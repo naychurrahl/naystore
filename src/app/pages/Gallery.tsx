@@ -1,17 +1,24 @@
 import { useState, useMemo } from "react";
-import { galleryImages, galleryCategories } from "../../data.js";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { X, Calendar, User, Tag } from "lucide-react";
+import { useAPI } from "../utils/api.js";
+import { API_BASE } from "../utils/apiBase.js";
 
 export function Gallery() {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedImage, setSelectedImage] = useState<typeof galleryImages[0] | null>(null);
+  const [selectedImage, setSelectedImage] = useState<any | null>(null);
+
+  const { data: imagesData, loading, error } = useAPI(`${API_BASE}/gallery`);
+  const { data: categoriesData } = useAPI(`${API_BASE}/categories?type=gallery`);
+
+  const galleryImages = (imagesData ?? []) as any[];
+  const galleryCategories = ["All", ...((categoriesData ?? []) as any[]).map((c) => c.name)];
 
   const filteredImages = useMemo(() => {
-    return selectedCategory === "All" 
-      ? galleryImages 
+    return selectedCategory === "All"
+      ? galleryImages
       : galleryImages.filter(img => img.category === selectedCategory);
-  }, [selectedCategory]);
+  }, [selectedCategory, imagesData]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
@@ -47,6 +54,12 @@ export function Gallery() {
         </div>
 
         {/* Masonry Gallery Grid */}
+        {loading && (
+          <p style={{ color: 'var(--color-text-secondary)' }}>Loading gallery...</p>
+        )}
+        {error && (
+          <p style={{ color: 'var(--color-error)' }}>Couldn't load the gallery. Please try again later.</p>
+        )}
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
           {filteredImages.map((image) => (
             <div
@@ -68,7 +81,7 @@ export function Gallery() {
             >
               <div className="relative overflow-hidden">
                 <ImageWithFallback
-                  src={`https://source.unsplash.com/600x${400 + Math.floor(Math.random() * 400)}/?${encodeURIComponent(image.image)}`}
+                  src={image.image}
                   alt={image.title}
                   className="w-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
@@ -120,7 +133,7 @@ export function Gallery() {
 
             <div className="aspect-video w-full overflow-hidden">
               <ImageWithFallback
-                src={`https://source.unsplash.com/1200x800/?${encodeURIComponent(selectedImage.image)}`}
+                src={selectedImage.image}
                 alt={selectedImage.title}
                 className="w-full h-full object-contain"
                 style={{ backgroundColor: 'black' }}

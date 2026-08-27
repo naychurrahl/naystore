@@ -1,28 +1,35 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { blogPosts, blogCategories } from "../../data.js";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Calendar, Clock, ArrowRight, Search } from "lucide-react";
+import { useAPI } from "../utils/api.js";
+import { API_BASE } from "../utils/apiBase.js";
 
 export function Blog() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
 
+  const { data: postsData, loading, error } = useAPI(`${API_BASE}/blog`);
+  const { data: categoriesData } = useAPI(`${API_BASE}/categories?type=blog`);
+
+  const blogPosts = (postsData ?? []) as any[];
+  const blogCategories = ["All", ...((categoriesData ?? []) as any[]).map((c) => c.name)];
+
   const filteredPosts = useMemo(() => {
-    let filtered = selectedCategory === "All" 
-      ? blogPosts 
+    let filtered = selectedCategory === "All"
+      ? blogPosts
       : blogPosts.filter(p => p.category === selectedCategory);
 
     if (searchTerm) {
-      filtered = filtered.filter(post => 
+      filtered = filtered.filter(post =>
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        post.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
     return filtered;
-  }, [selectedCategory, searchTerm]);
+  }, [selectedCategory, searchTerm, postsData]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
@@ -80,6 +87,12 @@ export function Blog() {
         </div>
 
         {/* Blog Posts Grid */}
+        {loading && (
+          <p style={{ color: 'var(--color-text-secondary)' }}>Loading articles...</p>
+        )}
+        {error && (
+          <p style={{ color: 'var(--color-error)' }}>Couldn't load articles. Please try again later.</p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPosts.map((post) => (
             <article
@@ -101,7 +114,7 @@ export function Blog() {
               {/* Featured Image */}
               <div className="aspect-video overflow-hidden">
                 <ImageWithFallback
-                  src={`https://source.unsplash.com/800x450/?${encodeURIComponent(post.image)}`}
+                  src={post.image}
                   alt={post.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
@@ -142,7 +155,7 @@ export function Blog() {
                 <div className="flex items-center gap-3 mb-4 pb-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <div className="w-10 h-10 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-surface)' }}>
                     <ImageWithFallback
-                      src={`https://source.unsplash.com/100x100/?${encodeURIComponent(post.authorImage)}`}
+                      src={post.authorImage}
                       alt={post.author}
                       className="w-full h-full object-cover"
                     />
@@ -159,7 +172,7 @@ export function Blog() {
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {post.tags.map((tag, index) => (
+                  {(post.tags as string[]).map((tag: string, index: number) => (
                     <span
                       key={index}
                       className="text-xs px-2 py-1 rounded"

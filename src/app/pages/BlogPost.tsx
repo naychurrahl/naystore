@@ -1,14 +1,26 @@
 import { useParams, Link, useNavigate } from "react-router";
-import { blogPosts } from "../../data.js";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Calendar, Clock, ArrowLeft, Tag, Share2 } from "lucide-react";
+import { useAPI } from "../utils/api.js";
+import { API_BASE } from "../utils/apiBase.js";
 
 export function BlogPost() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const post = blogPosts.find(p => p.id === Number(id));
 
-  if (!post) {
+  const { data, loading, error } = useAPI(`${API_BASE}/blog/${id}`);
+  const post = data as any;
+  const { data: allPosts } = useAPI(`${API_BASE}/blog`);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-surface)' }}>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Loading article...</p>
+      </div>
+    );
+  }
+
+  if (error || !post) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-surface)' }}>
         <div className="text-center">
@@ -18,7 +30,7 @@ export function BlogPost() {
           <Link
             to="/blog"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors"
-            style={{ 
+            style={{
               backgroundColor: 'var(--color-primary)',
               color: 'white'
             }}
@@ -31,14 +43,14 @@ export function BlogPost() {
     );
   }
 
-  const relatedPosts = blogPosts
+  const relatedPosts = ((allPosts ?? []) as any[])
     .filter(p => p.id !== post.id && p.category === post.category)
     .slice(0, 3);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
       {/* Back Button */}
-      <div style={{ backgroundColor: 'var(--color-background)' }} className="py-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+      <div className="py-4 border-b" style={{ backgroundColor: 'var(--color-background)', borderColor: 'var(--color-border)' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <button
             onClick={() => navigate(-1)}
@@ -87,7 +99,7 @@ export function BlogPost() {
         <div className="flex items-center gap-4 mb-8 pb-8" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <div className="w-16 h-16 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-surface)' }}>
             <ImageWithFallback
-              src={`https://source.unsplash.com/150x150/?${encodeURIComponent(post.authorImage)}`}
+              src={post.authorImage}
               alt={post.author}
               className="w-full h-full object-cover"
             />
@@ -121,7 +133,7 @@ export function BlogPost() {
         {/* Featured Image */}
         <div className="aspect-video rounded-xl overflow-hidden mb-8">
           <ImageWithFallback
-            src={`https://source.unsplash.com/1200x675/?${encodeURIComponent(post.image)}`}
+            src={post.image}
             alt={post.title}
             className="w-full h-full object-cover"
           />
@@ -136,31 +148,7 @@ export function BlogPost() {
             {post.excerpt}
           </p>
 
-          <p className="mb-4">
-            This is where the full blog post content would be displayed. In a real application, 
-            you would have rich text content here with multiple paragraphs, images, headings, 
-            lists, and other formatted content.
-          </p>
-
-          <p className="mb-4">
-            The content management system would store this data and render it dynamically. 
-            You could use a rich text editor or markdown to allow authors to format their posts 
-            with ease.
-          </p>
-
-          <h2 className="text-2xl font-bold mt-8 mb-4">Key Takeaways</h2>
-          <ul className="list-disc pl-6 mb-4 space-y-2">
-            <li>First important point from the article</li>
-            <li>Second key insight worth remembering</li>
-            <li>Third takeaway for readers</li>
-            <li>Final thought or action item</li>
-          </ul>
-
-          <h2 className="text-2xl font-bold mt-8 mb-4">Conclusion</h2>
-          <p className="mb-4">
-            Wrap up the article with a strong conclusion that reinforces the main points 
-            and provides value to the reader. Include a call-to-action if appropriate.
-          </p>
+          <div dangerouslySetInnerHTML={{ __html: post.content }} />
         </div>
 
         {/* Tags */}
@@ -209,7 +197,7 @@ export function BlogPost() {
                 >
                   <div className="aspect-video overflow-hidden">
                     <ImageWithFallback
-                      src={`https://source.unsplash.com/400x225/?${encodeURIComponent(relatedPost.image)}`}
+                      src={relatedPost.image}
                       alt={relatedPost.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />

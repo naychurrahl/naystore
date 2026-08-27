@@ -1,15 +1,23 @@
 import { useState, useMemo } from "react";
-import { portfolioProjects, portfolioCategories } from "../../data.js";
+import { Link } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { ExternalLink, Filter, Star } from "lucide-react";
+import { useAPI } from "../utils/api.js";
+import { API_BASE } from "../utils/apiBase.js";
 
 export function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
 
+  const { data: projectsData, loading, error } = useAPI(`${API_BASE}/portfolio`);
+  const { data: categoriesData } = useAPI(`${API_BASE}/categories?type=portfolio`);
+
+  const portfolioProjects = (projectsData ?? []) as any[];
+  const portfolioCategories = ["All", ...((categoriesData ?? []) as any[]).map((c) => c.name)];
+
   const filteredProjects = useMemo(() => {
-    let filtered = selectedCategory === "All" 
-      ? portfolioProjects 
+    let filtered = selectedCategory === "All"
+      ? portfolioProjects
       : portfolioProjects.filter(p => p.category === selectedCategory);
 
     if (showFeaturedOnly) {
@@ -17,7 +25,7 @@ export function Portfolio() {
     }
 
     return filtered;
-  }, [selectedCategory, showFeaturedOnly]);
+  }, [selectedCategory, showFeaturedOnly, projectsData]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
@@ -71,12 +79,19 @@ export function Portfolio() {
         </div>
 
         {/* Projects Grid */}
+        {loading && (
+          <p style={{ color: 'var(--color-text-secondary)' }}>Loading projects...</p>
+        )}
+        {error && (
+          <p style={{ color: 'var(--color-error)' }}>Couldn't load projects. Please try again later.</p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProjects.map((project) => (
-            <div
+            <Link
+              to={`/portfolio/${project.id}`}
               key={project.id}
-              className="rounded-xl overflow-hidden transition-all duration-300 group"
-              style={{ 
+              className="rounded-xl overflow-hidden transition-all duration-300 group block"
+              style={{
                 backgroundColor: 'var(--color-product-card)',
                 border: '1px solid var(--color-border)'
               }}
@@ -92,21 +107,21 @@ export function Portfolio() {
               {/* Project Image */}
               <div className="relative aspect-video overflow-hidden">
                 <ImageWithFallback
-                  src={`https://source.unsplash.com/800x600/?${encodeURIComponent(project.image)}`}
+                  src={project.image}
                   alt={project.title}
                   className="w-full h-full object-cover"
                 />
-                <div 
+                <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
                   style={{ backgroundColor: 'var(--color-portfolio-overlay)' }}
                 >
-                  <button 
-                    className="px-6 py-3 rounded-lg flex items-center gap-2 text-white transition-transform hover:scale-105"
+                  <span
+                    className="px-6 py-3 rounded-lg flex items-center gap-2 text-white transition-transform group-hover:scale-105"
                     style={{ backgroundColor: 'var(--color-secondary)' }}
                   >
                     View Project
                     <ExternalLink className="h-4 w-4" />
-                  </button>
+                  </span>
                 </div>
                 {project.featured && (
                   <div
@@ -144,7 +159,7 @@ export function Portfolio() {
                   {project.description}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {project.tags.map((tag, index) => (
+                  {(project.tags as string[]).map((tag: string, index: number) => (
                     <span
                       key={index}
                       className="text-xs px-2 py-1 rounded"
@@ -158,7 +173,7 @@ export function Portfolio() {
                   ))}
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 

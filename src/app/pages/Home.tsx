@@ -1,15 +1,35 @@
 import { Link } from "react-router";
-import { companyInfo } from "../../data.js";
 import { ArrowRight, ShoppingBag, Briefcase, Image as ImageIcon, BookOpen } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { HeroCarousel, type HeroSlide } from "../components/HeroCarousel";
+import { ShopSection } from "../components/ShopSection";
+import { Testimonials } from "../components/Testimonials";
+import { TrustStrip } from "../components/TrustStrip";
+import { useAPI } from "../utils/api.js";
+import { API_BASE } from "../utils/apiBase.js";
 
 export function Home() {
+  const { data: companyInfo } = useAPI(`${API_BASE}/settings`);
+  const { data: homeStats } = useAPI(`${API_BASE}/home-stats`);
+  const { data: curatedSlidesData } = useAPI(`${API_BASE}/hero-slides`);
+  const { data: featuredProjectsData } = useAPI(`${API_BASE}/portfolio?featured=true`);
+
+  const curatedSlides: HeroSlide[] = (curatedSlidesData ?? []) as HeroSlide[];
+  const autoSlides: HeroSlide[] = ((featuredProjectsData ?? []) as any[]).map((project) => ({
+    image: project.image,
+    heading: project.title,
+    subheading: `Client: ${project.client}`,
+    ctaLabel: "View Project",
+    ctaLink: `/portfolio/${project.id}`,
+  }));
+  const heroSlides = [...curatedSlides, ...autoSlides];
+
   const features = [
     {
       icon: ShoppingBag,
       title: "E-commerce Store",
       description: "Browse our curated selection of premium products",
-      link: "/shop",
+      link: "/#shop",
       color: 'var(--color-primary)'
     },
     {
@@ -37,70 +57,39 @@ export function Home() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section 
-        className="relative py-20 md:py-32"
+      {/* Hero Carousel */}
+      <HeroCarousel slides={heroSlides} />
+
+      <TrustStrip />
+
+      {/* Company Intro */}
+      <section
+        className="py-16"
         style={{ backgroundColor: 'var(--color-surface)' }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 
-              className="text-4xl md:text-6xl font-bold mb-6"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              {companyInfo.name}
-            </h1>
-            <p 
-              className="text-xl md:text-2xl mb-4"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              {companyInfo.tagline}
-            </p>
-            <p 
-              className="text-lg max-w-2xl mx-auto mb-8"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              {companyInfo.description}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/shop"
-                className="px-8 py-3 rounded-lg font-medium transition-colors inline-flex items-center justify-center"
-                style={{ 
-                  backgroundColor: 'var(--color-primary)',
-                  color: 'white'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-primary)';
-                }}
-              >
-                Start Shopping
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                to="/portfolio"
-                className="px-8 py-3 rounded-lg font-medium transition-colors inline-flex items-center justify-center"
-                style={{ 
-                  backgroundColor: 'white',
-                  color: 'var(--color-primary)',
-                  border: '2px solid var(--color-primary)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-primary-light)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                }}
-              >
-                View Our Work
-              </Link>
-            </div>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-4"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {companyInfo?.companyName}
+          </h2>
+          <p
+            className="text-lg md:text-xl mb-3"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            {companyInfo?.tagline}
+          </p>
+          <p
+            className="text-base max-w-2xl mx-auto"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            {companyInfo?.description}
+          </p>
         </div>
       </section>
+
+      <ShopSection />
 
       {/* Features Grid */}
       <section className="py-16 md:py-24">
@@ -176,31 +165,7 @@ export function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section 
-        className="py-16"
-        style={{ backgroundColor: 'var(--color-primary)' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { number: "500+", label: "Products" },
-              { number: "100+", label: "Projects" },
-              { number: "1000+", label: "Photos" },
-              { number: "200+", label: "Articles" }
-            ].map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                  {stat.number}
-                </div>
-                <div className="text-white opacity-90">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Testimonials />
     </div>
   );
 }
