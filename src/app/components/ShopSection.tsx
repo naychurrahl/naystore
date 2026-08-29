@@ -28,7 +28,7 @@ export function ShopSection() {
   const filteredProducts = useMemo(() => {
     let filtered = selectedCategory === "All"
       ? products
-      : products.filter((p) => p.category === selectedCategory);
+      : products.filter((p) => p.categories?.includes(selectedCategory));
 
     if (sortBy === "price-low") {
       filtered = [...filtered].sort((a, b) => a.price - b.price);
@@ -43,16 +43,6 @@ export function ShopSection() {
 
   return (
     <div id="shop" style={{ backgroundColor: 'var(--color-surface)' }}>
-      <style>{`
-        .category-scroll {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-        .category-scroll::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
-
       <PageHeader
         title="Shop"
         subtitle="Browse our curated selection of premium products"

@@ -1,21 +1,15 @@
 import { Outlet, Link, useLocation } from "react-router";
 import { Menu, X, ShoppingCart, ShoppingBag, User, LogIn } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
-const SOCIAL_LABELS = {
-  facebook: "Facebook",
-  twitter: "Twitter",
-  instagram: "Instagram",
-  linkedin: "LinkedIn",
-};
-
 export function Layout() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
 
   const { data: settings } = useAPI(`${API_BASE}/settings`);
   const { data: navigationMenu } = useAPI(`${API_BASE}/nav`);
@@ -23,24 +17,53 @@ export function Layout() {
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    if (!location.hash) return;
-    const el = document.getElementById(location.hash.slice(1));
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (location.hash) {
+      const el = document.getElementById(location.hash.slice(1));
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
 
   const companyName = settings?.companyName ?? "";
   const logoInitial = companyName ? companyName.charAt(0).toUpperCase() : "";
   const navItems = navigationMenu ?? [];
-  const socialLinks = settings
-    ? Object.entries(SOCIAL_LABELS)
-        .map(([key, label]) => ({ label, url: settings[key] }))
-        .filter((entry) => entry.url)
-    : [];
+  const socialLinks = settings?.socialLinks ?? [];
+  const emails = settings?.emails ?? [];
+  const phones = settings?.phones ?? [];
+  const addresses = settings?.addresses ?? [];
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
       <nav
+        ref={navRef}
         className="sticky top-0 z-40"
         style={{ backgroundColor: 'var(--color-nav-bg)', borderBottom: '1px solid var(--color-border)' }}
       >
@@ -174,9 +197,15 @@ export function Layout() {
               <h3 className="font-bold text-lg mb-4 text-white">{companyName}</h3>
               <p className="mb-4">{settings?.description}</p>
               <div className="space-y-2 text-sm">
-                <p>{settings?.email}</p>
-                <p>{settings?.phone}</p>
-                <p>{settings?.address}</p>
+                {emails.map((entry: any) => (
+                  <p key={entry.id}>{entry.value}</p>
+                ))}
+                {phones.map((entry: any) => (
+                  <p key={entry.id}>{entry.value}</p>
+                ))}
+                {addresses.map((entry: any) => (
+                  <p key={entry.id}>{entry.value}</p>
+                ))}
               </div>
             </div>
 
@@ -239,14 +268,14 @@ export function Layout() {
             <div>
               <h4 className="font-bold text-white mb-4">Follow Us</h4>
               <div className="space-y-2">
-                {socialLinks.map((social) => (
+                {socialLinks.map((social: any) => (
                   <a
-                    key={social.label}
+                    key={social.id}
                     href={social.url}
                     style={{ color: 'var(--color-footer-link)' }}
-                    className="block hover:underline"
+                    className="block hover:underline capitalize"
                   >
-                    {social.label}
+                    {social.platform}
                   </a>
                 ))}
               </div>

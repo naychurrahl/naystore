@@ -21,7 +21,7 @@ export function Blog() {
   const filteredPosts = useMemo(() => {
     let filtered = selectedCategory === "All"
       ? blogPosts
-      : blogPosts.filter(p => p.category === selectedCategory);
+      : blogPosts.filter(p => p.categories?.includes(selectedCategory));
 
     if (searchTerm) {
       filtered = filtered.filter(post =>
@@ -66,18 +66,18 @@ export function Blog() {
           </div>
 
           {/* Category Filter */}
-          <div className="flex flex-wrap gap-2">
+          <div className="category-scroll flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible -mx-1 px-1 py-1 md:mx-0 md:px-0 md:py-0">
             {blogCategories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className="px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                className="shrink-0 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
                 style={{
-                  backgroundColor: selectedCategory === category 
-                    ? 'var(--color-success)' 
+                  backgroundColor: selectedCategory === category
+                    ? 'var(--color-success)'
                     : 'white',
-                  color: selectedCategory === category 
-                    ? 'white' 
+                  color: selectedCategory === category
+                    ? 'white'
                     : 'var(--color-text-primary)',
                   border: '1px solid var(--color-border)'
                 }}
@@ -133,7 +133,7 @@ export function Blog() {
                       color: 'var(--color-blog-category)'
                     }}
                   >
-                    {post.category}
+                    {post.categories?.join(", ")}
                   </span>
                   <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--color-blog-meta)' }}>
                     <Calendar className="h-3 w-3" />

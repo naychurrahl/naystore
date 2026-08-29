@@ -21,7 +21,7 @@ export function Portfolio() {
   const filteredProjects = useMemo(() => {
     let filtered = selectedCategory === "All"
       ? portfolioProjects
-      : portfolioProjects.filter(p => p.category === selectedCategory);
+      : portfolioProjects.filter(p => p.categories?.includes(selectedCategory));
 
     if (showFeaturedOnly) {
       filtered = filtered.filter(p => p.featured);
@@ -43,20 +43,20 @@ export function Portfolio() {
         {/* Filters */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5" style={{ color: 'var(--color-text-secondary)' }} />
-              <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Filter className="h-5 w-5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
+              <div className="category-scroll flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible min-w-0 -mx-1 px-1 py-1 md:mx-0 md:px-0 md:py-0">
                 {portfolioCategories.map((category) => (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className="px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                    className="shrink-0 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
                     style={{
-                      backgroundColor: selectedCategory === category 
-                        ? 'var(--color-secondary)' 
+                      backgroundColor: selectedCategory === category
+                        ? 'var(--color-secondary)'
                         : 'white',
-                      color: selectedCategory === category 
-                        ? 'white' 
+                      color: selectedCategory === category
+                        ? 'white'
                         : 'var(--color-text-primary)',
                       border: '1px solid var(--color-border)'
                     }}
@@ -145,7 +145,7 @@ export function Portfolio() {
                       color: 'var(--color-secondary)'
                     }}
                   >
-                    {project.category}
+                    {project.categories?.join(", ")}
                   </span>
                   <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                     {project.year}

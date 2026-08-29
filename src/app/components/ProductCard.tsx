@@ -10,7 +10,7 @@ export interface ShopProduct {
   image: string;
   price: number;
   originalPrice?: number;
-  category: string;
+  categories: string[];
   description: string;
   badge?: string;
   inStock: boolean;
@@ -71,7 +71,7 @@ export function ProductCard({ product }: { product: ShopProduct }) {
 
       <div className="p-4">
         <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>
-          {product.category}
+          {product.categories?.join(", ")}
         </p>
         <Link to={`/shop/${product.id}`}>
           <h3 className="font-semibold mb-1 line-clamp-2" style={{ color: 'var(--color-text-primary)' }}>

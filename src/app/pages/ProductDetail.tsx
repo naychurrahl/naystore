@@ -124,7 +124,7 @@ export function ProductDetail() {
           </div>
 
           <div>
-            <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>{product.category}</p>
+            <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>{product.categories?.join(", ")}</p>
             <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
               {product.name}
             </h1>

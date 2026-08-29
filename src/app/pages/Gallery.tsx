@@ -20,7 +20,7 @@ export function Gallery() {
   const filteredImages = useMemo(() => {
     return selectedCategory === "All"
       ? galleryImages
-      : galleryImages.filter(img => img.category === selectedCategory);
+      : galleryImages.filter(img => img.categories?.includes(selectedCategory));
   }, [selectedCategory, imagesData]);
 
   return (
@@ -34,18 +34,18 @@ export function Gallery() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Category Filter */}
-        <div className="mb-8 flex flex-wrap gap-2 justify-center">
+        <div className="category-scroll mb-8 flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible md:justify-center -mx-1 px-1 py-1 md:mx-0 md:px-0 md:py-0">
           {galleryCategories.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className="px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+              className="shrink-0 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
               style={{
-                backgroundColor: selectedCategory === category 
-                  ? 'var(--color-accent)' 
+                backgroundColor: selectedCategory === category
+                  ? 'var(--color-accent)'
                   : 'white',
-                color: selectedCategory === category 
-                  ? 'white' 
+                color: selectedCategory === category
+                  ? 'white'
                   : 'var(--color-text-primary)',
                 border: '1px solid var(--color-border)'
               }}
@@ -161,7 +161,7 @@ export function Gallery() {
                   <div>
                     <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Category</p>
                     <p className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                      {selectedImage.category}
+                      {(selectedImage.categories ?? []).join(", ")}
                     </p>
                   </div>
                 </div>
