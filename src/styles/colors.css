@@ -32,6 +32,7 @@
   /* Neutral Colors */
   --color-background: #ffffff;
   --color-surface: #f9fafb;
+  --color-surface-alt: #f1f4f9; /* section banding: alternates with --color-surface so stacked sections read as distinct blocks instead of one flat expanse */
   --color-border: #e5e7eb;
   --color-text-primary: #111827;
   --color-text-secondary: #6b7280;

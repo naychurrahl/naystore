@@ -1,9 +1,12 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { PageHeader } from "../components/PageHeader";
 import { Calendar, Clock, ArrowRight, Search } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
+
+const HEADER_IMAGE = "https://www.sourcesplash.com/i/random?q=writing%20desk%20laptop&w=1600&h=400";
 
 export function Blog() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -33,13 +36,12 @@ export function Blog() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
-      {/* Header */}
-      <div style={{ backgroundColor: 'var(--color-success)' }} className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Our Blog</h1>
-          <p className="text-white opacity-90">Insights, stories, and updates from our team</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Our Blog"
+        subtitle="Insights, stories, and updates from our team"
+        image={HEADER_IMAGE}
+        tint="rgba(16, 185, 129, 0.82)"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Filter */}

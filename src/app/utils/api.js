@@ -187,13 +187,21 @@ export const api = {
 export function useAPI(url, options = {}) {
   const [state, setState] = React.useState({
     data: null,
-    loading: true,
+    loading: !!url,
     error: null
   });
 
   const fetchData = React.useCallback(async () => {
+    // A falsy url (e.g. a "only fetch when logged in" ternary that's
+    // currently false) means "don't fetch" - not "fetch the literal string
+    // 'null'", which is what a bare fetch(null) call resolves to.
+    if (!url) {
+      setState({ data: null, loading: false, error: null });
+      return null;
+    }
+
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       const result = await apiFetch(url, options);
       setState({ data: result, loading: false, error: null });
@@ -205,7 +213,11 @@ export function useAPI(url, options = {}) {
   }, [url, JSON.stringify(options)]);
 
   React.useEffect(() => {
-    fetchData();
+    // fetchData() still throws for callers of refetch() who want to catch it
+    // themselves - but nothing awaits this automatic mount-time call, so an
+    // uncaught rejection here would surface as an unhandled promise rejection
+    // even though the error is already captured in state.
+    fetchData().catch(() => {});
   }, [fetchData]);
 
   return {

@@ -4,6 +4,9 @@ import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { ProductRail } from "./ProductRail";
 import { ProductCard, type ShopProduct } from "./ProductCard";
+import { PageHeader } from "./PageHeader";
+
+const HEADER_IMAGE = "https://www.sourcesplash.com/i/random?q=retail%20shopping%20store&w=1600&h=400";
 
 export function ShopSection() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -40,6 +43,22 @@ export function ShopSection() {
 
   return (
     <div id="shop" style={{ backgroundColor: 'var(--color-surface)' }}>
+      <style>{`
+        .category-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .category-scroll::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
+      <PageHeader
+        title="Shop"
+        subtitle="Browse our curated selection of premium products"
+        image={HEADER_IMAGE}
+        tint="rgba(37, 99, 235, 0.82)"
+      />
 
       <ProductRail id="new-arrivals" title="New Arrivals" products={newArrivals} />
       <ProductRail id="best-sellers" title="Best Sellers" products={bestSellers} />
@@ -51,14 +70,14 @@ export function ShopSection() {
 
         {/* Filters */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <Filter className="h-5 w-5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
-            <div className="flex flex-wrap gap-2">
+            <div className="category-scroll flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible min-w-0 -mx-1 px-1 py-1 md:mx-0 md:px-0 md:py-0">
               {productCategories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className="px-4 py-2 rounded-full transition-colors text-sm font-medium"
+                  className="shrink-0 px-4 py-2 rounded-full transition-colors text-sm font-medium"
                   style={{
                     backgroundColor: selectedCategory === category
                       ? 'var(--color-primary)'

@@ -1,9 +1,12 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { PageHeader } from "../components/PageHeader";
 import { ExternalLink, Filter, Star } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
+
+const HEADER_IMAGE = "https://www.sourcesplash.com/i/random?q=creative%20team%20studio&w=1600&h=400";
 
 export function Portfolio() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -29,13 +32,12 @@ export function Portfolio() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
-      {/* Header */}
-      <div style={{ backgroundColor: 'var(--color-secondary)' }} className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Our Portfolio</h1>
-          <p className="text-white opacity-90">Showcasing our best work and creative solutions</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Our Portfolio"
+        subtitle="Showcasing our best work and creative solutions"
+        image={HEADER_IMAGE}
+        tint="rgba(124, 58, 237, 0.82)"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}

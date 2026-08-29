@@ -75,7 +75,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => setItems([]);
 
-  const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
+  // Distinct product lines, not total quantity - a badge showing "12" because
+  // someone ordered 12 of one thing reads as clutter, not cart contents.
+  const itemCount = useMemo(() => items.length, [items]);
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
 
   return (

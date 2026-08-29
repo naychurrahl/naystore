@@ -65,7 +65,7 @@ export function Home() {
       {/* Company Intro */}
       <section
         className="py-16"
-        style={{ backgroundColor: 'var(--color-surface)' }}
+        style={{ backgroundColor: 'var(--color-surface-alt)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2
@@ -92,7 +92,7 @@ export function Home() {
       <ShopSection />
 
       {/* Features Grid */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24" style={{ backgroundColor: 'var(--color-surface-alt)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 

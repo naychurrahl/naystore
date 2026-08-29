@@ -2,6 +2,7 @@ import { useLocation, Link } from "react-router";
 import { CheckCircle2, XCircle, Package } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
+import { getGuestId } from "../utils/guestId.js";
 import { useAuth } from "../context/AuthContext";
 
 function OrderCard({ order, highlight = false }: { order: any; highlight?: boolean }) {
@@ -47,14 +48,26 @@ function OrderCard({ order, highlight = false }: { order: any; highlight?: boole
 }
 
 export function OrderHistory() {
-  const { token, authHeader } = useAuth();
+  const { token, authHeader, user } = useAuth();
   const location = useLocation();
   const state = (location.state ?? {}) as { placedOrders?: any[]; paymentFailed?: boolean };
   const justPlaced = state.placedOrders ?? [];
   const paymentFailed = state.paymentFailed ?? false;
 
-  const { data: ordersData, loading } = useAPI(token ? `${API_BASE}/my-orders` : null, { headers: authHeader });
-  const orders = (ordersData ?? []) as any[];
+  // Guests have no account to fetch by, but the same browser-persisted guestId
+  // used at checkout lets them look up their own past orders here.
+  const guestId = !user ? getGuestId() : null;
+
+  const { data: myOrdersData, loading: myOrdersLoading } = useAPI(
+    token ? `${API_BASE}/my-orders` : null,
+    { headers: authHeader }
+  );
+  const { data: guestOrdersData, loading: guestOrdersLoading } = useAPI(
+    guestId ? `${API_BASE}/guest-orders?guestId=${encodeURIComponent(guestId)}` : null
+  );
+
+  const orders = ((token ? myOrdersData : guestOrdersData) ?? []) as any[];
+  const loading = token ? myOrdersLoading : guestOrdersLoading;
 
   const justPlacedIds = new Set(justPlaced.map((o) => o.id));
   const historyOrders = orders.filter((o) => !justPlacedIds.has(o.id));
@@ -84,31 +97,29 @@ export function OrderHistory() {
           </div>
         )}
 
-        {!token ? (
-          <div className="p-6 rounded-xl text-center" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
-            <p className="mb-3" style={{ color: 'var(--color-text-secondary)' }}>
-              Log in to see your full order history{justPlaced.length > 0 ? " and track this order" : ""}.
-            </p>
-            <Link to="/login" style={{ color: 'var(--color-primary)' }}>Log In</Link>
-          </div>
-        ) : (
-          <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
-            {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading orders...</p>}
+        <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
+          {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading orders...</p>}
 
-            {!loading && historyOrders.length === 0 && justPlaced.length === 0 && (
-              <div className="text-center py-8">
-                <Package className="h-10 w-10 mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
-                <p className="mb-4" style={{ color: 'var(--color-text-secondary)' }}>No orders yet.</p>
-                <Link to="/#shop" style={{ color: 'var(--color-primary)' }}>Browse the shop</Link>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              {historyOrders.map((order) => (
-                <OrderCard key={order.id} order={order} />
-              ))}
+          {!loading && historyOrders.length === 0 && justPlaced.length === 0 && (
+            <div className="text-center py-8">
+              <Package className="h-10 w-10 mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
+              <p className="mb-4" style={{ color: 'var(--color-text-secondary)' }}>No orders yet.</p>
+              <Link to="/#shop" style={{ color: 'var(--color-primary)' }}>Browse the shop</Link>
             </div>
+          )}
+
+          <div className="space-y-4">
+            {historyOrders.map((order) => (
+              <OrderCard key={order.id} order={order} />
+            ))}
           </div>
+        </div>
+
+        {!token && (
+          <p className="text-sm text-center mt-4" style={{ color: 'var(--color-text-secondary)' }}>
+            Orders shown above are matched to this browser.{" "}
+            <Link to="/login" style={{ color: 'var(--color-primary)' }}>Log in</Link> to keep a permanent history tied to your account.
+          </p>
         )}
       </div>
     </div>
