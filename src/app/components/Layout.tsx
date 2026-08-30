@@ -5,14 +5,15 @@ import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useChat } from "../context/ChatContext";
 import { ChatLauncher } from "./ChatLauncher";
 import { ChatPanel } from "./ChatPanel";
 
 export function Layout() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+  const { isOpen: chatOpen, open: openChat, close: closeChat } = useChat();
 
   const { data: settings } = useAPI(`${API_BASE}/settings`);
   const { data: navigationMenu } = useAPI(`${API_BASE}/nav`);
@@ -303,8 +304,8 @@ export function Layout() {
         <span className="hidden sm:inline text-sm font-medium">Back to Shop</span>
       </Link>
 
-      <ChatLauncher onClick={() => setChatOpen(true)} />
-      <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+      <ChatLauncher onClick={openChat} />
+      <ChatPanel isOpen={chatOpen} onClose={closeChat} />
     </div>
   );
 }

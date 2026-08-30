@@ -8,65 +8,162 @@ export interface ChatMessage {
   id: string;
   conversationId: string;
   senderId: string | null;
-  senderRole: "customer" | "staff" | "admin";
+  senderRole: "customer" | "staff" | "admin" | "merchant";
   body: string;
   createdAt: string;
 }
 
-interface ChatContextValue {
-  messages: ChatMessage[];
+export interface MerchantConversationSummary {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
   unreadCount: number;
-  fetchChat: (markRead?: boolean) => Promise<void>;
+}
+
+export type ActiveThread = { type: "support" } | { type: "merchant"; merchantId: string; merchantName: string };
+
+interface ChatContextValue {
+  isOpen: boolean;
+  open: () => void;
+  close: () => void;
+  unreadCount: number;
+  supportUnread: number;
+  merchantConversations: MerchantConversationSummary[];
+  activeThread: ActiveThread | null;
+  messages: ChatMessage[];
+  openThread: (thread: ActiveThread) => void;
+  backToList: () => void;
+  openMerchantChat: (merchantId: string, merchantName: string) => void;
   sendMessage: (body: string) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null);
 
-// Customer-facing support chat, open to guests too (same guestId identity
-// guest checkout already uses) - staff/admin use the CMS's own Chat page
-// instead, so this only ever talks to the customer/guest shape of GET/POST
-// /chat (a single conversation with a badge-only unread count until opened).
+// Customer-facing chat, open to guests too (same guestId identity guest
+// checkout already uses) - staff/admin use the CMS's own Chat page instead.
+// Owns two conversation types: the single support thread (/chat, unchanged
+// shape from before merchants existed) and any number of merchant threads
+// (/merchant-chat) - see openMerchantChat, used by the product page's "Chat
+// with Merchant" link.
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { user, authHeader } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [supportUnread, setSupportUnread] = useState(0);
+  const [merchantConversations, setMerchantConversations] = useState<MerchantConversationSummary[]>([]);
+  const [activeThread, setActiveThread] = useState<ActiveThread | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
 
+  const isStaffOrAdmin = !!user && (user.role === "admin" || user.role === "staff");
   const guestParam = () => (user ? "" : `&guestId=${encodeURIComponent(getGuestId())}`);
 
-  const fetchChat = async (markRead = true) => {
+  const fetchOverview = async () => {
     try {
-      const data = await api.get(`${API_BASE}/chat?markRead=${markRead ? "1" : "0"}${guestParam()}`, { headers: authHeader });
-      setUnreadCount(data.unreadCount ?? 0);
-      setMessages(data.messages ?? []);
+      const [supportData, merchantData] = await Promise.all([
+        api.get(`${API_BASE}/chat?markRead=0${guestParam()}`, { headers: authHeader }),
+        api.get(`${API_BASE}/merchant-chat?markRead=0${guestParam()}`, { headers: authHeader }),
+      ]);
+      setSupportUnread(supportData.unreadCount ?? 0);
+      setMerchantConversations(merchantData.conversations ?? []);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const sendMessage = async (body: string) => {
-    const payload: Record<string, string> = { body };
-    if (!user) payload.guestId = getGuestId();
-    await api.post(`${API_BASE}/chat`, payload, { headers: authHeader });
-    await fetchChat(true);
+  const fetchThreadMessages = async (thread: ActiveThread, markRead: boolean) => {
+    try {
+      if (thread.type === "support") {
+        const data = await api.get(`${API_BASE}/chat?markRead=${markRead ? "1" : "0"}${guestParam()}`, { headers: authHeader });
+        setMessages(data.messages ?? []);
+        setSupportUnread(data.unreadCount ?? 0);
+      } else {
+        const data = await api.get(
+          `${API_BASE}/merchant-chat?markRead=${markRead ? "1" : "0"}&merchantId=${encodeURIComponent(thread.merchantId)}${guestParam()}`,
+          { headers: authHeader }
+        );
+        setMessages(data.messages ?? []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // Badge-only poll for anyone who can actually chat (customer, or a guest -
-  // just not staff/admin); the panel itself polls faster (and marks read)
-  // only while actually open, see ChatPanel.
+  // just not staff/admin); a thread itself polls faster (and marks read)
+  // only while actually open, below.
   useEffect(() => {
-    if (user && (user.role === "admin" || user.role === "staff")) {
-      setMessages([]);
-      setUnreadCount(0);
+    if (isStaffOrAdmin) {
+      setSupportUnread(0);
+      setMerchantConversations([]);
       return;
     }
 
-    fetchChat(false);
-    const interval = setInterval(() => fetchChat(false), 20000);
+    fetchOverview();
+    const interval = setInterval(fetchOverview, 20000);
     return () => clearInterval(interval);
   }, [user]);
 
+  useEffect(() => {
+    if (!isOpen || !activeThread) return;
+
+    fetchThreadMessages(activeThread, true);
+    const interval = setInterval(() => fetchThreadMessages(activeThread, true), 8000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, activeThread?.type, activeThread?.type === "merchant" ? activeThread.merchantId : null]);
+
+  const open = () => setIsOpen(true);
+  const close = () => setIsOpen(false);
+
+  const openThread = (thread: ActiveThread) => {
+    setMessages([]);
+    setActiveThread(thread);
+  };
+
+  const backToList = () => {
+    setActiveThread(null);
+    setMessages([]);
+    fetchOverview();
+  };
+
+  const openMerchantChat = (merchantId: string, merchantName: string) => {
+    setMessages([]);
+    setActiveThread({ type: "merchant", merchantId, merchantName });
+    setIsOpen(true);
+  };
+
+  // Always keyed by merchantId (never a tracked conversationId) - the
+  // backend's getOrCreateMerchantConversation finds the existing thread once
+  // one exists, so the client never needs to know its id. This is also what
+  // makes "only clients can initiate" true: the client always has a
+  // merchantId to resolve from, a merchant never does.
+  const sendMessage = async (body: string) => {
+    if (!activeThread) return;
+
+    const payload: Record<string, string> = { body };
+    if (!user) payload.guestId = getGuestId();
+
+    if (activeThread.type === "support") {
+      await api.post(`${API_BASE}/chat`, payload, { headers: authHeader });
+    } else {
+      payload.merchantId = activeThread.merchantId;
+      await api.post(`${API_BASE}/merchant-chat`, payload, { headers: authHeader });
+    }
+
+    await fetchThreadMessages(activeThread, true);
+    fetchOverview();
+  };
+
+  const unreadCount = supportUnread + merchantConversations.reduce((sum, c) => sum + c.unreadCount, 0);
+
   return (
-    <ChatContext.Provider value={{ messages, unreadCount, fetchChat, sendMessage }}>
+    <ChatContext.Provider
+      value={{
+        isOpen, open, close, unreadCount, supportUnread, merchantConversations, activeThread, messages,
+        openThread, backToList, openMerchantChat, sendMessage,
+      }}
+    >
       {children}
     </ChatContext.Provider>
   );
