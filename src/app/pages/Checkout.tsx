@@ -4,6 +4,7 @@ import { CheckCircle2, XCircle, ArrowLeft, CreditCard, Truck, Layers } from "luc
 import PaystackPop from "@paystack/inline-js";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
+import { getGuestId } from "../utils/guestId.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -154,6 +155,7 @@ export function Checkout() {
       const result = await api.post(`${API_BASE}/orders`, {
         ...form,
         paymentMethod,
+        guestId: user ? undefined : getGuestId(),
         items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
       }, { headers: authHeader });
 

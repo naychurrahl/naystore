@@ -29,6 +29,28 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
 
   return (
     <Carousel setApi={setApi} opts={{ loop: true }} className="relative">
+      <style>{`
+        @keyframes hero-scrim-drift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        .hero-scrim {
+          background: linear-gradient(120deg,
+            rgba(37, 99, 235, 0.55),
+            rgba(124, 58, 237, 0.52),
+            rgba(0, 0, 0, 0.55),
+            rgba(245, 158, 11, 0.5)
+          );
+          background-size: 300% 300%;
+          animation: hero-scrim-drift 18s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-scrim {
+            animation: none;
+            background-position: 50% 50%;
+          }
+        }
+      `}</style>
       <CarouselContent className="ml-0">
         {slides.map((slide, index) => (
           <CarouselItem key={index} className="pl-0">
@@ -38,10 +60,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                 alt={slide.heading}
                 className="w-full h-full object-cover"
               />
-              <div
-                className="absolute inset-0 flex items-center"
-                style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
-              >
+              <div className="hero-scrim absolute inset-0 flex items-center">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                   <div className="max-w-2xl">
                     <h1 className="text-3xl md:text-5xl font-bold mb-4 text-white">

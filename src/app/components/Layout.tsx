@@ -1,21 +1,19 @@
 import { Outlet, Link, useLocation } from "react-router";
-import { Menu, X, ShoppingCart, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Menu, X, ShoppingCart, ShoppingBag, User, LogIn } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-
-const SOCIAL_LABELS = {
-  facebook: "Facebook",
-  twitter: "Twitter",
-  instagram: "Instagram",
-  linkedin: "LinkedIn",
-};
+import { useChat } from "../context/ChatContext";
+import { ChatLauncher } from "./ChatLauncher";
+import { ChatPanel } from "./ChatPanel";
 
 export function Layout() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const { isOpen: chatOpen, open: openChat, close: closeChat } = useChat();
 
   const { data: settings } = useAPI(`${API_BASE}/settings`);
   const { data: navigationMenu } = useAPI(`${API_BASE}/nav`);
@@ -23,24 +21,56 @@ export function Layout() {
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    if (!location.hash) return;
-    const el = document.getElementById(location.hash.slice(1));
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (location.hash) {
+      const el = document.getElementById(location.hash.slice(1));
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
 
   const companyName = settings?.companyName ?? "";
   const logoInitial = companyName ? companyName.charAt(0).toUpperCase() : "";
   const navItems = navigationMenu ?? [];
-  const socialLinks = settings
-    ? Object.entries(SOCIAL_LABELS)
-        .map(([key, label]) => ({ label, url: settings[key] }))
-        .filter((entry) => entry.url)
-    : [];
+  const socialLinks = settings?.socialLinks ?? [];
+  const emails = settings?.emails ?? [];
+  const phones = settings?.phones ?? [];
+  const addresses = settings?.addresses ?? [];
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
-      <nav style={{ backgroundColor: 'var(--color-nav-bg)', borderBottom: '1px solid var(--color-border)' }}>
+      <nav
+        ref={navRef}
+        className="sticky top-0 z-40"
+        style={{ backgroundColor: 'var(--color-nav-bg)', borderBottom: '1px solid var(--color-border)' }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
@@ -110,34 +140,20 @@ export function Layout() {
                 )}
               </Link>
 
-              {user ? (
-                <div className="hidden sm:flex items-center gap-3">
-                  <Link
-                    to="/profile"
-                    className="flex items-center gap-1 transition-colors"
-                    style={{ color: 'var(--color-nav-text)' }}
-                  >
-                    <User className="h-5 w-5" />
-                    {user.name}
-                  </Link>
-                  <button
-                    onClick={() => logout()}
-                    className="text-sm transition-colors"
-                    style={{ color: 'var(--color-nav-text)' }}
-                  >
-                    Log Out
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  to="/login"
-                  className="hidden sm:flex items-center gap-1 transition-colors"
-                  style={{ color: 'var(--color-nav-text)' }}
-                >
-                  <User className="h-5 w-5" />
-                  Log In
-                </Link>
-              )}
+              <Link
+                to={user ? "/profile" : "/login"}
+                className="p-2 rounded-md transition-colors"
+                style={{ color: 'var(--color-nav-text)' }}
+                aria-label={user ? "Profile" : "Log In"}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-nav-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                {user ? <User className="h-6 w-6" /> : <LogIn className="h-6 w-6" />}
+              </Link>
 
               <button
                 className="md:hidden p-2 rounded-md"
@@ -166,34 +182,6 @@ export function Layout() {
                   {item.name}
                 </Link>
               ))}
-              {user ? (
-                <>
-                  <Link
-                    to="/profile"
-                    className="block px-3 py-2 rounded-md transition-colors"
-                    style={{ color: 'var(--color-nav-text)' }}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    My Account
-                  </Link>
-                  <button
-                    onClick={() => { logout(); setMobileMenuOpen(false); }}
-                    className="block w-full text-left px-3 py-2 rounded-md transition-colors"
-                    style={{ color: 'var(--color-nav-text)' }}
-                  >
-                    Log Out
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  className="block px-3 py-2 rounded-md transition-colors"
-                  style={{ color: 'var(--color-nav-text)' }}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Log In
-                </Link>
-              )}
             </div>
           )}
         </div>
@@ -207,21 +195,27 @@ export function Layout() {
       {/* Footer */}
       <footer style={{ backgroundColor: 'var(--color-footer-bg)', color: 'var(--color-footer-text)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             {/* Company Info */}
             <div className="col-span-1 md:col-span-2">
               <h3 className="font-bold text-lg mb-4 text-white">{companyName}</h3>
               <p className="mb-4">{settings?.description}</p>
               <div className="space-y-2 text-sm">
-                <p>{settings?.email}</p>
-                <p>{settings?.phone}</p>
-                <p>{settings?.address}</p>
+                {emails.map((entry: any) => (
+                  <p key={entry.id}>{entry.value}</p>
+                ))}
+                {phones.map((entry: any) => (
+                  <p key={entry.id}>{entry.value}</p>
+                ))}
+                {addresses.map((entry: any) => (
+                  <p key={entry.id}>{entry.value}</p>
+                ))}
               </div>
             </div>
 
-            {/* Quick Links */}
+            {/* Nav Links */}
             <div>
-              <h4 className="font-bold text-white mb-4">Quick Links</h4>
+              <h4 className="font-bold text-white mb-4">Nav Links</h4>
               <ul className="space-y-2">
                 {navItems.map((item) => (
                   <li key={item.path}>
@@ -237,18 +231,55 @@ export function Layout() {
               </ul>
             </div>
 
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-bold text-white mb-4">Quick Links</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link to="/orders" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                    Order History
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/profile" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                    Profile
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/cart" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                    Cart
+                  </Link>
+                </li>
+                <li>
+                  {user ? (
+                    <button
+                      onClick={() => logout()}
+                      style={{ color: 'var(--color-footer-link)' }}
+                      className="hover:underline"
+                    >
+                      Log Out
+                    </button>
+                  ) : (
+                    <Link to="/login" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                      Log In
+                    </Link>
+                  )}
+                </li>
+              </ul>
+            </div>
+
             {/* Social Links */}
             <div>
               <h4 className="font-bold text-white mb-4">Follow Us</h4>
               <div className="space-y-2">
-                {socialLinks.map((social) => (
+                {socialLinks.map((social: any) => (
                   <a
-                    key={social.label}
+                    key={social.id}
                     href={social.url}
                     style={{ color: 'var(--color-footer-link)' }}
-                    className="block hover:underline"
+                    className="block hover:underline capitalize"
                   >
-                    {social.label}
+                    {social.platform}
                   </a>
                 ))}
               </div>
@@ -262,6 +293,19 @@ export function Layout() {
           </div>
         </div>
       </footer>
+
+      <Link
+        to="/#shop"
+        className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-transform hover:scale-105"
+        style={{ backgroundColor: 'var(--color-primary)', color: 'white', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25)' }}
+        aria-label="Back to Shop"
+      >
+        <ShoppingBag className="h-5 w-5" />
+        <span className="hidden sm:inline text-sm font-medium">Back to Shop</span>
+      </Link>
+
+      <ChatLauncher onClick={openChat} />
+      <ChatPanel isOpen={chatOpen} onClose={closeChat} />
     </div>
   );
 }

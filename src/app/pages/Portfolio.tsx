@@ -1,12 +1,16 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { PageHeader } from "../components/PageHeader";
 import { ExternalLink, Filter, Star } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 
+const HEADER_IMAGE = "https://www.sourcesplash.com/i/random?q=creative%20team%20studio&w=1600&h=400";
+
 export function Portfolio() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchParams] = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "All");
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
 
   const { data: projectsData, loading, error } = useAPI(`${API_BASE}/portfolio`);
@@ -18,7 +22,7 @@ export function Portfolio() {
   const filteredProjects = useMemo(() => {
     let filtered = selectedCategory === "All"
       ? portfolioProjects
-      : portfolioProjects.filter(p => p.category === selectedCategory);
+      : portfolioProjects.filter(p => p.categories?.includes(selectedCategory));
 
     if (showFeaturedOnly) {
       filtered = filtered.filter(p => p.featured);
@@ -29,32 +33,31 @@ export function Portfolio() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
-      {/* Header */}
-      <div style={{ backgroundColor: 'var(--color-secondary)' }} className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Our Portfolio</h1>
-          <p className="text-white opacity-90">Showcasing our best work and creative solutions</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Our Portfolio"
+        subtitle="Showcasing our best work and creative solutions"
+        image={HEADER_IMAGE}
+        tint="rgba(124, 58, 237, 0.82)"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5" style={{ color: 'var(--color-text-secondary)' }} />
-              <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Filter className="h-5 w-5 shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
+              <div className="category-scroll flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible min-w-0 -mx-1 px-1 py-1 md:mx-0 md:px-0 md:py-0">
                 {portfolioCategories.map((category) => (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className="px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                    className="shrink-0 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
                     style={{
-                      backgroundColor: selectedCategory === category 
-                        ? 'var(--color-secondary)' 
+                      backgroundColor: selectedCategory === category
+                        ? 'var(--color-secondary)'
                         : 'white',
-                      color: selectedCategory === category 
-                        ? 'white' 
+                      color: selectedCategory === category
+                        ? 'white'
                         : 'var(--color-text-primary)',
                       border: '1px solid var(--color-border)'
                     }}
@@ -143,7 +146,7 @@ export function Portfolio() {
                       color: 'var(--color-secondary)'
                     }}
                   >
-                    {project.category}
+                    {project.categories?.join(", ")}
                   </span>
                   <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                     {project.year}

@@ -1,8 +1,11 @@
 import { useState, useMemo } from "react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { PageHeader } from "../components/PageHeader";
 import { X, Calendar, User, Tag } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
+
+const HEADER_IMAGE = "https://www.sourcesplash.com/i/random?q=photography%20camera%20art&w=1600&h=400";
 
 export function Gallery() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -17,33 +20,32 @@ export function Gallery() {
   const filteredImages = useMemo(() => {
     return selectedCategory === "All"
       ? galleryImages
-      : galleryImages.filter(img => img.category === selectedCategory);
+      : galleryImages.filter(img => img.categories?.includes(selectedCategory));
   }, [selectedCategory, imagesData]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
-      {/* Header */}
-      <div style={{ backgroundColor: 'var(--color-accent)' }} className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Photo Gallery</h1>
-          <p className="text-white opacity-90">A curated collection of stunning photography</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Photo Gallery"
+        subtitle="A curated collection of stunning photography"
+        image={HEADER_IMAGE}
+        tint="rgba(245, 158, 11, 0.82)"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Category Filter */}
-        <div className="mb-8 flex flex-wrap gap-2 justify-center">
+        <div className="category-scroll mb-8 flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible md:justify-center -mx-1 px-1 py-1 md:mx-0 md:px-0 md:py-0">
           {galleryCategories.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className="px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+              className="shrink-0 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
               style={{
-                backgroundColor: selectedCategory === category 
-                  ? 'var(--color-accent)' 
+                backgroundColor: selectedCategory === category
+                  ? 'var(--color-accent)'
                   : 'white',
-                color: selectedCategory === category 
-                  ? 'white' 
+                color: selectedCategory === category
+                  ? 'white'
                   : 'var(--color-text-primary)',
                 border: '1px solid var(--color-border)'
               }}
@@ -159,7 +161,7 @@ export function Gallery() {
                   <div>
                     <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Category</p>
                     <p className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                      {selectedImage.category}
+                      {(selectedImage.categories ?? []).join(", ")}
                     </p>
                   </div>
                 </div>

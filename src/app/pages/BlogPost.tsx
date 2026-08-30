@@ -44,7 +44,7 @@ export function BlogPost() {
   }
 
   const relatedPosts = ((allPosts ?? []) as any[])
-    .filter(p => p.id !== post.id && p.category === post.category)
+    .filter(p => p.id !== post.id && p.categories?.some((c: string) => post.categories?.includes(c)))
     .slice(0, 3);
 
   return (
@@ -74,7 +74,7 @@ export function BlogPost() {
               color: 'var(--color-blog-category)'
             }}
           >
-            {post.category}
+            {post.categories?.join(", ")}
           </span>
           <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-blog-meta)' }}>
             <Calendar className="h-4 w-4" />
@@ -204,7 +204,7 @@ export function BlogPost() {
                   </div>
                   <div className="p-4">
                     <p className="text-xs mb-2" style={{ color: 'var(--color-text-muted)' }}>
-                      {relatedPost.category}
+                      {relatedPost.categories?.join(", ")}
                     </p>
                     <h3 className="font-semibold mb-2 line-clamp-2" style={{ color: 'var(--color-text-primary)' }}>
                       {relatedPost.title}

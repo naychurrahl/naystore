@@ -67,7 +67,7 @@ export function PortfolioDetail() {
             className="text-sm font-medium px-3 py-1 rounded"
             style={{ backgroundColor: 'var(--color-secondary-light)', color: 'var(--color-secondary)' }}
           >
-            {project.category}
+            {project.categories?.join(", ")}
           </span>
           <span style={{ color: 'var(--color-text-muted)' }}>{project.year}</span>
         </div>

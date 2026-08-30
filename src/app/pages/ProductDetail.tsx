@@ -2,11 +2,12 @@ import { useState, type FormEvent } from "react";
 import { useParams, Link } from "react-router";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { ArrowLeft, Minus, Plus, ShoppingCart, Star } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingCart, Star, MessageCircle } from "lucide-react";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useChat } from "../context/ChatContext";
 
 function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
   return (
@@ -28,6 +29,7 @@ export function ProductDetail() {
   const { id } = useParams();
   const { addItem } = useCart();
   const { user, authHeader } = useAuth();
+  const { openMerchantChat } = useChat();
   const [quantity, setQuantity] = useState(1);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -124,7 +126,7 @@ export function ProductDetail() {
           </div>
 
           <div>
-            <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>{product.category}</p>
+            <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>{product.categories?.join(", ")}</p>
             <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
               {product.name}
             </h1>
@@ -197,6 +199,17 @@ export function ProductDetail() {
                 Add to Cart
               </button>
             </div>
+
+            {product.merchantId && (
+              <button
+                onClick={() => openMerchantChat(product.merchantId, product.merchantName)}
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors w-full sm:w-auto"
+                style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+              >
+                <MessageCircle className="h-5 w-5" />
+                Chat with {product.merchantName}
+              </button>
+            )}
           </div>
         </div>
 
