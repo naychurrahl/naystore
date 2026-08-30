@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { PageHeader } from "../components/PageHeader";
 import { ExternalLink, Filter, Star } from "lucide-react";
@@ -9,7 +9,8 @@ import { API_BASE } from "../utils/apiBase.js";
 const HEADER_IMAGE = "https://www.sourcesplash.com/i/random?q=creative%20team%20studio&w=1600&h=400";
 
 export function Portfolio() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchParams] = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "All");
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
 
   const { data: projectsData, loading, error } = useAPI(`${API_BASE}/portfolio`);

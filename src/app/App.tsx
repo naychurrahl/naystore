@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router';
 import { router } from './routes';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ChatProvider } from './context/ChatContext';
 import { clearGuestId } from './utils/guestId.js';
 import { Toaster } from './components/ui/sonner';
 
@@ -32,9 +33,11 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <SessionGuard />
-        <RouterProvider router={router} />
-        <Toaster />
+        <ChatProvider>
+          <SessionGuard />
+          <RouterProvider router={router} />
+          <Toaster />
+        </ChatProvider>
       </CartProvider>
     </AuthProvider>
   );

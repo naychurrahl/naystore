@@ -1,28 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { ArrowRight, ChevronLeft, ChevronRight, ShoppingBag, Briefcase, Image as ImageIcon, BookOpen, Boxes } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, ShoppingBag, Boxes } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 
-// Shop/Portfolio/Gallery/Blog are fixed verticals, not part of the dynamic
-// content-types system - kept static here and combined with whatever
-// businesses the admin has added from the CMS.
+// Portfolio/Gallery/Blog are content types, not businesses - Shop is the one
+// fixed vertical that is a business, kept static here. The rest of "Our
+// Businesses" is just Portfolio's own categories: each one groups a set of
+// portfolio projects under a business name, so they double as businesses.
 const STATIC_BUSINESSES = [
   { icon: ShoppingBag, title: "E-commerce Store", description: "Browse our curated selection of premium products", link: "/#shop", color: 'var(--color-primary)' },
-  { icon: Briefcase, title: "Portfolio", description: "Explore our creative work and successful projects", link: "/portfolio", color: 'var(--color-secondary)' },
-  { icon: ImageIcon, title: "Gallery", description: "View our collection of stunning photography", link: "/gallery", color: 'var(--color-accent)' },
-  { icon: BookOpen, title: "Blog", description: "Read insights and stories from our team", link: "/blog", color: 'var(--color-success)' },
 ];
 
 export function BusinessesCarousel() {
-  const { data } = useAPI(`${API_BASE}/content-types`);
-  const contentTypes = (data ?? []) as any[];
+  const { data } = useAPI(`${API_BASE}/categories?type=portfolio`);
+  const portfolioCategories = (data ?? []) as any[];
 
-  const dynamicBusinesses = contentTypes.map((type) => ({
+  const dynamicBusinesses = portfolioCategories.map((category) => ({
     icon: Boxes,
-    title: type.label,
-    description: type.description || `Explore our ${type.label.toLowerCase()} listings`,
-    link: `/content/${type.key}`,
+    title: category.name,
+    description: `Explore our ${category.name} projects`,
+    link: `/portfolio?category=${encodeURIComponent(category.name)}`,
     color: 'var(--color-primary)',
   }));
 
