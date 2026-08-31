@@ -1,10 +1,50 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Navigate, Link } from "react-router";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { ChevronRight, Package } from "lucide-react";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+
+function GuestProfile() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-surface)' }}>
+      <div className="max-w-md w-full mx-4 p-8 rounded-xl text-center" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Your Account</h1>
+        <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
+          Log in or create an account to manage your profile and see your order history.
+        </p>
+        <div className="space-y-3">
+          <Link
+            to="/login"
+            className="block w-full px-6 py-3 rounded-lg font-medium transition-colors"
+            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+          >
+            Log In
+          </Link>
+          <Link
+            to="/register"
+            className="block w-full px-6 py-3 rounded-lg font-medium transition-colors border"
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+          >
+            Create Account
+          </Link>
+        </div>
+        <Link
+          to="/orders"
+          className="flex items-center justify-between p-4 rounded-lg mt-6 transition-colors"
+          style={{ border: '1px solid var(--color-border)' }}
+        >
+          <span className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            <Package className="h-4 w-4" style={{ color: 'var(--color-primary)' }} />
+            Track a Guest Order
+          </span>
+          <ChevronRight className="h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export function Profile() {
   const { user, token, authHeader, setUser, logout } = useAuth();
@@ -27,7 +67,7 @@ export function Profile() {
   }, [user]);
 
   if (!user || !token) {
-    return <Navigate to="/login" replace />;
+    return <GuestProfile />;
   }
 
   const handleDetailsSubmit = async (e: FormEvent) => {
