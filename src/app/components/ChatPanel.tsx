@@ -101,6 +101,13 @@ export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
     el.style.height = `${Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT)}px`;
   }, [text]);
 
+  // Each thread gets its own blank draft - a half-typed message to one
+  // merchant shouldn't show up when switching to another thread.
+  const threadKey = !activeThread ? null : activeThread.type === "support" ? "support" : `merchant:${activeThread.merchantId}`;
+  useEffect(() => {
+    setText("");
+  }, [threadKey]);
+
   const handleSend = async () => {
     const body = text.trim();
     if (!body || isSending) return;
@@ -164,9 +171,19 @@ export function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                     </p>
                   )}
                   {messages.map((message) => {
-                    const isMine = message.senderRole !== "customer";
+                    // The viewer here is always the customer/guest, so
+                    // "mine" is their own messages - the other party is
+                    // either the merchant or, if staff/admin have stepped
+                    // in on an unanswered merchant chat, support.
+                    const isMine = message.senderRole === "customer";
+                    const label = !isMine && (message.senderRole === "staff" || message.senderRole === "admin") ? "Support" : null;
                     return (
-                      <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                      <div key={message.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
+                        {label && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide mb-0.5 px-1" style={{ color: 'var(--color-text-muted)' }}>
+                            {label}
+                          </span>
+                        )}
                         <div
                           className="max-w-[80%] px-4 py-2 rounded-lg text-sm whitespace-pre-wrap"
                           style={
