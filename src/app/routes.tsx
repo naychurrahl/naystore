@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
 import { ProductDetail } from "./pages/ProductDetail";
+import { SellerPage } from "./pages/SellerPage";
 import { Portfolio } from "./pages/Portfolio";
 import { PortfolioDetail } from "./pages/PortfolioDetail";
 import { Gallery } from "./pages/Gallery";
@@ -13,6 +14,7 @@ import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Profile } from "./pages/Profile";
 import { OrderHistory } from "./pages/OrderHistory";
+import { OrderDetail } from "./pages/OrderDetail";
 import { NotFound } from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -22,6 +24,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       { path: "shop/:id", Component: ProductDetail },
+      { path: "sellers/:slug", Component: SellerPage },
       { path: "portfolio", Component: Portfolio },
       { path: "portfolio/:id", Component: PortfolioDetail },
       { path: "gallery", Component: Gallery },
@@ -33,6 +36,7 @@ export const router = createBrowserRouter([
       { path: "register", Component: Register },
       { path: "profile", Component: Profile },
       { path: "orders", Component: OrderHistory },
+      { path: "orders/:id", Component: OrderDetail },
       { path: "*", Component: NotFound }
     ]
   }

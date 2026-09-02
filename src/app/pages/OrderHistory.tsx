@@ -1,9 +1,10 @@
 import { useLocation, Link } from "react-router";
-import { CheckCircle2, XCircle, Package } from "lucide-react";
+import { CheckCircle2, XCircle, Package, ChevronRight } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { getGuestId } from "../utils/guestId.js";
 import { useAuth } from "../context/AuthContext";
+import { FulfillmentStatus } from "../components/FulfillmentStatus";
 
 function OrderCard({ order, highlight = false }: { order: any; highlight?: boolean }) {
   const paymentLine =
@@ -16,8 +17,10 @@ function OrderCard({ order, highlight = false }: { order: any; highlight?: boole
       : "Card payment pending";
 
   return (
-    <div
-      className="p-4 rounded-lg"
+    <Link
+      to={`/orders/${order.id}`}
+      state={{ order }}
+      className="block p-4 rounded-lg transition-colors"
       style={{ border: highlight ? '2px solid var(--color-primary)' : '1px solid var(--color-border)' }}
     >
       <div className="flex justify-between items-center mb-2">
@@ -43,7 +46,13 @@ function OrderCard({ order, highlight = false }: { order: any; highlight?: boole
         <span>Total</span>
         <span>${order.total}</span>
       </div>
-    </div>
+      {(order.fulfillments ?? []).map((f: any) => (
+        <FulfillmentStatus key={f.id} fulfillment={f} />
+      ))}
+      <div className="flex items-center justify-end gap-0.5 pt-2 mt-1 text-xs font-medium" style={{ color: 'var(--color-primary)' }}>
+        View details <ChevronRight className="h-3.5 w-3.5" />
+      </div>
+    </Link>
   );
 }
 

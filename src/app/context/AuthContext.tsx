@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
-import { api } from "../utils/api.js";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { api, setUnauthorizedHandler } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 
 export interface AuthUser {
@@ -73,6 +74,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setUser = (nextUser: AuthUser) => {
     persist({ user: nextUser, token });
   };
+
+  // A 401 on any request means the token is missing/invalid/expired (never a
+  // role mismatch - that's 403), so it's always safe to clear the session
+  // here. tokenRef (not the `token` closed over at mount) lets the handler
+  // see the current session without re-registering on every token change.
+  // Pages already fall back to a guest view when user/token are null (see
+  // e.g. Profile.tsx), so no forced redirect is needed here.
+  const tokenRef = useRef(token);
+  tokenRef.current = token;
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      if (tokenRef.current) {
+        persist({ user: null, token: null });
+        toast.error("Your session has expired. Please log in again.");
+      }
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 

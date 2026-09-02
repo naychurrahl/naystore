@@ -14,16 +14,13 @@ export function ShopSection() {
 
   const { data: productsData, loading, error } = useAPI(`${API_BASE}/products`);
   const { data: categoriesData } = useAPI(`${API_BASE}/categories?type=product`);
+  const { data: bestSellersData } = useAPI(`${API_BASE}/best-sellers?limit=8`);
 
   const products = (productsData ?? []) as ShopProduct[];
   const productCategories = ["All", ...((categoriesData ?? []) as any[]).map((c) => c.name)];
+  const bestSellers = (bestSellersData ?? []) as ShopProduct[];
 
   const newArrivals = useMemo(() => [...products].slice(-8).reverse(), [products]);
-
-  const bestSellers = useMemo(
-    () => [...products].sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0)).slice(0, 8),
-    [products],
-  );
 
   const filteredProducts = useMemo(() => {
     let filtered = selectedCategory === "All"
