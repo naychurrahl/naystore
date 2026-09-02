@@ -14,6 +14,7 @@ import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Profile } from "./pages/Profile";
 import { OrderHistory } from "./pages/OrderHistory";
+import { OrderDetail } from "./pages/OrderDetail";
 import { NotFound } from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
       { path: "register", Component: Register },
       { path: "profile", Component: Profile },
       { path: "orders", Component: OrderHistory },
+      { path: "orders/:id", Component: OrderDetail },
       { path: "*", Component: NotFound }
     ]
   }
