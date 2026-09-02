@@ -17,9 +17,11 @@ export interface ShopProduct {
   codEligible: boolean;
   avgRating?: number;
   reviewCount?: number;
+  merchantName?: string | null;
+  merchantSlug?: string | null;
 }
 
-export function ProductCard({ product }: { product: ShopProduct }) {
+export function ProductCard({ product, showMerchant = true }: { product: ShopProduct; showMerchant?: boolean }) {
   const { addItem } = useCart();
 
   return (
@@ -78,7 +80,7 @@ export function ProductCard({ product }: { product: ShopProduct }) {
             {product.name}
           </h3>
         </Link>
-        <div className="flex items-center gap-1 mb-2">
+        <div className="flex items-center gap-1 mb-2 flex-wrap">
           {product.reviewCount ? (
             <>
               <Star className="h-3.5 w-3.5" fill="var(--color-accent)" style={{ color: 'var(--color-accent)' }} />
@@ -90,6 +92,18 @@ export function ProductCard({ product }: { product: ShopProduct }) {
             <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
               No rating
             </span>
+          )}
+          {showMerchant && product.merchantSlug && (
+            <>
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>&middot;</span>
+              <Link
+                to={`/sellers/${product.merchantSlug}`}
+                className="text-xs hover:underline"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                by {product.merchantName}
+              </Link>
+            </>
           )}
         </div>
         <p className="text-sm mb-3 line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useParams, Link } from "react-router";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { ArrowLeft, Minus, Plus, ShoppingCart, Star, MessageCircle } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingCart, Star, MessageCircle, Store } from "lucide-react";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useCart } from "../context/CartContext";
@@ -199,6 +199,17 @@ export function ProductDetail() {
                 Add to Cart
               </button>
             </div>
+
+            {product.merchantSlug && (
+              <Link
+                to={`/sellers/${product.merchantSlug}`}
+                className="inline-flex items-center gap-2 mb-3 transition-colors"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                <Store className="h-4 w-4" />
+                Sold by {product.merchantName}
+              </Link>
+            )}
 
             {product.merchantId && (
               <button

@@ -37,6 +37,16 @@ export class APIError extends Error {
   }
 }
 
+// Module-level so AuthContext can react to a 401 from anywhere a request is
+// made, without every call site having to check for it individually - a
+// 401 means "not authenticated at all" (see backend's requireAuth), which
+// only happens with a missing/invalid/expired token, never a role mismatch
+// (that's 403). Registered by AuthContext on mount.
+let unauthorizedHandler = null;
+export function setUnauthorizedHandler(fn) {
+  unauthorizedHandler = fn;
+}
+
 /**
  * Main API fetch function
  * @param {string} url - The API endpoint URL
@@ -101,6 +111,10 @@ export async function apiFetch(url, options = {}) {
         errorMessage = errorJson.message || errorJson.error || response.statusText;
       } catch {
         errorMessage = errorText || response.statusText;
+      }
+
+      if (response.status === 401 && unauthorizedHandler) {
+        unauthorizedHandler();
       }
 
       throw new APIError(
