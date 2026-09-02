@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { ArrowLeft, Minus, Plus, ShoppingCart, Star, MessageCircle, Store } from "lucide-react";
@@ -7,6 +7,7 @@ import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
 
 function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
@@ -29,6 +30,8 @@ export function ProductDetail() {
   const { id } = useParams();
   const { addItem } = useCart();
   const { user, authHeader } = useAuth();
+  const { openLogin } = useAuthModal();
+  const location = useLocation();
   const { openMerchantChat } = useChat();
   const [quantity, setQuantity] = useState(1);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
@@ -270,7 +273,7 @@ export function ProductDetail() {
             </form>
           ) : (
             <p className="mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-              <Link to="/login" style={{ color: 'var(--color-primary)' }}>Log in</Link> to leave a review.
+              <button onClick={() => openLogin(location.pathname)} style={{ color: 'var(--color-primary)' }}>Log in</button> to leave a review.
             </p>
           )}
 

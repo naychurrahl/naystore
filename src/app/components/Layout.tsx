@@ -1,10 +1,11 @@
 import { Outlet, Link, useLocation } from "react-router";
-import { Menu, X, ShoppingCart, ShoppingBag, User, LogIn } from "lucide-react";
+import { Menu, X, ShoppingCart, ShoppingBag, User, LogIn, LayoutDashboard, Store } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
 import { ChatLauncher } from "./ChatLauncher";
 import { ChatPanel } from "./ChatPanel";
@@ -19,6 +20,7 @@ export function Layout() {
   const { data: navigationMenu } = useAPI(`${API_BASE}/nav`);
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
+  const { openLogin } = useAuthModal();
 
   useEffect(() => {
     if (location.hash) {
@@ -140,20 +142,55 @@ export function Layout() {
                 )}
               </Link>
 
-              <Link
-                to={user ? "/profile" : "/login"}
-                className="p-2 rounded-md transition-colors"
-                style={{ color: 'var(--color-nav-text)' }}
-                aria-label={user ? "Profile" : "Log In"}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-nav-hover)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                {user ? <User className="h-6 w-6" /> : <LogIn className="h-6 w-6" />}
-              </Link>
+              {user?.role === "merchant" && (
+                <Link
+                  to="/merchant"
+                  className="p-2 rounded-md transition-colors"
+                  style={{ color: 'var(--color-nav-text)' }}
+                  aria-label="Merchant Dashboard"
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-nav-hover)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                >
+                  <LayoutDashboard className="h-6 w-6" />
+                </Link>
+              )}
+
+              {user?.role === "customer" && (
+                <Link
+                  to="/become-merchant"
+                  className="p-2 rounded-md transition-colors"
+                  style={{ color: 'var(--color-nav-text)' }}
+                  aria-label="Become a Merchant"
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-nav-hover)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                >
+                  <Store className="h-6 w-6" />
+                </Link>
+              )}
+
+              {user ? (
+                <Link
+                  to="/profile"
+                  className="p-2 rounded-md transition-colors"
+                  style={{ color: 'var(--color-nav-text)' }}
+                  aria-label="Profile"
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-nav-hover)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                >
+                  <User className="h-6 w-6" />
+                </Link>
+              ) : (
+                <button
+                  onClick={() => openLogin()}
+                  className="p-2 rounded-md transition-colors"
+                  style={{ color: 'var(--color-nav-text)' }}
+                  aria-label="Log In"
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-nav-hover)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                >
+                  <LogIn className="h-6 w-6" />
+                </button>
+              )}
 
               <button
                 className="md:hidden p-2 rounded-md"
@@ -182,6 +219,26 @@ export function Layout() {
                   {item.name}
                 </Link>
               ))}
+              {user?.role === "merchant" && (
+                <Link
+                  to="/merchant"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
+                  style={{ color: 'var(--color-nav-text)' }}
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+              )}
+              {user?.role === "customer" && (
+                <Link
+                  to="/become-merchant"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
+                  style={{ color: 'var(--color-nav-text)' }}
+                >
+                  <Store className="h-4 w-4" />
+                  Become a Merchant
+                </Link>
+              )}
             </div>
           )}
         </div>
@@ -250,6 +307,20 @@ export function Layout() {
                     Cart
                   </Link>
                 </li>
+                {user?.role === "merchant" && (
+                  <li>
+                    <Link to="/merchant" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                      Merchant Dashboard
+                    </Link>
+                  </li>
+                )}
+                {user?.role === "customer" && (
+                  <li>
+                    <Link to="/become-merchant" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                      Become a Merchant
+                    </Link>
+                  </li>
+                )}
                 <li>
                   {user ? (
                     <button
@@ -260,9 +331,13 @@ export function Layout() {
                       Log Out
                     </button>
                   ) : (
-                    <Link to="/login" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                    <button
+                      onClick={() => openLogin()}
+                      style={{ color: 'var(--color-footer-link)' }}
+                      className="hover:underline"
+                    >
                       Log In
-                    </Link>
+                    </button>
                   )}
                 </li>
               </ul>

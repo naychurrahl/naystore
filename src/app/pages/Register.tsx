@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import { useAuthModal } from "../context/AuthModalContext";
 
 export function Register() {
   const { register } = useAuth();
+  const { openLogin } = useAuthModal();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", username: "", email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
@@ -93,9 +95,9 @@ export function Register() {
 
         <p className="mt-6 text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
           Already have an account?{" "}
-          <Link to="/login" style={{ color: 'var(--color-primary)' }}>
+          <button onClick={() => openLogin()} style={{ color: 'var(--color-primary)' }}>
             Log in
-          </Link>
+          </button>
         </p>
       </div>
     </div>

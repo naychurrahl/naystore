@@ -4,8 +4,10 @@ import { router } from './routes';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ChatProvider } from './context/ChatContext';
+import { AuthModalProvider } from './context/AuthModalContext';
 import { clearGuestId } from './utils/guestId.js';
 import { Toaster } from './components/ui/sonner';
+import { LoginModal } from './components/LoginModal';
 
 // Wipes cart + guest identity the instant a logged-in session ends, so nothing
 // carries over to whoever uses the browser next. Only fires on an actual
@@ -32,13 +34,16 @@ function SessionGuard() {
 export default function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <ChatProvider>
-          <SessionGuard />
-          <RouterProvider router={router} />
-          <Toaster />
-        </ChatProvider>
-      </CartProvider>
+      <AuthModalProvider>
+        <CartProvider>
+          <ChatProvider>
+            <SessionGuard />
+            <RouterProvider router={router} />
+            <Toaster />
+            <LoginModal />
+          </ChatProvider>
+        </CartProvider>
+      </AuthModalProvider>
     </AuthProvider>
   );
 }

@@ -5,8 +5,10 @@ import { ChevronRight, Package } from "lucide-react";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { useAuthModal } from "../context/AuthModalContext";
 
 function GuestProfile() {
+  const { openLogin } = useAuthModal();
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-surface)' }}>
       <div className="max-w-md w-full mx-4 p-8 rounded-xl text-center" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
@@ -15,13 +17,13 @@ function GuestProfile() {
           Log in or create an account to manage your profile and see your order history.
         </p>
         <div className="space-y-3">
-          <Link
-            to="/login"
+          <button
+            onClick={() => openLogin("/profile")}
             className="block w-full px-6 py-3 rounded-lg font-medium transition-colors"
             style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
           >
             Log In
-          </Link>
+          </button>
           <Link
             to="/register"
             className="block w-full px-6 py-3 rounded-lg font-medium transition-colors border"

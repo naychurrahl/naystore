@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { ProductCard } from "../components/ProductCard";
@@ -7,6 +7,7 @@ import { ArrowLeft, Star, Package } from "lucide-react";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { useAuthModal } from "../context/AuthModalContext";
 import { NotFound } from "./NotFound";
 
 function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
@@ -28,6 +29,8 @@ function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
 export function SellerPage() {
   const { slug } = useParams();
   const { user, authHeader } = useAuth();
+  const { openLogin } = useAuthModal();
+  const location = useLocation();
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
@@ -188,7 +191,7 @@ export function SellerPage() {
             </form>
           ) : (
             <p className="mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-              <Link to="/login" style={{ color: 'var(--color-primary)' }}>Log in</Link> to leave a review.
+              <button onClick={() => openLogin(location.pathname)} style={{ color: 'var(--color-primary)' }}>Log in</button> to leave a review.
             </p>
           )}
 

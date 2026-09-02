@@ -4,6 +4,7 @@ import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { getGuestId } from "../utils/guestId.js";
 import { useAuth } from "../context/AuthContext";
+import { useAuthModal } from "../context/AuthModalContext";
 import { FulfillmentStatus } from "../components/FulfillmentStatus";
 
 function OrderCard({ order, highlight = false }: { order: any; highlight?: boolean }) {
@@ -58,6 +59,7 @@ function OrderCard({ order, highlight = false }: { order: any; highlight?: boole
 
 export function OrderHistory() {
   const { token, authHeader, user } = useAuth();
+  const { openLogin } = useAuthModal();
   const location = useLocation();
   const state = (location.state ?? {}) as { placedOrders?: any[]; paymentFailed?: boolean };
   const justPlaced = state.placedOrders ?? [];
@@ -127,7 +129,7 @@ export function OrderHistory() {
         {!token && (
           <p className="text-sm text-center mt-4" style={{ color: 'var(--color-text-secondary)' }}>
             Orders shown above are matched to this browser.{" "}
-            <Link to="/login" style={{ color: 'var(--color-primary)' }}>Log in</Link> to keep a permanent history tied to your account.
+            <button onClick={() => openLogin("/orders")} style={{ color: 'var(--color-primary)' }}>Log in</button> to keep a permanent history tied to your account.
           </p>
         )}
       </div>
