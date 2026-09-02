@@ -8,7 +8,8 @@ import { FULFILLMENT_LABELS } from "../components/FulfillmentStatus";
 import { NotFound } from "./NotFound";
 
 function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
-  const location = [fulfillment.state, fulfillment.country].filter(Boolean).join(", ");
+  const location = [fulfillment.city, fulfillment.state, fulfillment.country].filter(Boolean).join(", ");
+  const isDelivered = fulfillment.status === "delivered";
   return (
     <div className="p-4 rounded-lg" style={{ border: '1px solid var(--color-border)' }}>
       <div className="flex justify-between items-center mb-2">
@@ -24,7 +25,7 @@ function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
         </span>
       </div>
       <div className="text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
-        {location && <p>Location: {location}</p>}
+        {location && !isDelivered && <p>Location: {location}</p>}
         {fulfillment.contactPhone && <p>Contact phone: {fulfillment.contactPhone}</p>}
         {fulfillment.contactEmail && <p>Contact email: {fulfillment.contactEmail}</p>}
         {fulfillment.meta?.trackingId && <p>Tracking ID: {fulfillment.meta.trackingId}</p>}

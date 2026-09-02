@@ -7,6 +7,7 @@ import { API_BASE } from "../utils/apiBase.js";
 import { getGuestId } from "../utils/guestId.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { FulfillmentStatus } from "../components/FulfillmentStatus";
 
 type PaymentChoice = "cod" | "card" | "split";
 
@@ -115,6 +116,9 @@ export function Checkout() {
                 <span>Total</span>
                 <span>${order.total}</span>
               </div>
+              {(order.fulfillments ?? []).map((f: any) => (
+                <FulfillmentStatus key={f.id} fulfillment={f} />
+              ))}
             </div>
           ))}
 
