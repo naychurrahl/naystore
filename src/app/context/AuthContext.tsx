@@ -13,14 +13,24 @@ export interface AuthUser {
   role: string;
 }
 
+export interface RegisterInput {
+  usertype: "customer" | "merchant";
+  name: string;
+  email: string;
+  password: string;
+  username?: string;
+  commissionType?: "percentage" | "flat";
+  commissionRate?: number;
+  fulfillmentMethod?: "fbu" | "fbm";
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
   authHeader: Record<string, string>;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, username?: string) => Promise<void>;
-  registerMerchant: (name: string, email: string, password: string) => Promise<void>;
-  becomeMerchant: () => Promise<void>;
+  register: (data: RegisterInput) => Promise<void>;
+  becomeMerchant: (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm") => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
 }
@@ -57,20 +67,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     persist({ user: result.user, token: result.token });
   };
 
-  const register = async (name: string, email: string, password: string, username?: string) => {
-    const result = await api.post(`${API_BASE}/register`, { name, email, password, username });
-    persist({ user: result.user, token: result.token });
-  };
-
-  const registerMerchant = async (name: string, email: string, password: string) => {
-    const result = await api.post(`${API_BASE}/register-merchant`, { name, email, password });
+  const register = async (data: RegisterInput) => {
+    const result = await api.post(`${API_BASE}/register`, data);
     persist({ user: result.user, token: result.token });
   };
 
   // Upgrades the current customer's own account to a merchant in place -
   // same login/email going forward, no new account.
-  const becomeMerchant = async () => {
-    const result = await api.put(`${API_BASE}/become-merchant`, {}, { headers: authHeader });
+  const becomeMerchant = async (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm") => {
+    const result = await api.put(`${API_BASE}/become-merchant`, { commissionType, commissionRate, fulfillmentMethod }, { headers: authHeader });
     persist({ user: result.user, token: result.token });
   };
 
@@ -111,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
   return (
-    <AuthContext.Provider value={{ user, token, authHeader, login, register, registerMerchant, becomeMerchant, logout, setUser }}>
+    <AuthContext.Provider value={{ user, token, authHeader, login, register, becomeMerchant, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );

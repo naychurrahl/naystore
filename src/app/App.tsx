@@ -7,7 +7,7 @@ import { ChatProvider } from './context/ChatContext';
 import { AuthModalProvider } from './context/AuthModalContext';
 import { clearGuestId } from './utils/guestId.js';
 import { Toaster } from './components/ui/sonner';
-import { LoginModal } from './components/LoginModal';
+import { AuthModal } from './components/AuthModal';
 
 // Wipes cart + guest identity the instant a logged-in session ends, so nothing
 // carries over to whoever uses the browser next. Only fires on an actual
@@ -40,7 +40,7 @@ export default function App() {
             <SessionGuard />
             <RouterProvider router={router} />
             <Toaster />
-            <LoginModal />
+            <AuthModal />
           </ChatProvider>
         </CartProvider>
       </AuthModalProvider>
