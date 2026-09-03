@@ -19,7 +19,6 @@ import { OrderHistory } from "./pages/OrderHistory";
 import { OrderDetail } from "./pages/OrderDetail";
 import { NotFound } from "./pages/NotFound";
 import { BecomeMerchant } from "./pages/BecomeMerchant";
-import { MerchantSignup } from "./pages/MerchantSignup";
 import { MerchantDashboard } from "./pages/MerchantDashboard";
 import { MerchantProductsPage } from "./pages/MerchantProductsPage";
 import { MerchantOrdersPage } from "./pages/MerchantOrdersPage";
@@ -53,7 +52,6 @@ export const router = createBrowserRouter([
       { path: "*", Component: NotFound }
     ]
   },
-  { path: "/merchant/signup", Component: MerchantSignup },
   {
     path: "/merchant",
     Component: MerchantProtectedRoute,

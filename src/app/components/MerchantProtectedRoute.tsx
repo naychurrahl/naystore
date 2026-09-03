@@ -9,7 +9,10 @@ export function MerchantProtectedRoute() {
   const location = useLocation();
 
   useEffect(() => {
-    if (!user) openLogin(location.pathname);
+    // Opens Login (not Register) since a /merchant visit more often means a
+    // returning merchant who's just signed out - but its "Create one" link
+    // carries the merchant default through if that guess is wrong.
+    if (!user) openLogin(location.pathname, "merchant");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 

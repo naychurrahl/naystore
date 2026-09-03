@@ -9,11 +9,14 @@ export function BecomeMerchant() {
   const { user, becomeMerchant } = useAuth();
   const { openLogin } = useAuthModal();
   const navigate = useNavigate();
+  const [commissionType, setCommissionType] = useState<"percentage" | "flat">("percentage");
+  const [commissionRate, setCommissionRate] = useState("");
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<"fbu" | "fbm">("fbm");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!user) openLogin("/become-merchant");
+    if (!user) openLogin("/become-merchant", "merchant");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -26,10 +29,16 @@ export function BecomeMerchant() {
   }
 
   const handleUpgrade = async () => {
+    const rate = Number(commissionRate);
+    if (!commissionRate || Number.isNaN(rate) || rate < 0) {
+      setError("Enter a valid, non-negative commission rate");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     try {
-      await becomeMerchant();
+      await becomeMerchant(commissionType, rate, fulfillmentMethod);
       navigate("/merchant", { replace: true });
     } catch (err: any) {
       setError(err.message || "Could not upgrade your account");
@@ -53,9 +62,56 @@ export function BecomeMerchant() {
           you'll keep the same login and just gain a Dashboard for managing products, orders, and payouts.
         </p>
 
-        {error && <p className="text-sm mb-4" style={{ color: 'var(--color-error)' }}>{error}</p>}
+        <div className="space-y-4 text-left">
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Commission</label>
+            <div className="flex gap-2">
+              <select
+                value={commissionType}
+                onChange={(e) => setCommissionType(e.target.value as "percentage" | "flat")}
+                className="px-3 py-3 rounded-lg border"
+                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              >
+                <option value="percentage">Percentage</option>
+                <option value="flat">Flat</option>
+              </select>
+              <input
+                type="number"
+                step="any"
+                min="0"
+                required
+                placeholder={commissionType === "flat" ? "e.g. 5.00" : "e.g. 15"}
+                value={commissionRate}
+                onChange={(e) => setCommissionRate(e.target.value)}
+                className="flex-1 px-4 py-3 rounded-lg border"
+                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              />
+            </div>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+              What we take per sale - admins can revise this later.
+            </p>
+          </div>
 
-        <Button onClick={handleUpgrade} disabled={submitting} className="w-full">
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Logistics</label>
+            <select
+              value={fulfillmentMethod}
+              onChange={(e) => setFulfillmentMethod(e.target.value as "fbu" | "fbm")}
+              className="w-full px-4 py-3 rounded-lg border"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            >
+              <option value="fbm">Fulfilled by Merchant (FBM)</option>
+              <option value="fbu">Fulfilled by Us (FBU)</option>
+            </select>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+              Your default - can be overridden per product.
+            </p>
+          </div>
+        </div>
+
+        {error && <p className="text-sm mt-4" style={{ color: 'var(--color-error)' }}>{error}</p>}
+
+        <Button onClick={handleUpgrade} disabled={submitting} className="w-full mt-6">
           {submitting ? "Upgrading..." : "Become a Merchant"}
         </Button>
 
