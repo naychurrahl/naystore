@@ -18,6 +18,9 @@ export interface FieldConfig {
 export interface ColumnConfig {
   key: string;
   label: string;
+  // Renders a small thumbnail instead of the raw value - the column still
+  // needs a real key (the field holding the image path/URL).
+  image?: boolean;
 }
 
 export interface ResourceConfig {
@@ -51,6 +54,7 @@ export const merchantProductsConfig: ResourceConfig = {
   endpoint: "/products",
   listEndpoint: "/my-products",
   columns: [
+    { key: "image", label: "", image: true },
     { key: "name", label: "Name" },
     { key: "categories", label: "Categories" },
     { key: "price", label: "Price" },

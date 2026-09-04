@@ -47,23 +47,29 @@ export function MyShopPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>My Shop</h1>
+      <h1 className="text-2xl font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>My Shop</h1>
       <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
         Your public shop page - what buyers see when they click "Sold by" on one of your products.
       </p>
 
-      <div className="p-6 rounded-lg" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-product-card)' }}>
+      <div className="p-6 rounded-xl" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-product-card)' }}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label className="mb-1.5 block">Shop URL</Label>
-            <Input
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
-              placeholder="your-shop-name"
-            />
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-              /sellers/{form.slug || "your-shop-name"}
-            </p>
+            <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
+              <span
+                className="px-3 flex items-center text-sm shrink-0"
+                style={{ backgroundColor: 'var(--color-surface-alt)', color: 'var(--color-text-muted)' }}
+              >
+                /sellers/
+              </span>
+              <Input
+                value={form.slug}
+                onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                placeholder="your-shop-name"
+                className="border-0 rounded-none focus-visible:ring-0"
+              />
+            </div>
             {slugError && <p className="text-sm mt-1" style={{ color: 'var(--color-error)' }}>{slugError}</p>}
           </div>
 
@@ -96,14 +102,14 @@ export function MyShopPage() {
             />
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 pt-1">
             <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Shop"}</Button>
             {form.slug && (
               <a
                 href={`/sellers/${form.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm"
+                className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
                 style={{ color: 'var(--color-primary)' }}
               >
                 <ExternalLink className="h-4 w-4" />

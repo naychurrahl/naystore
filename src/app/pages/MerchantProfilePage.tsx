@@ -50,11 +50,11 @@ export function MerchantProfilePage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>My Profile</h1>
+      <h1 className="text-2xl font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>My Profile</h1>
       <p className="text-sm mb-6 capitalize" style={{ color: 'var(--color-text-muted)' }}>{user?.role}</p>
 
-      <div className="p-6 rounded-lg mb-6" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-product-card)' }}>
-        <h2 className="font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>Account Details</h2>
+      <div className="p-6 rounded-xl mb-6" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-product-card)' }}>
+        <h2 className="font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Account Details</h2>
         <form onSubmit={handleDetailsSubmit} className="space-y-4">
           <div>
             <Label className="mb-1.5 block">Name</Label>
@@ -68,8 +68,8 @@ export function MerchantProfilePage() {
         </form>
       </div>
 
-      <div className="p-6 rounded-lg" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-product-card)' }}>
-        <h2 className="font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>Change Password</h2>
+      <div className="p-6 rounded-xl" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-product-card)' }}>
+        <h2 className="font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Change Password</h2>
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
           <div>
             <Label className="mb-1.5 block">Current Password</Label>

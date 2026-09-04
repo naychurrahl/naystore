@@ -61,10 +61,10 @@ export function MerchantSupportPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>Contact Support</h1>
+      <h1 className="text-2xl font-semibold mb-6" style={{ color: 'var(--color-text-primary)' }}>Contact Support</h1>
 
       <div
-        className="flex flex-col rounded-lg overflow-hidden"
+        className="flex flex-col rounded-xl overflow-hidden"
         style={{ border: '1px solid var(--color-border)', height: '70vh', backgroundColor: 'var(--color-product-card)' }}
       >
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
@@ -78,10 +78,10 @@ export function MerchantSupportPage() {
             return (
               <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                 <div
-                  className="max-w-[70%] px-4 py-2 rounded-lg text-sm whitespace-pre-wrap"
+                  className="max-w-[70%] px-4 py-2 rounded-2xl text-sm whitespace-pre-wrap"
                   style={
                     isMine
-                      ? { backgroundColor: 'var(--color-secondary)', color: 'white' }
+                      ? { backgroundColor: 'var(--color-primary)', color: 'white' }
                       : { backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }
                   }
                 >
@@ -115,8 +115,8 @@ export function MerchantSupportPage() {
           <button
             onClick={handleSend}
             disabled={isSending || !text.trim()}
-            className="px-4 py-2 rounded-lg text-sm text-white"
-            style={{ backgroundColor: isSending || !text.trim() ? 'var(--color-border)' : 'var(--color-secondary)' }}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+            style={{ backgroundColor: isSending || !text.trim() ? 'var(--color-border)' : 'var(--color-primary)' }}
           >
             Send
           </button>
