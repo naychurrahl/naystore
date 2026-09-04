@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
@@ -192,11 +192,15 @@ export function ResourceForm({
   initialData,
   onSuccess,
   onCancel,
+  extraSection,
 }: {
   config: ResourceConfig;
   initialData: Record<string, any> | null;
   onSuccess: () => void;
   onCancel: () => void;
+  // An extra labeled section rendered after the config-driven fields, e.g.
+  // commission negotiation on Products - see ResourceTable's formExtra prop.
+  extraSection?: { label: string; content: ReactNode } | null;
 }) {
   const { authHeader } = useAuth();
   const isEdit = !!initialData;
@@ -271,6 +275,18 @@ export function ResourceForm({
           </div>
         </div>
       ))}
+
+      {extraSection && (
+        <div>
+          <p
+            className="text-[11px] font-semibold uppercase tracking-wider mb-3 pb-2"
+            style={{ color: 'var(--color-text-muted)', borderBottom: '1px solid var(--color-border)' }}
+          >
+            {extraSection.label}
+          </p>
+          {extraSection.content}
+        </div>
+      )}
 
       {error && <p className="text-sm" style={{ color: 'var(--color-error)' }}>{error}</p>}
 

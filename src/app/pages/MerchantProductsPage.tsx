@@ -6,7 +6,10 @@ export function MerchantProductsPage() {
   return (
     <ResourceTable
       config={merchantProductsConfig}
-      rowActions={(row, refetch) => <CommissionNegotiation product={row} onUpdated={refetch} />}
+      formExtra={(row, refetch) => ({
+        label: "Commission",
+        content: <CommissionNegotiation product={row} onUpdated={refetch} />,
+      })}
     />
   );
 }

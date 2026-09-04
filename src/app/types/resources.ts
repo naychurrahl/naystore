@@ -26,6 +26,12 @@ export interface ColumnConfig {
   // Renders a small thumbnail instead of the raw value - the column still
   // needs a real key (the field holding the image path/URL).
   image?: boolean;
+  // Renders a red/amber/green stock-level pill computed from the row's
+  // inStock/stockQuantity fields, instead of the raw value.
+  stock?: boolean;
+  // Renders the boolean value as a click-to-toggle pill that PUTs the
+  // flipped value straight back via config.endpoint, instead of a static badge.
+  toggle?: boolean;
 }
 
 export interface ResourceConfig {
@@ -58,15 +64,14 @@ export const merchantProductsConfig: ResourceConfig = {
   label: "Products",
   endpoint: "/products",
   listEndpoint: "/my-products",
+  // Kept deliberately narrow - just enough to scan and act on at a glance.
+  // Categories, commission, and fulfillment override are edit-only details,
+  // reachable through the row's own form.
   columns: [
-    { key: "image", label: "", image: true },
     { key: "name", label: "Name" },
-    { key: "categories", label: "Categories" },
+    { key: "inStock", label: "Stock", stock: true },
     { key: "price", label: "Price" },
-    { key: "inStock", label: "In Stock" },
-    { key: "visible", label: "Visible" },
-    { key: "commissionSummary", label: "Commission" },
-    { key: "fulfillmentMethod", label: "Fulfillment" },
+    { key: "visible", label: "Visible", toggle: true },
   ],
   fields: [
     { key: "name", label: "Name", type: "text", required: true, section: "Basics" },

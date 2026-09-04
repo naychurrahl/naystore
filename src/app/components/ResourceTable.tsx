@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Plus, Trash2, Inbox } from "lucide-react";
+import { Plus, Trash2, Inbox, Lock } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
@@ -21,6 +21,10 @@ import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 import type { ColumnConfig, ResourceConfig } from "../types/resources";
 
+// Mirrors the backend's LOW_STOCK_THRESHOLD (Functions.php) so the pill
+// agrees with the dashboard's own low-stock count.
+const LOW_STOCK_THRESHOLD = 5;
+
 function CellValue({ column, value }: { column: ColumnConfig; value: any }) {
   if (column.image) {
     return (
@@ -41,15 +45,80 @@ function CellValue({ column, value }: { column: ColumnConfig; value: any }) {
   return <>{String(value)}</>;
 }
 
+function StockPill({ row }: { row: Record<string, any> }) {
+  const qty = row.stockQuantity;
+  let color = 'var(--color-success)';
+  let bg = 'var(--color-success-light)';
+  let label = 'In Stock';
+
+  if (!row.inStock) {
+    color = 'var(--color-error)'; bg = 'var(--color-error-light)'; label = 'Out of Stock';
+  } else if (qty !== null && qty !== undefined && qty <= LOW_STOCK_THRESHOLD) {
+    color = 'var(--color-accent)'; bg = 'var(--color-accent-light)'; label = `Low Stock (${qty})`;
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium" style={{ backgroundColor: bg, color }}>
+      <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+      {label}
+    </span>
+  );
+}
+
+function VisibleToggle({ row, config, refetch }: { row: Record<string, any>; config: ResourceConfig; refetch: () => void }) {
+  const { authHeader } = useAuth();
+  const [pending, setPending] = useState(false);
+  const visible = !!row.visible;
+  // Staff/admin can hide a listing for moderation; once locked, the merchant
+  // can't flip it back on themselves - see updateProduct in Functions.php.
+  const locked = !!row.visibilityLocked && !visible;
+
+  const handleToggle = async () => {
+    if (pending || locked) return;
+    setPending(true);
+    try {
+      await api.put(`${API_BASE}${config.endpoint}`, { id: row.id, visible: !visible }, { headers: authHeader });
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Could not update visibility");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); handleToggle(); }}
+      disabled={pending || locked}
+      title={locked ? "Hidden by staff for moderation - contact support to have this reviewed" : "Click to toggle"}
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium disabled:opacity-70"
+      style={{
+        backgroundColor: visible ? 'var(--color-success-light)' : 'var(--color-surface-alt)',
+        color: visible ? 'var(--color-success)' : 'var(--color-text-muted)',
+        cursor: locked ? 'not-allowed' : 'pointer',
+      }}
+    >
+      {locked ? (
+        <Lock className="h-3 w-3" />
+      ) : (
+        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: visible ? 'var(--color-success)' : 'var(--color-text-muted)' }} />
+      )}
+      {locked ? "Locked" : visible ? "Visible" : "Hidden"}
+    </button>
+  );
+}
+
 export function ResourceTable({
   config,
-  rowActions,
+  formExtra,
 }: {
   config: ResourceConfig;
-  // Extra per-row control(s) rendered in the Actions column, e.g. the
-  // Commission negotiation button on Products - kept as a prop rather than
+  // Extra content rendered as its own section inside the edit form, e.g. the
+  // Commission negotiation panel on Products - kept as a prop rather than
   // part of ResourceConfig since it needs JSX (config files stay plain data).
-  rowActions?: (row: Record<string, any>, refetch: () => void) => ReactNode;
+  // Only called for an existing row (create has no id to negotiate against).
+  formExtra?: (row: Record<string, any>, refetch: () => void) => { label: string; content: ReactNode } | null;
 }) {
   const { user, authHeader } = useAuth();
   const { data, loading, error, refetch } = useAPI(`${API_BASE}${config.listEndpoint ?? config.endpoint}`, { headers: authHeader });
@@ -57,7 +126,6 @@ export function ResourceTable({
   const canCreate = !config.hideCreate && (!config.adminOnlyCreate || user?.role === "admin");
   const canDeleteBase = !config.hideDelete && (!config.adminOnlyDelete || user?.role === "admin");
   const rowCanDelete = (row: Record<string, any>) => canDeleteBase && (!config.canDeleteRow || config.canDeleteRow(row, user));
-  const hasActionsColumn = canDeleteBase || !!rowActions;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<Record<string, any> | null>(null);
@@ -112,7 +180,7 @@ export function ResourceTable({
                       {col.label}
                     </TableHead>
                   ))}
-                  {hasActionsColumn && (
+                  {canDeleteBase && (
                     <TableHead className="text-right text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                       Actions
                     </TableHead>
@@ -124,14 +192,21 @@ export function ResourceTable({
                   <TableRow key={row.id} onClick={() => openEdit(row)} className="cursor-pointer">
                     {config.columns.map((col) => (
                       <TableCell key={col.key} style={{ color: 'var(--color-text-primary)' }}>
-                        <CellValue column={col} value={row[col.key]} />
+                        {col.toggle ? (
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <VisibleToggle row={row} config={config} refetch={refetch} />
+                          </div>
+                        ) : col.stock ? (
+                          <StockPill row={row} />
+                        ) : (
+                          <CellValue column={col} value={row[col.key]} />
+                        )}
                       </TableCell>
                     ))}
-                    {hasActionsColumn && (
+                    {canDeleteBase && (
                       <TableCell className="text-right">
-                        <div className="flex justify-end items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          {rowActions?.(row, refetch)}
-                          {rowCanDelete(row) && (
+                        {rowCanDelete(row) && (
+                          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" aria-label="Delete">
@@ -149,15 +224,15 @@ export function ResourceTable({
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </TableCell>
                     )}
                   </TableRow>
                 ))}
                 {rows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={config.columns.length + (hasActionsColumn ? 1 : 0)} className="py-14">
+                    <TableCell colSpan={config.columns.length + (canDeleteBase ? 1 : 0)} className="py-14">
                       <div className="flex flex-col items-center gap-2">
                         <Inbox className="h-6 w-6" style={{ color: 'var(--color-text-muted)' }} />
                         <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>No {config.label.toLowerCase()} yet.</p>
@@ -181,6 +256,7 @@ export function ResourceTable({
             initialData={editingRow}
             onSuccess={() => { setDialogOpen(false); refetch(); toast.success("Saved"); }}
             onCancel={() => setDialogOpen(false)}
+            extraSection={editingRow && formExtra ? formExtra(editingRow, refetch) : null}
           />
         </DialogContent>
       </Dialog>
