@@ -178,7 +178,7 @@ export function MerchantOrdersPage() {
                               {row.items.map((item: any, i: number) => (
                                 <div key={i} className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                                   <span>{item.quantity} × {item.name}</span>
-                                  <span>${(item.price * item.quantity).toFixed(2)}</span>
+                                  <span>₦{(item.price * item.quantity).toFixed(2)}</span>
                                 </div>
                               ))}
                             </div>

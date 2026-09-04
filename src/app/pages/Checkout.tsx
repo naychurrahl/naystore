@@ -108,13 +108,13 @@ export function Checkout() {
                 {order.items.map((item: any, index: number) => (
                   <div key={index} className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                     <span>{item.quantity} × {item.name}</span>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    <span>₦{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
               <div className="flex justify-between font-bold pt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
                 <span>Total</span>
-                <span>${order.total}</span>
+                <span>₦{order.total}</span>
               </div>
               {(order.fulfillments ?? []).map((f: any) => (
                 <FulfillmentStatus key={f.id} fulfillment={f} />
@@ -346,13 +346,13 @@ export function Checkout() {
               {items.map((item) => (
                 <div key={item.productId} className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                   <span>{item.quantity} × {item.name}</span>
-                  <span>${(item.price * item.quantity).toFixed(2)}</span>
+                  <span>₦{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
             <div className="flex justify-between font-bold pt-4" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
               <span>Total</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>₦{subtotal.toFixed(2)}</span>
             </div>
           </div>
         </div>

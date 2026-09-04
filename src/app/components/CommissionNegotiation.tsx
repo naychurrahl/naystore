@@ -21,7 +21,7 @@ interface CommissionProduct {
 }
 
 const formatRate = (type?: string | null, rate?: number | null) =>
-  type === "flat" ? `$${Number(rate).toFixed(2)} flat` : `${Number(rate).toFixed(2)}%`;
+  type === "flat" ? `₦${Number(rate).toFixed(2)} flat` : `${Number(rate).toFixed(2)}%`;
 
 // Negotiated, not unilateral: either side proposes a per-product override,
 // but it only takes effect once the OTHER side accepts. Used on both the

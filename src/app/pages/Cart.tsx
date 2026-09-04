@@ -50,7 +50,7 @@ export function Cart() {
 
               <div className="flex-1">
                 <h3 className="font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>{item.name}</h3>
-                <p className="mb-2" style={{ color: 'var(--color-text-secondary)' }}>${item.price} each</p>
+                <p className="mb-2" style={{ color: 'var(--color-text-secondary)' }}>₦{item.price} each</p>
                 {!item.codEligible && (
                   <span
                     className="inline-block text-xs px-2 py-1 rounded font-medium"
@@ -82,7 +82,7 @@ export function Cart() {
               </div>
 
               <div className="font-bold w-20 text-right" style={{ color: 'var(--color-text-primary)' }}>
-                ${(item.price * item.quantity).toFixed(2)}
+                ₦{(item.price * item.quantity).toFixed(2)}
               </div>
 
               <button
@@ -99,7 +99,7 @@ export function Cart() {
 
         <div className="flex flex-col items-end gap-4">
           <div className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            Subtotal: ${subtotal.toFixed(2)}
+            Subtotal: ₦{subtotal.toFixed(2)}
           </div>
 
           {hasIneligibleItems && hasEligibleItems && (

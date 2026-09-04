@@ -112,11 +112,11 @@ export function ProductCard({ product, showMerchant = true }: { product: ShopPro
         <div className="flex items-center justify-between">
           <div>
             <span className="font-bold text-lg" style={{ color: 'var(--color-text-primary)' }}>
-              ${product.price}
+              ₦{product.price}
             </span>
             {product.originalPrice && (
               <span className="ml-2 text-sm line-through" style={{ color: 'var(--color-text-muted)' }}>
-                ${product.originalPrice}
+                ₦{product.originalPrice}
               </span>
             )}
           </div>
