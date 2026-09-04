@@ -5,7 +5,7 @@ import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 
-const money = (n: number) => `$${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const money = (n: number) => `₦${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 interface Commission {
   id: string;

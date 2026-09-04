@@ -145,11 +145,11 @@ export function ProductDetail() {
 
             <div className="flex items-center gap-3 mb-6">
               <span className="text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                ${product.price}
+                ₦{product.price}
               </span>
               {product.originalPrice && (
                 <span className="text-lg line-through" style={{ color: 'var(--color-text-muted)' }}>
-                  ${product.originalPrice}
+                  ₦{product.originalPrice}
                 </span>
               )}
             </div>

@@ -8,7 +8,7 @@ import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 
-const money = (n: number) => `$${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const money = (n: number) => `₦${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const trendLabel = (current: number, prior: number) => {
   if (!prior) return null;
   const pct = ((current - prior) / prior) * 100;

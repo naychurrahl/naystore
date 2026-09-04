@@ -124,16 +124,16 @@ export function OrderDetail() {
             {order.items.map((item: any, index: number) => (
               <div key={index} className="flex justify-between text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>
                 <span>{item.quantity} × {item.name}</span>
-                <span>${(item.price * item.quantity).toFixed(2)}</span>
+                <span>₦{(item.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
             <div className="flex justify-between text-sm pt-2 mt-2" style={{ color: 'var(--color-text-secondary)', borderTop: '1px solid var(--color-border)' }}>
               <span>Subtotal</span>
-              <span>${order.subtotal}</span>
+              <span>₦{order.subtotal}</span>
             </div>
             <div className="flex justify-between font-bold" style={{ color: 'var(--color-text-primary)' }}>
               <span>Total</span>
-              <span>${order.total}</span>
+              <span>₦{order.total}</span>
             </div>
           </div>
         </div>
