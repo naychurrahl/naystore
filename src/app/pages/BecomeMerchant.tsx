@@ -12,6 +12,7 @@ export function BecomeMerchant() {
   const [commissionType, setCommissionType] = useState<"percentage" | "flat">("percentage");
   const [commissionRate, setCommissionRate] = useState("");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"fbu" | "fbm">("fbm");
+  const [location, setLocation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,11 +35,15 @@ export function BecomeMerchant() {
       setError("Enter a valid, non-negative commission rate");
       return;
     }
+    if (!location.trim()) {
+      setError("Enter your shop's location");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
     try {
-      await becomeMerchant(commissionType, rate, fulfillmentMethod);
+      await becomeMerchant(commissionType, rate, fulfillmentMethod, location.trim());
       navigate("/merchant", { replace: true });
     } catch (err: any) {
       setError(err.message || "Could not upgrade your account");
@@ -89,6 +94,22 @@ export function BecomeMerchant() {
             </div>
             <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
               What we take per sale - admins can revise this later.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Location</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Ibadan, Oyo"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            />
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+              Shown on your public shop page - you can update it anytime from My Shop.
             </p>
           </div>
 

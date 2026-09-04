@@ -29,6 +29,7 @@ export function AuthModal() {
   const [commissionType, setCommissionType] = useState<"percentage" | "flat">("percentage");
   const [commissionRate, setCommissionRate] = useState("");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"fbu" | "fbm">("fbm");
+  const [location, setLocation] = useState("");
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -44,6 +45,7 @@ export function AuthModal() {
       setCommissionType("percentage");
       setCommissionRate("");
       setFulfillmentMethod("fbm");
+      setLocation("");
       setUsertype(defaultUsertype);
       setError(null);
     }
@@ -91,6 +93,10 @@ export function AuthModal() {
         setError("Enter a valid, non-negative commission rate");
         return;
       }
+      if (!location.trim()) {
+        setError("Enter your shop's location");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -102,7 +108,7 @@ export function AuthModal() {
         password,
         username: usertype === "customer" && username ? username : undefined,
         ...(usertype === "merchant"
-          ? { commissionType, commissionRate: Number(commissionRate), fulfillmentMethod }
+          ? { commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim() }
           : {}),
       });
       close();
@@ -289,6 +295,22 @@ export function AuthModal() {
                     </div>
                     <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
                       What we take per sale - admins can revise this later.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1" style={labelStyle}>Location</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Ibadan, Oyo"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg border"
+                      style={inputStyle}
+                    />
+                    <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
+                      Shown on your public shop page - editable anytime from My Shop.
                     </p>
                   </div>
 
