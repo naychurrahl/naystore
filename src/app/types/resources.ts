@@ -13,6 +13,11 @@ export interface FieldConfig {
   folder?: string;
   helpText?: string;
   defaultValue?: any;
+  // Groups fields under an uppercase section heading in ResourceForm. Fields
+  // sharing a section render together even if not adjacent in this array -
+  // the array's field order still controls each field's position within its
+  // section, and a section's own position is set by its first field.
+  section?: string;
 }
 
 export interface ColumnConfig {
@@ -64,21 +69,22 @@ export const merchantProductsConfig: ResourceConfig = {
     { key: "fulfillmentMethod", label: "Fulfillment" },
   ],
   fields: [
-    { key: "name", label: "Name", type: "text", required: true },
-    { key: "categories", label: "Categories", type: "multiselect-create", optionsFrom: "/categories?type=product", required: true },
-    { key: "price", label: "Price", type: "number", required: true },
-    { key: "originalPrice", label: "Original Price", type: "number" },
-    { key: "image", label: "Image", type: "image", folder: "products" },
-    { key: "description", label: "Description", type: "textarea", required: true },
-    { key: "inStock", label: "In Stock", type: "checkbox", defaultValue: true },
-    { key: "stockQuantity", label: "Stock Quantity", type: "number", helpText: "Optional. Leave blank if you don't track exact quantity - low-stock alerts only show once this is set." },
-    { key: "codEligible", label: "COD Eligible", type: "checkbox", defaultValue: true },
-    { key: "badge", label: "Badge", type: "text" },
-    { key: "visible", label: "Visible", type: "checkbox", defaultValue: true, helpText: "You can show or hide your own listing. If staff hides it for moderation, only they can turn it back on." },
+    { key: "name", label: "Name", type: "text", required: true, section: "Basics" },
+    { key: "categories", label: "Categories", type: "multiselect-create", optionsFrom: "/categories?type=product", required: true, section: "Basics" },
+    { key: "description", label: "Description", type: "textarea", required: true, section: "Basics" },
+    { key: "image", label: "Image", type: "image", folder: "products", section: "Photo" },
+    { key: "price", label: "Price", type: "number", required: true, section: "Pricing & Stock" },
+    { key: "originalPrice", label: "Original Price", type: "number", section: "Pricing & Stock" },
+    { key: "inStock", label: "In Stock", type: "checkbox", defaultValue: true, section: "Pricing & Stock" },
+    { key: "stockQuantity", label: "Stock Quantity", type: "number", helpText: "Optional. Leave blank if you don't track exact quantity - low-stock alerts only show once this is set.", section: "Pricing & Stock" },
+    { key: "codEligible", label: "COD Eligible", type: "checkbox", defaultValue: true, section: "Settings" },
+    { key: "badge", label: "Badge", type: "text", section: "Settings" },
+    { key: "visible", label: "Visible", type: "checkbox", defaultValue: true, helpText: "You can show or hide your own listing. If staff hides it for moderation, only they can turn it back on.", section: "Settings" },
     {
       key: "fulfillmentMethod", label: "Fulfillment Override", type: "select",
       options: ["", "fbu", "fbm"],
       helpText: "Leave blank to use your default (set on the Orders page). Override per product only if this one needs different handling.",
+      section: "Settings",
     },
   ],
 };
