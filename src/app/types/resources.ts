@@ -37,18 +37,19 @@ export interface ResourceConfig {
   canDeleteRow?: (row: Record<string, any>, user: { role: string } | null) => boolean;
 }
 
-// A merchant's own product management view. Deletion stays staff-only (done
-// from the CMS), so the delete button is hidden entirely here. Visibility is
-// freely editable by the merchant - but only while it isn't staff/admin-locked;
-// the backend silently drops the visible field on update whenever it's locked,
-// so the toggle can look like it "did nothing" in that case - the helpText
-// explains why, and the row's real state always wins on refetch.
+// A merchant's own product management view. Delete is a faux delete on the
+// backend (deleted_at stamped, row kept for order-history integrity) - it
+// just disappears from every list, including this one, with no undo.
+// Visibility is freely editable by the merchant - but only while it isn't
+// staff/admin-locked; the backend silently drops the visible field on update
+// whenever it's locked, so the toggle can look like it "did nothing" in that
+// case - the helpText explains why, and the row's real state always wins on
+// refetch.
 export const merchantProductsConfig: ResourceConfig = {
   key: "my-products",
   label: "Products",
   endpoint: "/products",
   listEndpoint: "/my-products",
-  hideDelete: true,
   columns: [
     { key: "name", label: "Name" },
     { key: "categories", label: "Categories" },

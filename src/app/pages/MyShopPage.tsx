@@ -12,14 +12,14 @@ import { useAuth } from "../context/AuthContext";
 
 export function MyShopPage() {
   const { authHeader } = useAuth();
-  const [form, setForm] = useState({ slug: "", bio: "", bannerImage: "" });
+  const [form, setForm] = useState({ slug: "", bio: "", location: "", bannerImage: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [slugError, setSlugError] = useState<string | null>(null);
 
   useEffect(() => {
     api.get(`${API_BASE}/my-shop`, { headers: authHeader })
-      .then((shop) => setForm({ slug: shop.slug ?? "", bio: shop.bio ?? "", bannerImage: shop.bannerImage ?? "" }))
+      .then((shop) => setForm({ slug: shop.slug ?? "", bio: shop.bio ?? "", location: shop.location ?? "", bannerImage: shop.bannerImage ?? "" }))
       .catch((err: any) => toast.error(err.message || "Could not load shop"))
       .finally(() => setLoading(false));
   }, []);
@@ -30,7 +30,7 @@ export function MyShopPage() {
     setSlugError(null);
     try {
       const updated = await api.put(`${API_BASE}/my-shop`, form, { headers: authHeader });
-      setForm({ slug: updated.slug ?? "", bio: updated.bio ?? "", bannerImage: updated.bannerImage ?? "" });
+      setForm({ slug: updated.slug ?? "", bio: updated.bio ?? "", location: updated.location ?? "", bannerImage: updated.bannerImage ?? "" });
       toast.success("Shop saved");
     } catch (err: any) {
       if (err.status === 409) {
@@ -65,6 +65,16 @@ export function MyShopPage() {
               /sellers/{form.slug || "your-shop-name"}
             </p>
             {slugError && <p className="text-sm mt-1" style={{ color: 'var(--color-error)' }}>{slugError}</p>}
+          </div>
+
+          <div>
+            <Label className="mb-1.5 block">Location</Label>
+            <Input
+              required
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+              placeholder="e.g. Ibadan, Oyo"
+            />
           </div>
 
           <div>

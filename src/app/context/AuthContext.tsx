@@ -19,6 +19,7 @@ export interface RegisterInput {
   email: string;
   password: string;
   username?: string;
+  location?: string;
   commissionType?: "percentage" | "flat";
   commissionRate?: number;
   fulfillmentMethod?: "fbu" | "fbm";
@@ -30,7 +31,7 @@ interface AuthContextValue {
   authHeader: Record<string, string>;
   login: (identifier: string, password: string) => Promise<void>;
   register: (data: RegisterInput) => Promise<void>;
-  becomeMerchant: (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm") => Promise<void>;
+  becomeMerchant: (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
 }
@@ -74,8 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Upgrades the current customer's own account to a merchant in place -
   // same login/email going forward, no new account.
-  const becomeMerchant = async (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm") => {
-    const result = await api.put(`${API_BASE}/become-merchant`, { commissionType, commissionRate, fulfillmentMethod }, { headers: authHeader });
+  const becomeMerchant = async (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string) => {
+    const result = await api.put(`${API_BASE}/become-merchant`, { commissionType, commissionRate, fulfillmentMethod, location }, { headers: authHeader });
     persist({ user: result.user, token: result.token });
   };
 

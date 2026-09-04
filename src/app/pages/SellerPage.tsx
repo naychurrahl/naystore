@@ -3,7 +3,7 @@ import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { ProductCard } from "../components/ProductCard";
-import { ArrowLeft, Star, Package } from "lucide-react";
+import { ArrowLeft, Star, Package, MapPin } from "lucide-react";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
@@ -100,6 +100,12 @@ export function SellerPage() {
         </h1>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
+          {profile.location && (
+            <div className="flex items-center gap-1.5">
+              <MapPin className="h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
+              <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{profile.location}</span>
+            </div>
+          )}
           {profile.productReviewCount > 0 && (
             <div className="flex items-center gap-2">
               <StarRating rating={profile.productAvgRating} />
