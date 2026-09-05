@@ -4,6 +4,7 @@ import { router } from './routes';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ChatProvider } from './context/ChatContext';
+import { NotificationsProvider } from './context/NotificationsContext';
 import { AuthModalProvider } from './context/AuthModalContext';
 import { clearGuestId } from './utils/guestId.js';
 import { Toaster } from './components/ui/sonner';
@@ -36,12 +37,14 @@ export default function App() {
     <AuthProvider>
       <AuthModalProvider>
         <CartProvider>
-          <ChatProvider>
-            <SessionGuard />
-            <RouterProvider router={router} />
-            <Toaster />
-            <AuthModal />
-          </ChatProvider>
+          <NotificationsProvider>
+            <ChatProvider>
+              <SessionGuard />
+              <RouterProvider router={router} />
+              <Toaster />
+              <AuthModal />
+            </ChatProvider>
+          </NotificationsProvider>
         </CartProvider>
       </AuthModalProvider>
     </AuthProvider>

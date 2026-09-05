@@ -9,6 +9,7 @@ import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
 import { ChatLauncher } from "./ChatLauncher";
 import { ChatPanel } from "./ChatPanel";
+import { NotificationBell } from "./NotificationBell";
 
 export function Layout() {
   const location = useLocation();
@@ -141,6 +142,8 @@ export function Layout() {
                   </span>
                 )}
               </Link>
+
+              <NotificationBell />
 
               {user?.role === "merchant" && (
                 <Link
