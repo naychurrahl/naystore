@@ -1,11 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { Plus, Trash2, Inbox, Lock } from "lucide-react";
+import { Plus, Trash2, Inbox, Lock, Eye, EyeOff, PackageCheck, PackageX, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from "./ui/table";
 import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "./ui/dialog";
@@ -25,16 +24,19 @@ import type { ColumnConfig, ResourceConfig } from "../types/resources";
 // agrees with the dashboard's own low-stock count.
 const LOW_STOCK_THRESHOLD = 5;
 
+const money = (n: number) => `₦${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+function BooleanIcon({ value, label }: { value: boolean; label: string }) {
+  return value ? (
+    <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--color-success)' }} aria-label={`${label}: yes`} />
+  ) : (
+    <XCircle className="h-4 w-4" style={{ color: 'var(--color-text-muted)' }} aria-label={`${label}: no`} />
+  );
+}
+
 function CellValue({ column, value }: { column: ColumnConfig; value: any }) {
-  if (column.image) {
-    return (
-      <div className="h-10 w-10 rounded-md overflow-hidden shrink-0" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-        {value ? <ImageWithFallback src={value} alt="" className="w-full h-full object-cover" /> : null}
-      </div>
-    );
-  }
   if (typeof value === "boolean") {
-    return <Badge variant={value ? "default" : "secondary"}>{value ? "Yes" : "No"}</Badge>;
+    return <BooleanIcon value={value} label={column.label || column.key} />;
   }
   if (Array.isArray(value)) {
     return value.length ? <>{value.join(", ")}</> : <span style={{ color: 'var(--color-text-muted)' }}>—</span>;
@@ -43,6 +45,47 @@ function CellValue({ column, value }: { column: ColumnConfig; value: any }) {
     return <span style={{ color: 'var(--color-text-muted)' }}>—</span>;
   }
   return <>{String(value)}</>;
+}
+
+// Thumbnail + name (+ badge tag) + category subtitle, all in one cell - the
+// table's primary identifying column.
+function ProductCell({ row }: { row: Record<string, any> }) {
+  const categories: string[] = Array.isArray(row.categories) ? row.categories : [];
+  return (
+    <div className="flex items-center gap-3">
+      <div className="h-11 w-11 rounded-md overflow-hidden shrink-0" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+        {row.image ? <ImageWithFallback src={row.image} alt="" className="w-full h-full object-cover" /> : null}
+      </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{row.name}</span>
+          {row.badge && (
+            <span
+              className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide shrink-0"
+              style={{ backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)' }}
+            >
+              {row.badge}
+            </span>
+          )}
+        </div>
+        {categories.length > 0 && (
+          <p className="text-xs truncate mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{categories.join(", ")}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PriceCell({ row }: { row: Record<string, any> }) {
+  const hasDiscount = row.originalPrice != null && row.originalPrice > row.price;
+  return (
+    <div className="tabular-nums whitespace-nowrap">
+      <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{money(row.price)}</span>
+      {hasDiscount && (
+        <span className="ml-1.5 text-xs line-through" style={{ color: 'var(--color-text-muted)' }}>{money(row.originalPrice)}</span>
+      )}
+    </div>
+  );
 }
 
 // Out-of-stock/low-stock rows get a tinted background so the whole row
@@ -62,10 +105,11 @@ function StockToggle({ row, config, refetch }: { row: Record<string, any>; confi
 
   let color = 'var(--color-success)';
   let label = 'In Stock';
+  let Icon = PackageCheck;
   if (!row.inStock) {
-    color = 'var(--color-error)'; label = 'Out of Stock';
+    color = 'var(--color-error)'; label = 'Out of Stock'; Icon = PackageX;
   } else if (qty !== null && qty !== undefined && qty <= LOW_STOCK_THRESHOLD) {
-    color = 'var(--color-accent)'; label = `Low Stock (${qty})`;
+    color = 'var(--color-accent)'; label = `Low Stock (${qty})`; Icon = AlertTriangle;
   }
 
   const handleToggle = async () => {
@@ -86,12 +130,11 @@ function StockToggle({ row, config, refetch }: { row: Record<string, any>; confi
       type="button"
       onClick={(e) => { e.stopPropagation(); handleToggle(); }}
       disabled={pending}
-      title="Click to mark in stock / out of stock"
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium disabled:opacity-70"
+      title={`${label} - click to mark in stock / out of stock`}
+      className="inline-flex items-center justify-center h-8 w-8 rounded-full disabled:opacity-70"
       style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)', color }}
     >
-      <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-      {label}
+      <Icon className="h-4 w-4" />
     </button>
   );
 }
@@ -117,26 +160,19 @@ function VisibleToggle({ row, config, refetch }: { row: Record<string, any>; con
     }
   };
 
+  const Icon = locked ? Lock : visible ? Eye : EyeOff;
+  const color = locked ? 'var(--color-text-muted)' : visible ? 'var(--color-success)' : 'var(--color-text-muted)';
+
   return (
     <button
       type="button"
       onClick={(e) => { e.stopPropagation(); handleToggle(); }}
       disabled={pending || locked}
-      title={locked ? "Hidden by staff for moderation - contact support to have this reviewed" : "Click to toggle"}
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium disabled:opacity-70"
-      style={{
-        backgroundColor: 'var(--color-product-card)',
-        border: '1px solid var(--color-border)',
-        color: visible ? 'var(--color-success)' : 'var(--color-text-muted)',
-        cursor: locked ? 'not-allowed' : 'pointer',
-      }}
+      title={locked ? "Hidden by staff for moderation - contact support to have this reviewed" : visible ? "Visible - click to hide" : "Hidden - click to show"}
+      className="inline-flex items-center justify-center h-8 w-8 rounded-full disabled:opacity-70"
+      style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)', color, cursor: locked ? 'not-allowed' : 'pointer' }}
     >
-      {locked ? (
-        <Lock className="h-3 w-3" />
-      ) : (
-        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: visible ? 'var(--color-success)' : 'var(--color-text-muted)' }} />
-      )}
-      {locked ? "Locked" : visible ? "Visible" : "Hidden"}
+      <Icon className="h-4 w-4" />
     </button>
   );
 }
@@ -175,6 +211,17 @@ export function ResourceTable({
     }
   };
 
+  const renderCell = (col: ColumnConfig, row: Record<string, any>) => {
+    if (col.product) return <ProductCell row={row} />;
+    if (col.price) return <PriceCell row={row} />;
+    if (col.toggle) return <VisibleToggle row={row} config={config} refetch={refetch} />;
+    if (col.stock) return <StockToggle row={row} config={config} refetch={refetch} />;
+    if (col.icon) return <BooleanIcon value={!!row[col.key]} label={col.label || col.key} />;
+    return <CellValue column={col} value={row[col.key]} />;
+  };
+
+  const isCentered = (col: ColumnConfig) => col.toggle || col.icon || col.stock;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -206,8 +253,8 @@ export function ResourceTable({
                   {config.columns.map((col) => (
                     <TableHead
                       key={col.key}
-                      className="text-[11px] font-semibold uppercase tracking-wider"
-                      style={{ color: 'var(--color-text-muted)', width: col.image ? '1%' : undefined }}
+                      className={`text-[11px] font-semibold uppercase tracking-wider ${isCentered(col) ? "text-center" : ""}`}
+                      style={{ color: 'var(--color-text-muted)' }}
                     >
                       {col.label}
                     </TableHead>
@@ -223,17 +270,17 @@ export function ResourceTable({
                 {rows.map((row) => (
                   <TableRow key={row.id} onClick={() => openEdit(row)} className="cursor-pointer" style={{ backgroundColor: rowStockBg(row) }}>
                     {config.columns.map((col) => (
-                      <TableCell key={col.key} style={{ color: 'var(--color-text-primary)' }}>
-                        {col.toggle ? (
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <VisibleToggle row={row} config={config} refetch={refetch} />
-                          </div>
-                        ) : col.stock ? (
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <StockToggle row={row} config={config} refetch={refetch} />
+                      <TableCell
+                        key={col.key}
+                        style={{ color: 'var(--color-text-primary)' }}
+                        className={isCentered(col) ? "text-center" : ""}
+                      >
+                        {col.toggle || col.stock ? (
+                          <div className={isCentered(col) ? "flex justify-center" : ""} onClick={(e) => e.stopPropagation()}>
+                            {renderCell(col, row)}
                           </div>
                         ) : (
-                          <CellValue column={col} value={row[col.key]} />
+                          renderCell(col, row)
                         )}
                       </TableCell>
                     ))}

@@ -23,15 +23,23 @@ export interface FieldConfig {
 export interface ColumnConfig {
   key: string;
   label: string;
-  // Renders a small thumbnail instead of the raw value - the column still
-  // needs a real key (the field holding the image path/URL).
-  image?: boolean;
-  // Renders a red/amber/green stock-level pill computed from the row's
-  // inStock/stockQuantity fields, instead of the raw value.
+  // Renders a thumbnail + name (+ badge tag) + category subtitle in one
+  // compound cell instead of the raw value - the key still names the field
+  // holding the row's title (e.g. "name").
+  product?: boolean;
+  // Renders price with a struck-through originalPrice when one is set,
+  // instead of the raw number.
+  price?: boolean;
+  // Renders a red/amber/green stock-level pill (with a matching icon)
+  // computed from the row's inStock/stockQuantity fields, instead of the
+  // raw value - click-to-toggle, same as `toggle`.
   stock?: boolean;
-  // Renders the boolean value as a click-to-toggle pill that PUTs the
-  // flipped value straight back via config.endpoint, instead of a static badge.
+  // Renders the boolean value as a click-to-toggle icon button that PUTs
+  // the flipped value straight back via config.endpoint, instead of a
+  // static badge.
   toggle?: boolean;
+  // Renders the boolean value as a plain check/x icon (no interaction).
+  icon?: boolean;
 }
 
 export interface ResourceConfig {
@@ -68,10 +76,9 @@ export const merchantProductsConfig: ResourceConfig = {
   // Categories, commission, and fulfillment override are edit-only details,
   // reachable through the row's own form.
   columns: [
-    { key: "image", label: "", image: true },
-    { key: "name", label: "Name" },
+    { key: "name", label: "Product", product: true },
     { key: "inStock", label: "Stock", stock: true },
-    { key: "price", label: "Price" },
+    { key: "price", label: "Price", price: true },
     { key: "visible", label: "Visible", toggle: true },
   ],
   fields: [
@@ -83,7 +90,7 @@ export const merchantProductsConfig: ResourceConfig = {
     { key: "originalPrice", label: "Original Price", type: "number", section: "Pricing & Stock" },
     { key: "inStock", label: "In Stock", type: "checkbox", defaultValue: true, section: "Pricing & Stock" },
     { key: "stockQuantity", label: "Stock Quantity", type: "number", helpText: "Optional. Leave blank if you don't track exact quantity - low-stock alerts only show once this is set.", section: "Pricing & Stock" },
-    { key: "codEligible", label: "COD Eligible", type: "checkbox", defaultValue: true, section: "Settings" },
+    { key: "codEligible", label: "Cash on Delivery", type: "checkbox", defaultValue: true, section: "Settings" },
     { key: "badge", label: "Badge", type: "text", section: "Settings" },
     { key: "visible", label: "Visible", type: "checkbox", defaultValue: true, helpText: "You can show or hide your own listing. If staff hides it for moderation, only they can turn it back on.", section: "Settings" },
     {
