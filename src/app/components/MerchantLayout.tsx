@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
 import { ChatLauncher } from "./ChatLauncher";
 import { ChatPanel } from "./ChatPanel";
+import { NotificationBell } from "./NotificationBell";
 
 const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: typeof ShoppingBag }[] }[] = [
   { label: "Overview", items: [{ to: "/merchant", label: "Dashboard", icon: LayoutDashboard }] },
@@ -136,6 +137,7 @@ export function MerchantLayout() {
             <p className="text-sm font-medium truncate" style={{ color: '#ffffff' }}>{user?.name || user?.email}</p>
             <p className="text-xs" style={{ color: 'var(--color-nav-text)', opacity: 0.6 }}>Merchant</p>
           </div>
+          <NotificationBell />
           <button
             onClick={() => logout()}
             aria-label="Log out"
@@ -157,7 +159,8 @@ export function MerchantLayout() {
           <button onClick={() => setMobileNavOpen(true)} className="p-1" aria-label="Open menu">
             <Menu className="h-5 w-5" style={{ color: 'var(--color-nav-text)' }} />
           </button>
-          <span className="font-semibold" style={{ color: '#ffffff' }}>Seller Console</span>
+          <span className="font-semibold flex-1" style={{ color: '#ffffff' }}>Seller Console</span>
+          <NotificationBell />
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
