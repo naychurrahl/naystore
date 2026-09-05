@@ -2,6 +2,7 @@
 @import './tailwind.css';
 @import './theme.css';
 @import './colors.css';
+@import './merchant-workspace.css';
 
 .category-scroll {
   scrollbar-width: none;

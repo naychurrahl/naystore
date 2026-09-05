@@ -1,0 +1,91 @@
+/*
+  Seller Console theme - scoped token overrides for the merchant workspace.
+
+  The storefront's two token layers (--color-* in colors.css, driving every
+  inline-styled page; and the shadcn --background/--card/--primary/--sidebar-*
+  layer in theme.css, driving every ui/* primitive) both cascade normally, so
+  redefining them once under .merchant-workspace reskins the entire portal -
+  every Button/Card/Table/Dialog/Input and every var(--color-*) inline style
+  underneath it - without touching individual component files. Deliberately
+  cooler and quieter than the storefront's consumer palette (dark slate nav,
+  neutral canvas) so "running your shop" reads as a distinct workspace from
+  the public storefront, while keeping the same brand blue as the one accent
+  thread tying the two together.
+*/
+
+.merchant-workspace {
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-light: #e8f0fe;
+
+  --color-secondary: #171a23;
+  --color-secondary-hover: #10131b;
+  --color-secondary-light: #eef0f4;
+
+  --color-accent: #d97706;
+  --color-accent-hover: #b45309;
+  --color-accent-light: #fdeed2;
+
+  --color-success: #12a875;
+  --color-success-hover: #0f9166;
+  --color-success-light: #dcf5ec;
+
+  --color-error: #dc3545;
+  --color-error-hover: #c1121f;
+  --color-error-light: #fbe4e7;
+
+  --color-background: #ffffff;
+  --color-surface: #f4f5f8;
+  --color-surface-alt: #ebedf2;
+  --color-border: #e4e6ec;
+  --color-text-primary: #171a23;
+  --color-text-secondary: #5c6072;
+  --color-text-muted: #9397a6;
+
+  --color-nav-bg: #14161f;
+  --color-nav-text: #cbd0dc;
+  --color-nav-hover: rgba(255, 255, 255, 0.05);
+  --color-nav-active: #7db0ff;
+
+  --color-product-card: #ffffff;
+
+  /* shadcn ui/* primitives read these via the @theme inline mapping in theme.css */
+  --background: #f4f5f8;
+  --foreground: #171a23;
+  --card: #ffffff;
+  --card-foreground: #171a23;
+  --popover: #ffffff;
+  --popover-foreground: #171a23;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #eef0f4;
+  --secondary-foreground: #171a23;
+  --muted: #eef0f4;
+  --muted-foreground: #5c6072;
+  --accent: #e8f0fe;
+  --accent-foreground: #1d4ed8;
+  --destructive: #dc3545;
+  --destructive-foreground: #ffffff;
+  --border: #e4e6ec;
+  --input: #e4e6ec;
+  --input-background: #ffffff;
+  --ring: #2563eb;
+  --radius: 0.75rem;
+  --sidebar: #14161f;
+  --sidebar-foreground: #cbd0dc;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.06);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #2563eb;
+
+  background: var(--color-surface);
+  min-height: 100vh;
+}
+
+/* Tabular figures wherever the workspace lines up numbers in a column -
+   stat cards, tables, payout amounts. */
+.merchant-workspace .tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

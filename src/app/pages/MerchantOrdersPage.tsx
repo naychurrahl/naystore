@@ -13,6 +13,32 @@ import { useAuth } from "../context/AuthContext";
 
 const STATUSES = ["processing", "shipped", "in_transit", "delivered"];
 
+const ORDER_STATUS_TONE: Record<string, { bg: string; fg: string }> = {
+  pending: { bg: 'var(--color-accent-light)', fg: 'var(--color-accent)' },
+  confirmed: { bg: 'var(--color-primary-light)', fg: 'var(--color-primary)' },
+  fulfilled: { bg: 'var(--color-success-light)', fg: 'var(--color-success)' },
+  cancelled: { bg: 'var(--color-error-light)', fg: 'var(--color-error)' },
+};
+
+const FULFILLMENT_STATUS_TONE: Record<string, { bg: string; fg: string }> = {
+  processing: { bg: 'var(--color-accent-light)', fg: 'var(--color-accent)' },
+  shipped: { bg: 'var(--color-primary-light)', fg: 'var(--color-primary)' },
+  in_transit: { bg: 'var(--color-primary-light)', fg: 'var(--color-primary)' },
+  delivered: { bg: 'var(--color-success-light)', fg: 'var(--color-success)' },
+};
+
+function StatusPill({ value, tones }: { value: string; tones: Record<string, { bg: string; fg: string }> }) {
+  const tone = tones[value] ?? { bg: 'var(--color-surface-alt)', fg: 'var(--color-text-secondary)' };
+  return (
+    <span
+      className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium capitalize"
+      style={{ backgroundColor: tone.bg, color: tone.fg }}
+    >
+      {value.replace("_", " ")}
+    </span>
+  );
+}
+
 interface FulfillmentForm {
   city: string;
   state: string;
@@ -122,7 +148,7 @@ export function MerchantOrdersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Orders</h1>
+      <h1 className="text-2xl font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>Orders</h1>
       <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
         Orders containing your products, and their own line items only.
       </p>
@@ -133,16 +159,16 @@ export function MerchantOrdersPage() {
       {error && <p style={{ color: 'var(--color-error)' }}>Couldn't load orders.</p>}
 
       {!loading && !error && (
-        <div className="rounded-lg" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-product-card)' }}>
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-product-card)' }}>
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow style={{ backgroundColor: 'var(--color-surface-alt)' }}>
                 <TableHead></TableHead>
-                <TableHead>Order</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Order Status</TableHead>
-                <TableHead>Placed</TableHead>
-                <TableHead>Fulfillment</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Order</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Customer</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Order Status</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Placed</TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Fulfillment</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -153,11 +179,11 @@ export function MerchantOrdersPage() {
                   <Fragment key={row.id}>
                     <TableRow className="cursor-pointer" onClick={() => setExpanded(expanded === row.id ? null : row.id)}>
                       <TableCell>{expanded === row.id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</TableCell>
-                      <TableCell className="font-medium">{row.orderId}</TableCell>
-                      <TableCell>{row.customerName}</TableCell>
-                      <TableCell className="capitalize">{row.orderStatus}</TableCell>
-                      <TableCell>{new Date(row.orderCreatedAt).toLocaleDateString()}</TableCell>
-                      <TableCell className="capitalize">{row.status.replace("_", " ")}</TableCell>
+                      <TableCell className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{row.orderId}</TableCell>
+                      <TableCell style={{ color: 'var(--color-text-primary)' }}>{row.customerName}</TableCell>
+                      <TableCell><StatusPill value={row.orderStatus} tones={ORDER_STATUS_TONE} /></TableCell>
+                      <TableCell style={{ color: 'var(--color-text-secondary)' }}>{new Date(row.orderCreatedAt).toLocaleDateString()}</TableCell>
+                      <TableCell><StatusPill value={row.status} tones={FULFILLMENT_STATUS_TONE} /></TableCell>
                     </TableRow>
                     {expanded === row.id && (
                       <TableRow>

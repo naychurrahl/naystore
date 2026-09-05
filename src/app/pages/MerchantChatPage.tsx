@@ -137,10 +137,10 @@ export function MerchantChatPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>My Chats</h1>
+      <h1 className="text-2xl font-semibold mb-6" style={{ color: 'var(--color-text-primary)' }}>My Chats</h1>
 
       <div
-        className="flex flex-col lg:flex-row rounded-lg overflow-hidden"
+        className="flex flex-col lg:flex-row rounded-xl overflow-hidden"
         style={{ border: '1px solid var(--color-border)', height: '70vh', backgroundColor: 'var(--color-product-card)' }}
       >
         <div
@@ -191,10 +191,10 @@ export function MerchantChatPage() {
                         </span>
                       )}
                       <div
-                        className="max-w-[70%] px-4 py-2 rounded-lg text-sm whitespace-pre-wrap"
+                        className="max-w-[70%] px-4 py-2 rounded-2xl text-sm whitespace-pre-wrap"
                         style={
                           isMine
-                            ? { backgroundColor: 'var(--color-secondary)', color: 'white' }
+                            ? { backgroundColor: 'var(--color-primary)', color: 'white' }
                             : { backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }
                         }
                       >
@@ -228,8 +228,8 @@ export function MerchantChatPage() {
                 <button
                   onClick={handleSend}
                   disabled={isSending || !text.trim()}
-                  className="px-4 py-2 rounded-lg text-sm text-white"
-                  style={{ backgroundColor: isSending || !text.trim() ? 'var(--color-border)' : 'var(--color-secondary)' }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                  style={{ backgroundColor: isSending || !text.trim() ? 'var(--color-border)' : 'var(--color-primary)' }}
                 >
                   Send
                 </button>
