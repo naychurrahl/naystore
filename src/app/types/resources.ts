@@ -94,8 +94,12 @@ export const merchantProductsConfig: ResourceConfig = {
     { key: "badge", label: "Badge", type: "text", section: "Settings" },
     { key: "visible", label: "Visible", type: "checkbox", defaultValue: true, helpText: "You can show or hide your own listing. If staff hides it for moderation, only they can turn it back on.", section: "Settings" },
     {
-      key: "fulfillmentMethod", label: "Fulfillment", type: "fulfillment",
-      helpText: "Stays on \"Inherit my default\" unless this product needs different handling from what you set on the Orders page.",
+      // Hidden on create: a brand-new product has no resolved effective
+      // value yet to preselect (that only exists once the product row does),
+      // so it starts on your account default and can be changed after
+      // creation, when editing shows the actual value in effect.
+      key: "fulfillmentMethod", label: "Fulfillment", type: "fulfillment", hideOnCreate: true,
+      helpText: "How this product is fulfilled. Defaults to what you set on the Orders page - change it here only if this product needs different handling.",
       section: "Settings",
     },
   ],
