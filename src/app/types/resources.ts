@@ -1,4 +1,4 @@
-export type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "checkbox-group" | "select" | "multiselect-create" | "image" | "tags" | "date";
+export type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "checkbox-group" | "select" | "multiselect-create" | "image" | "tags" | "date" | "fulfillment";
 
 export interface FieldConfig {
   key: string;
@@ -68,6 +68,7 @@ export const merchantProductsConfig: ResourceConfig = {
   // Categories, commission, and fulfillment override are edit-only details,
   // reachable through the row's own form.
   columns: [
+    { key: "image", label: "", image: true },
     { key: "name", label: "Name" },
     { key: "inStock", label: "Stock", stock: true },
     { key: "price", label: "Price" },
@@ -86,9 +87,8 @@ export const merchantProductsConfig: ResourceConfig = {
     { key: "badge", label: "Badge", type: "text", section: "Settings" },
     { key: "visible", label: "Visible", type: "checkbox", defaultValue: true, helpText: "You can show or hide your own listing. If staff hides it for moderation, only they can turn it back on.", section: "Settings" },
     {
-      key: "fulfillmentMethod", label: "Fulfillment Override", type: "select",
-      options: ["", "fbu", "fbm"],
-      helpText: "Leave blank to use your default (set on the Orders page). Override per product only if this one needs different handling.",
+      key: "fulfillmentMethod", label: "Fulfillment", type: "fulfillment",
+      helpText: "Stays on \"Inherit my default\" unless this product needs different handling from what you set on the Orders page.",
       section: "Settings",
     },
   ],

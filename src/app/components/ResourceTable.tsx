@@ -45,23 +45,54 @@ function CellValue({ column, value }: { column: ColumnConfig; value: any }) {
   return <>{String(value)}</>;
 }
 
-function StockPill({ row }: { row: Record<string, any> }) {
+// Out-of-stock/low-stock rows get a tinted background so the whole row
+// reads as needing attention, not just the pill - null when in stock (the
+// table's normal card background already applies).
+function rowStockBg(row: Record<string, any>): string | undefined {
+  if (!row.inStock) return 'var(--color-error-light)';
   const qty = row.stockQuantity;
-  let color = 'var(--color-success)';
-  let bg = 'var(--color-success-light)';
-  let label = 'In Stock';
+  if (qty !== null && qty !== undefined && qty <= LOW_STOCK_THRESHOLD) return 'var(--color-accent-light)';
+  return undefined;
+}
 
+function StockToggle({ row, config, refetch }: { row: Record<string, any>; config: ResourceConfig; refetch: () => void }) {
+  const { authHeader } = useAuth();
+  const [pending, setPending] = useState(false);
+  const qty = row.stockQuantity;
+
+  let color = 'var(--color-success)';
+  let label = 'In Stock';
   if (!row.inStock) {
-    color = 'var(--color-error)'; bg = 'var(--color-error-light)'; label = 'Out of Stock';
+    color = 'var(--color-error)'; label = 'Out of Stock';
   } else if (qty !== null && qty !== undefined && qty <= LOW_STOCK_THRESHOLD) {
-    color = 'var(--color-accent)'; bg = 'var(--color-accent-light)'; label = `Low Stock (${qty})`;
+    color = 'var(--color-accent)'; label = `Low Stock (${qty})`;
   }
 
+  const handleToggle = async () => {
+    if (pending) return;
+    setPending(true);
+    try {
+      await api.put(`${API_BASE}${config.endpoint}`, { id: row.id, inStock: !row.inStock }, { headers: authHeader });
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Could not update stock status");
+    } finally {
+      setPending(false);
+    }
+  };
+
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium" style={{ backgroundColor: bg, color }}>
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); handleToggle(); }}
+      disabled={pending}
+      title="Click to mark in stock / out of stock"
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium disabled:opacity-70"
+      style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)', color }}
+    >
       <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
       {label}
-    </span>
+    </button>
   );
 }
 
@@ -94,7 +125,8 @@ function VisibleToggle({ row, config, refetch }: { row: Record<string, any>; con
       title={locked ? "Hidden by staff for moderation - contact support to have this reviewed" : "Click to toggle"}
       className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium disabled:opacity-70"
       style={{
-        backgroundColor: visible ? 'var(--color-success-light)' : 'var(--color-surface-alt)',
+        backgroundColor: 'var(--color-product-card)',
+        border: '1px solid var(--color-border)',
         color: visible ? 'var(--color-success)' : 'var(--color-text-muted)',
         cursor: locked ? 'not-allowed' : 'pointer',
       }}
@@ -189,7 +221,7 @@ export function ResourceTable({
               </TableHeader>
               <TableBody>
                 {rows.map((row) => (
-                  <TableRow key={row.id} onClick={() => openEdit(row)} className="cursor-pointer">
+                  <TableRow key={row.id} onClick={() => openEdit(row)} className="cursor-pointer" style={{ backgroundColor: rowStockBg(row) }}>
                     {config.columns.map((col) => (
                       <TableCell key={col.key} style={{ color: 'var(--color-text-primary)' }}>
                         {col.toggle ? (
@@ -197,7 +229,9 @@ export function ResourceTable({
                             <VisibleToggle row={row} config={config} refetch={refetch} />
                           </div>
                         ) : col.stock ? (
-                          <StockPill row={row} />
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <StockToggle row={row} config={config} refetch={refetch} />
+                          </div>
                         ) : (
                           <CellValue column={col} value={row[col.key]} />
                         )}

@@ -49,6 +49,30 @@ function groupFields(fields: FieldConfig[]): { section: string; fields: FieldCon
   return groups;
 }
 
+// Mirrors the labels already used on the Orders page's fulfillment picker.
+const FULFILLMENT_LABELS: Record<string, string> = {
+  fbu: "FBU - Fulfilled by Us",
+  fbm: "FBM - Fulfilled by Merchant",
+};
+const FULFILLMENT_BLANK = "__inherit__";
+
+function FulfillmentSelect({ value, onChange, merchantDefault }: { value: string; onChange: (v: string) => void; merchantDefault: string | null }) {
+  const inheritLabel = merchantDefault
+    ? `Inherit my default (${FULFILLMENT_LABELS[merchantDefault] ?? merchantDefault})`
+    : "Inherit my default (not set yet)";
+
+  return (
+    <Select value={value || FULFILLMENT_BLANK} onValueChange={(v) => onChange(v === FULFILLMENT_BLANK ? "" : v)}>
+      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+      <SelectContent>
+        <SelectItem value={FULFILLMENT_BLANK}>{inheritLabel}</SelectItem>
+        <SelectItem value="fbu">{FULFILLMENT_LABELS.fbu}</SelectItem>
+        <SelectItem value="fbm">{FULFILLMENT_LABELS.fbm}</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
 function CategorySelect({ field, value, onChange }: { field: FieldConfig; value: any; onChange: (v: any) => void }) {
   const { data } = useAPI(`${API_BASE}${field.optionsFrom}`);
   const options = (data ?? []) as any[];
@@ -72,11 +96,16 @@ function FieldBlock({
   required,
   value,
   onChange,
+  initialData,
 }: {
   field: FieldConfig;
   required: boolean;
   value: any;
   onChange: (v: any) => void;
+  // The full row being edited (null on create) - fields whose control needs
+  // to reflect something outside the config-driven form data (e.g. the
+  // merchant's own default fulfillment method) read it from here.
+  initialData: Record<string, any> | null;
 }) {
   if (field.type === "checkbox") {
     return (
@@ -129,6 +158,10 @@ function FieldBlock({
 
       {field.type === "select" && field.optionsFrom && (
         <CategorySelect field={field} value={value} onChange={onChange} />
+      )}
+
+      {field.type === "fulfillment" && (
+        <FulfillmentSelect value={value} onChange={onChange} merchantDefault={initialData?.merchantFulfillmentMethod ?? null} />
       )}
 
       {field.type === "multiselect-create" && (
@@ -269,6 +302,7 @@ export function ResourceForm({
                   required={!!(field.required || (!isEdit && field.requiredOnCreate))}
                   value={formData[field.key]}
                   onChange={(v) => setValue(field.key, v)}
+                  initialData={initialData}
                 />
               </div>
             ))}
