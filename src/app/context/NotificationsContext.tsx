@@ -25,6 +25,12 @@ interface NotificationsContextValue {
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
 
+// Types that still create a bell entry (and count toward unreadCount) but
+// shouldn't pop a toast - either because the recipient likely isn't at their
+// keyboard when it happens (payment_failed) or because it's a quiet
+// moderation notice, not something worth interrupting for (review_removed).
+const SILENT_TOAST_TYPES = new Set(["payment_failed", "review_removed"]);
+
 // Bell/notification-center data, shared by every logged-in role in this app
 // (customer and merchant both live here) - notifications are already scoped
 // server-side by user_id, so one context serves both with no role gating.
@@ -52,8 +58,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const fresh = lastSeenCreatedAt.current
           ? items.filter((n) => n.createdAt > lastSeenCreatedAt.current!)
           : [];
-        fresh.slice(0, 3).forEach((n) => toast(n.title, { description: n.body ?? undefined }));
-        if (fresh.length > 3) toast(`+${fresh.length - 3} more notifications`);
+        const toastable = fresh.filter((n) => !SILENT_TOAST_TYPES.has(n.type));
+        toastable.slice(0, 3).forEach((n) => toast(n.title, { description: n.body ?? undefined }));
+        if (toastable.length > 3) toast(`+${toastable.length - 3} more notifications`);
       }
       isFirstFetch.current = false;
       if (items[0]) lastSeenCreatedAt.current = items[0].createdAt;

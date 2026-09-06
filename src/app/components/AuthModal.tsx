@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { router } from "../routes";
+import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 
 const inputStyle = { borderColor: "var(--color-border)", color: "var(--color-text-primary)" };
 const labelStyle = { color: "var(--color-text-primary)" };
@@ -30,6 +31,10 @@ export function AuthModal() {
   const [commissionRate, setCommissionRate] = useState("");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"fbu" | "fbm">("fbm");
   const [location, setLocation] = useState("");
+  const [state, setState] = useState("");
+  const [lga, setLga] = useState("");
+  const [area, setArea] = useState("");
+  const [landmark, setLandmark] = useState("");
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -46,6 +51,10 @@ export function AuthModal() {
       setCommissionRate("");
       setFulfillmentMethod("fbm");
       setLocation("");
+      setState("");
+      setLga("");
+      setArea("");
+      setLandmark("");
       setUsertype(defaultUsertype);
       setError(null);
     }
@@ -97,6 +106,18 @@ export function AuthModal() {
         setError("Enter your shop's location");
         return;
       }
+      if (!state) {
+        setError("Select your state");
+        return;
+      }
+      if (!lga) {
+        setError("Select your LGA");
+        return;
+      }
+      if (!area.trim()) {
+        setError("Enter your area");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -108,7 +129,7 @@ export function AuthModal() {
         password,
         username: usertype === "customer" && username ? username : undefined,
         ...(usertype === "merchant"
-          ? { commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim() }
+          ? { commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim() }
           : {}),
       });
       close();
@@ -298,18 +319,69 @@ export function AuthModal() {
                     </p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1" style={labelStyle}>Location</label>
+                  <div className="p-3 rounded-lg border space-y-3" style={{ borderColor: "var(--color-border)" }}>
+                    <p className="text-sm font-semibold" style={labelStyle}>Shop Location</p>
+
+                    <div className="flex gap-2">
+                      <select
+                        required
+                        value={state}
+                        onChange={(e) => {
+                          setState(e.target.value);
+                          setLga("");
+                        }}
+                        className="flex-1 px-4 py-3 rounded-lg border"
+                        style={inputStyle}
+                      >
+                        <option value="" disabled>Select state</option>
+                        {NIGERIA_STATES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <select
+                        required
+                        disabled={!state}
+                        value={lga}
+                        onChange={(e) => setLga(e.target.value)}
+                        className="flex-1 px-4 py-3 rounded-lg border disabled:opacity-50"
+                        style={inputStyle}
+                      >
+                        <option value="" disabled>{state ? "Select LGA" : "Select state first"}</option>
+                        {(NIGERIA_STATE_LGAS[state] ?? []).map((l) => (
+                          <option key={l} value={l}>{l}</option>
+                        ))}
+                      </select>
+                    </div>
+
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Ibadan, Oyo"
+                      placeholder="Area, e.g. Ikeja GRA"
+                      value={area}
+                      onChange={(e) => setArea(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg border"
+                      style={inputStyle}
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="Landmark (optional), e.g. Near Shoprite"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg border"
+                      style={inputStyle}
+                    />
+
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 12 Allen Avenue, Ibadan"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       className="w-full px-4 py-3 rounded-lg border"
                       style={inputStyle}
                     />
-                    <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                       Shown on your public shop page - editable anytime from My Shop.
                     </p>
                   </div>

@@ -10,6 +10,7 @@ import { Button } from "../components/ui/button";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { NIGERIA_STATES } from "../data/nigeriaStates";
 
 const STATUSES = ["processing", "shipped", "in_transit", "delivered"];
 
@@ -196,7 +197,7 @@ export function MerchantOrdersPage() {
                               </div>
                               <div>
                                 <p style={{ color: 'var(--color-text-muted)' }}>Ship To</p>
-                                <p style={{ color: 'var(--color-text-primary)' }}>{row.address}</p>
+                                <p style={{ color: 'var(--color-text-primary)' }}>{row.fullAddress}</p>
                               </div>
                             </div>
 
@@ -230,7 +231,14 @@ export function MerchantOrdersPage() {
                                 </div>
                                 <div>
                                   <Label className="mb-1 block text-xs">State</Label>
-                                  <Input value={form.state} onChange={(e) => setField(row.id, row, "state", e.target.value)} />
+                                  <Select value={form.state} onValueChange={(v) => setField(row.id, row, "state", v)}>
+                                    <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                                    <SelectContent>
+                                      {NIGERIA_STATES.map((s) => (
+                                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                                 <div>
                                   <Label className="mb-1 block text-xs">Country</Label>

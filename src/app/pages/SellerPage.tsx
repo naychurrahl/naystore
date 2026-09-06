@@ -100,10 +100,12 @@ export function SellerPage() {
         </h1>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
-          {profile.location && (
+          {(profile.area || profile.state) && (
             <div className="flex items-center gap-1.5">
               <MapPin className="h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
-              <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{profile.location}</span>
+              <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                {[profile.area, profile.state].filter(Boolean).join(", ")}
+              </span>
             </div>
           )}
           {profile.productReviewCount > 0 && (
