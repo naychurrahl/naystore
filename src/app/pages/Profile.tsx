@@ -6,6 +6,7 @@ import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
+import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 
 function GuestProfile() {
   const { openLogin } = useAuthModal();
@@ -50,7 +51,10 @@ function GuestProfile() {
 
 export function Profile() {
   const { user, token, authHeader, setUser, logout } = useAuth();
-  const [details, setDetails] = useState({ name: "", username: "", email: "", phone: "", address: "" });
+  const [details, setDetails] = useState({
+    name: "", username: "", email: "", phone: "",
+    state: "", lga: "", area: "", landmark: "", address: "",
+  });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", password: "" });
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -63,6 +67,10 @@ export function Profile() {
         username: user.username ?? "",
         email: user.email,
         phone: user.phone ?? "",
+        state: user.state ?? "",
+        lga: user.lga ?? "",
+        area: user.area ?? "",
+        landmark: user.landmark ?? "",
         address: user.address ?? "",
       });
     }
@@ -161,16 +169,84 @@ export function Profile() {
                 style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Address</label>
-              <input
-                type="text"
-                value={details.address}
-                onChange={(e) => setDetails({ ...details, address: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border"
-                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-              />
-              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+            <div className="p-4 rounded-lg border space-y-4" style={{ borderColor: 'var(--color-border)' }}>
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Delivery Address</h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>State</label>
+                  <select
+                    value={details.state}
+                    onChange={(e) => setDetails({ ...details, state: e.target.value, lga: "" })}
+                    className="w-full px-4 py-3 rounded-lg border"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                  >
+                    <option value="">Select state</option>
+                    {NIGERIA_STATES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>LGA</label>
+                  <select
+                    disabled={!details.state}
+                    value={details.lga}
+                    onChange={(e) => setDetails({ ...details, lga: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg border disabled:opacity-50"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                  >
+                    <option value="">{details.state ? "Select LGA" : "Select state first"}</option>
+                    {(NIGERIA_STATE_LGAS[details.state] ?? []).map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Area</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ikeja GRA"
+                  value={details.area}
+                  onChange={(e) => setDetails({ ...details, area: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border"
+                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Landmark (optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Near Shoprite"
+                  value={details.landmark}
+                  onChange={(e) => setDetails({ ...details, landmark: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border"
+                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Address Line</label>
+                <input
+                  type="text"
+                  placeholder="House number and street"
+                  value={details.address}
+                  onChange={(e) => setDetails({ ...details, address: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border"
+                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                />
+              </div>
+
+              {(details.address || details.landmark || details.area || details.lga || details.state) && (
+                <p className="text-xs pt-1" style={{ color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)' }}>
+                  {[details.address, details.landmark, details.area, details.lga, details.state].filter(Boolean).join(", ")}
+                </p>
+              )}
+
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                 Saved here, this fills in automatically at checkout.
               </p>
             </div>

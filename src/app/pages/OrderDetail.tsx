@@ -112,7 +112,7 @@ export function OrderDetail() {
             <h2 className="font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Delivery details</h2>
             <div className="text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
               <p>{order.customerName}</p>
-              <p>{order.address}</p>
+              <p>{order.fullAddress}</p>
               <p>{order.phone}</p>
               <p>{order.email}</p>
               {order.notes && <p className="italic mt-2">Note: {order.notes}</p>}

@@ -10,6 +10,10 @@ export interface AuthUser {
   email: string;
   phone?: string | null;
   address?: string | null;
+  area?: string | null;
+  landmark?: string | null;
+  state?: string | null;
+  lga?: string | null;
   role: string;
 }
 
@@ -20,6 +24,10 @@ export interface RegisterInput {
   password: string;
   username?: string;
   location?: string;
+  state?: string;
+  lga?: string;
+  area?: string;
+  landmark?: string;
   commissionType?: "percentage" | "flat";
   commissionRate?: number;
   fulfillmentMethod?: "fbu" | "fbm";
@@ -31,7 +39,7 @@ interface AuthContextValue {
   authHeader: Record<string, string>;
   login: (identifier: string, password: string) => Promise<void>;
   register: (data: RegisterInput) => Promise<void>;
-  becomeMerchant: (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string) => Promise<void>;
+  becomeMerchant: (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
 }
@@ -75,8 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Upgrades the current customer's own account to a merchant in place -
   // same login/email going forward, no new account.
-  const becomeMerchant = async (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string) => {
-    const result = await api.put(`${API_BASE}/become-merchant`, { commissionType, commissionRate, fulfillmentMethod, location }, { headers: authHeader });
+  const becomeMerchant = async (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string) => {
+    const result = await api.put(`${API_BASE}/become-merchant`, { commissionType, commissionRate, fulfillmentMethod, location, state, lga, area, landmark }, { headers: authHeader });
     persist({ user: result.user, token: result.token });
   };
 

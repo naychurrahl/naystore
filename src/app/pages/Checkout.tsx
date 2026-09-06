@@ -8,6 +8,7 @@ import { getGuestId } from "../utils/guestId.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { FulfillmentStatus } from "../components/FulfillmentStatus";
+import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 
 type PaymentChoice = "cod" | "card" | "split";
 
@@ -16,7 +17,11 @@ const paystack = new PaystackPop();
 export function Checkout() {
   const { items, subtotal, clearCart } = useCart();
   const { user, authHeader } = useAuth();
-  const [form, setForm] = useState({ customerName: "", email: "", phone: "", address: "", notes: "" });
+  const [form, setForm] = useState({
+    customerName: "", email: "", phone: "",
+    state: "", lga: "", area: "", landmark: "", address: "",
+    notes: "",
+  });
 
   useEffect(() => {
     if (user) {
@@ -25,6 +30,10 @@ export function Checkout() {
         customerName: prev.customerName || user.name || "",
         email: prev.email || user.email,
         phone: prev.phone || user.phone || "",
+        state: prev.state || user.state || "",
+        lga: prev.lga || user.lga || "",
+        area: prev.area || user.area || "",
+        landmark: prev.landmark || user.landmark || "",
         address: prev.address || user.address || "",
       }));
     }
@@ -197,7 +206,9 @@ export function Checkout() {
   const handleConfirmSave = async () => {
     setShowSaveConfirm(false);
     try {
-      await api.put(`${API_BASE}/profile`, { phone: form.phone, address: form.address }, { headers: authHeader });
+      await api.put(`${API_BASE}/profile`, {
+        phone: form.phone, state: form.state, lga: form.lga, area: form.area, landmark: form.landmark, address: form.address,
+      }, { headers: authHeader });
     } catch {
       // Best-effort - a failed profile save shouldn't block placing the order.
     }
@@ -252,7 +263,7 @@ export function Checkout() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <form onSubmit={handleSubmit} className="md:col-span-2 space-y-4">
-            {(["customerName", "email", "phone", "address"] as const).map((field) => (
+            {(["customerName", "email", "phone"] as const).map((field) => (
               <div key={field}>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
                   {field === "customerName" ? "Full Name" : field.charAt(0).toUpperCase() + field.slice(1)}
@@ -267,6 +278,98 @@ export function Checkout() {
                 />
               </div>
             ))}
+
+            <div className="p-4 rounded-lg border space-y-4" style={{ borderColor: 'var(--color-border)' }}>
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Delivery Address</h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                    State
+                  </label>
+                  <select
+                    required
+                    value={form.state}
+                    onChange={(e) => setForm({ ...form, state: e.target.value, lga: "" })}
+                    className="w-full px-4 py-3 rounded-lg border"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                  >
+                    <option value="" disabled>Select state</option>
+                    {NIGERIA_STATES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                    LGA
+                  </label>
+                  <select
+                    required
+                    disabled={!form.state}
+                    value={form.lga}
+                    onChange={(e) => setForm({ ...form, lga: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg border disabled:opacity-50"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                  >
+                    <option value="" disabled>{form.state ? "Select LGA" : "Select state first"}</option>
+                    {(NIGERIA_STATE_LGAS[form.state] ?? []).map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                  Area
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ikeja GRA"
+                  value={form.area}
+                  onChange={(e) => setForm({ ...form, area: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border"
+                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                  Landmark (optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Near Shoprite"
+                  value={form.landmark}
+                  onChange={(e) => setForm({ ...form, landmark: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border"
+                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                  Address Line
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="House number and street"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border"
+                  style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                />
+              </div>
+
+              {(form.address || form.landmark || form.area || form.lga || form.state) && (
+                <p className="text-xs pt-1" style={{ color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)' }}>
+                  {[form.address, form.landmark, form.area, form.lga, form.state].filter(Boolean).join(", ")}
+                </p>
+              )}
+            </div>
 
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>

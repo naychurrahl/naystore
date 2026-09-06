@@ -5,21 +5,31 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Button } from "../components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { ImageUploadField } from "../components/ImageUploadField";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 
 export function MyShopPage() {
   const { authHeader } = useAuth();
-  const [form, setForm] = useState({ slug: "", bio: "", location: "", bannerImage: "" });
+  const [form, setForm] = useState({
+    slug: "", bio: "",
+    state: "", lga: "", area: "", landmark: "", location: "",
+    bannerImage: "",
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [slugError, setSlugError] = useState<string | null>(null);
 
   useEffect(() => {
     api.get(`${API_BASE}/my-shop`, { headers: authHeader })
-      .then((shop) => setForm({ slug: shop.slug ?? "", bio: shop.bio ?? "", location: shop.location ?? "", bannerImage: shop.bannerImage ?? "" }))
+      .then((shop) => setForm({
+        slug: shop.slug ?? "", bio: shop.bio ?? "",
+        state: shop.state ?? "", lga: shop.lga ?? "", area: shop.area ?? "", landmark: shop.landmark ?? "", location: shop.location ?? "",
+        bannerImage: shop.bannerImage ?? "",
+      }))
       .catch((err: any) => toast.error(err.message || "Could not load shop"))
       .finally(() => setLoading(false));
   }, []);
@@ -30,7 +40,11 @@ export function MyShopPage() {
     setSlugError(null);
     try {
       const updated = await api.put(`${API_BASE}/my-shop`, form, { headers: authHeader });
-      setForm({ slug: updated.slug ?? "", bio: updated.bio ?? "", location: updated.location ?? "", bannerImage: updated.bannerImage ?? "" });
+      setForm({
+        slug: updated.slug ?? "", bio: updated.bio ?? "",
+        state: updated.state ?? "", lga: updated.lga ?? "", area: updated.area ?? "", landmark: updated.landmark ?? "", location: updated.location ?? "",
+        bannerImage: updated.bannerImage ?? "",
+      });
       toast.success("Shop saved");
     } catch (err: any) {
       if (err.status === 409) {
@@ -73,14 +87,71 @@ export function MyShopPage() {
             {slugError && <p className="text-sm mt-1" style={{ color: 'var(--color-error)' }}>{slugError}</p>}
           </div>
 
-          <div>
-            <Label className="mb-1.5 block">Location</Label>
-            <Input
-              required
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              placeholder="e.g. Ibadan, Oyo"
-            />
+          <div className="p-4 rounded-lg border space-y-4" style={{ borderColor: 'var(--color-border)' }}>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Shop Location</h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="mb-1.5 block">State</Label>
+                <Select value={form.state} onValueChange={(v) => setForm({ ...form, state: v, lga: "" })}>
+                  <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                  <SelectContent>
+                    {NIGERIA_STATES.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="mb-1.5 block">LGA</Label>
+                <Select value={form.lga} onValueChange={(v) => setForm({ ...form, lga: v })} disabled={!form.state}>
+                  <SelectTrigger><SelectValue placeholder={form.state ? "Select LGA" : "Select state first"} /></SelectTrigger>
+                  <SelectContent>
+                    {(NIGERIA_STATE_LGAS[form.state] ?? []).map((l) => (
+                      <SelectItem key={l} value={l}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="mb-1.5 block">Area</Label>
+              <Input
+                required
+                value={form.area}
+                onChange={(e) => setForm({ ...form, area: e.target.value })}
+                placeholder="e.g. Ikeja GRA"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-1.5 block">Landmark (optional)</Label>
+              <Input
+                value={form.landmark}
+                onChange={(e) => setForm({ ...form, landmark: e.target.value })}
+                placeholder="e.g. Near Shoprite"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-1.5 block">Location</Label>
+              <Input
+                required
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                placeholder="e.g. 12 Allen Avenue, Ibadan"
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                Shown on your public shop page.
+              </p>
+            </div>
+
+            {(form.location || form.landmark || form.area || form.lga || form.state) && (
+              <p className="text-xs pt-1" style={{ color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)' }}>
+                {[form.location, form.landmark, form.area, form.lga, form.state].filter(Boolean).join(", ")}
+              </p>
+            )}
           </div>
 
           <div>

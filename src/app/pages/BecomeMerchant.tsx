@@ -4,6 +4,7 @@ import { Store } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { Button } from "../components/ui/button";
+import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 
 export function BecomeMerchant() {
   const { user, becomeMerchant } = useAuth();
@@ -13,6 +14,10 @@ export function BecomeMerchant() {
   const [commissionRate, setCommissionRate] = useState("");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"fbu" | "fbm">("fbm");
   const [location, setLocation] = useState("");
+  const [state, setState] = useState("");
+  const [lga, setLga] = useState("");
+  const [area, setArea] = useState("");
+  const [landmark, setLandmark] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,11 +44,23 @@ export function BecomeMerchant() {
       setError("Enter your shop's location");
       return;
     }
+    if (!state) {
+      setError("Select your state");
+      return;
+    }
+    if (!lga) {
+      setError("Select your LGA");
+      return;
+    }
+    if (!area.trim()) {
+      setError("Enter your area");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
     try {
-      await becomeMerchant(commissionType, rate, fulfillmentMethod, location.trim());
+      await becomeMerchant(commissionType, rate, fulfillmentMethod, location.trim(), state, lga, area.trim(), landmark.trim());
       navigate("/merchant", { replace: true });
     } catch (err: any) {
       setError(err.message || "Could not upgrade your account");
@@ -97,18 +114,69 @@ export function BecomeMerchant() {
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Location</label>
+          <div className="p-3 rounded-lg border space-y-3" style={{ borderColor: 'var(--color-border)' }}>
+            <p className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Shop Location</p>
+
+            <div className="flex gap-2">
+              <select
+                required
+                value={state}
+                onChange={(e) => {
+                  setState(e.target.value);
+                  setLga("");
+                }}
+                className="flex-1 px-4 py-3 rounded-lg border"
+                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              >
+                <option value="" disabled>Select state</option>
+                {NIGERIA_STATES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <select
+                required
+                disabled={!state}
+                value={lga}
+                onChange={(e) => setLga(e.target.value)}
+                className="flex-1 px-4 py-3 rounded-lg border disabled:opacity-50"
+                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              >
+                <option value="" disabled>{state ? "Select LGA" : "Select state first"}</option>
+                {(NIGERIA_STATE_LGAS[state] ?? []).map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </div>
+
             <input
               type="text"
               required
-              placeholder="e.g. Ibadan, Oyo"
+              placeholder="Area, e.g. Ikeja GRA"
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            />
+
+            <input
+              type="text"
+              placeholder="Landmark (optional), e.g. Near Shoprite"
+              value={landmark}
+              onChange={(e) => setLandmark(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            />
+
+            <input
+              type="text"
+              required
+              placeholder="e.g. 12 Allen Avenue, Ibadan"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="w-full px-4 py-3 rounded-lg border"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
               Shown on your public shop page - you can update it anytime from My Shop.
             </p>
           </div>
