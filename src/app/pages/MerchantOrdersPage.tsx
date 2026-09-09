@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChevronDown, ChevronRight, Truck } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Input } from "../components/ui/input";
@@ -64,54 +63,6 @@ function toForm(row: any): FulfillmentForm {
   };
 }
 
-function FulfillmentMethodCard() {
-  const { authHeader } = useAuth();
-  const [method, setMethod] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    api.get(`${API_BASE}/my-fulfillment`, { headers: authHeader })
-      .then((r) => setMethod(r.fulfillmentMethod))
-      .catch((err: any) => toast.error(err.message || "Could not load fulfillment method"));
-  }, []);
-
-  const handleChange = async (value: string) => {
-    setSaving(true);
-    try {
-      await api.put(`${API_BASE}/my-fulfillment`, { fulfillmentMethod: value }, { headers: authHeader });
-      setMethod(value);
-      toast.success("Fulfillment method updated");
-    } catch (err: any) {
-      toast.error(err.message || "Could not update fulfillment method");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="text-base">Fulfillment Method</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm mb-3" style={{ color: 'var(--color-text-secondary)' }}>
-          <strong>FBU (Fulfilled by Us)</strong>: we handle shipping for your orders. <strong>FBM (Fulfilled by Merchant)</strong>: you're
-          responsible for shipping and keeping tracking info up to date. This is your default - you can still override it per product.
-        </p>
-        {method !== null && (
-          <Select value={method} onValueChange={handleChange} disabled={saving}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="fbu">FBU - Fulfilled by Us</SelectItem>
-              <SelectItem value="fbm">FBM - Fulfilled by Merchant</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 export function MerchantOrdersPage() {
   const { authHeader } = useAuth();
   const { data, loading, error, refetch } = useAPI(`${API_BASE}/merchant-orders`, { headers: authHeader });
@@ -153,8 +104,6 @@ export function MerchantOrdersPage() {
       <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
         Orders containing your products, and their own line items only.
       </p>
-
-      <FulfillmentMethodCard />
 
       {loading && <p style={{ color: 'var(--color-text-secondary)' }}>Loading...</p>}
       {error && <p style={{ color: 'var(--color-error)' }}>Couldn't load orders.</p>}
