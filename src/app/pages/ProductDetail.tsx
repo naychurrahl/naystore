@@ -9,6 +9,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
+import { isPhysical, productTypeLabel } from "../utils/productTypes";
 
 function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
   return (
@@ -72,6 +73,8 @@ export function ProductDetail() {
     );
   }
 
+  const physical = isPhysical(product.productType);
+
   const handleAddToCart = () => {
     addItem(
       {
@@ -80,10 +83,11 @@ export function ProductDetail() {
         image: product.image,
         price: product.price,
         codEligible: product.codEligible,
+        productType: product.productType,
       },
-      quantity
+      physical ? quantity : 1
     );
-    toast.success(`Added ${quantity} × ${product.name} to cart`);
+    toast.success(physical ? `Added ${quantity} × ${product.name} to cart` : `Added ${product.name} to cart`);
   };
 
   const handleReviewSubmit = async (e: FormEvent) => {
@@ -129,7 +133,14 @@ export function ProductDetail() {
           </div>
 
           <div>
-            <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>{product.categories?.join(", ")}</p>
+            <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>
+              {!physical && (
+                <span className="inline-block mr-2 px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
+                  {productTypeLabel(product.productType)}
+                </span>
+              )}
+              {product.categories?.join(", ")}
+            </p>
             <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
               {product.name}
             </h1>
@@ -158,18 +169,24 @@ export function ProductDetail() {
               {product.description}
             </p>
 
-            {!product.inStock && (
+            {!physical && (
+              <p className="mb-4 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                Instant access after payment &mdash; it appears in your Library and we email you a link.
+              </p>
+            )}
+            {physical && !product.inStock && (
               <p className="mb-4 font-medium" style={{ color: 'var(--color-error)' }}>
                 Currently out of stock.
               </p>
             )}
-            {product.inStock && !product.codEligible && (
+            {physical && product.inStock && !product.codEligible && (
               <p className="mb-4 text-sm" style={{ color: 'var(--color-text-muted)' }}>
                 Not available for Cash on Delivery.
               </p>
             )}
 
             <div className="flex items-center gap-4 mb-6">
+              {physical && (
               <div className="flex items-center rounded-lg" style={{ border: '1px solid var(--color-border)' }}>
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -191,6 +208,7 @@ export function ProductDetail() {
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
+              )}
 
               <button
                 onClick={handleAddToCart}

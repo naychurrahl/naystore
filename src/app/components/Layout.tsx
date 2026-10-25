@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router";
-import { Menu, X, ShoppingCart, ShoppingBag, User, LogIn, LayoutDashboard, Store } from "lucide-react";
+import { Menu, X, ShoppingCart, ShoppingBag, User, LogIn, LayoutDashboard, Store, Library } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
@@ -171,6 +171,18 @@ export function Layout() {
                 </Link>
               )}
 
+              <Link
+                to="/library"
+                className="p-2 rounded-md transition-colors"
+                style={{ color: 'var(--color-nav-text)' }}
+                aria-label="My Library"
+                title="My Library"
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-nav-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+              >
+                <Library className="h-6 w-6" />
+              </Link>
+
               {user ? (
                 <Link
                   to="/profile"
@@ -298,6 +310,11 @@ export function Layout() {
                 <li>
                   <Link to="/orders" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
                     Order History
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/library" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                    My Library
                   </Link>
                 </li>
                 <li>

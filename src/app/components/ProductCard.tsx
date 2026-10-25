@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ShoppingCart, Star } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCart } from "../context/CartContext";
+import { isPhysical, productTypeLabel } from "../utils/productTypes";
 
 export interface ShopProduct {
   id: string;
@@ -15,6 +16,7 @@ export interface ShopProduct {
   badge?: string;
   inStock: boolean;
   codEligible: boolean;
+  productType?: string;
   avgRating?: number;
   reviewCount?: number;
   merchantName?: string | null;
@@ -60,15 +62,24 @@ export function ProductCard({ product, showMerchant = true }: { product: ShopPro
             {product.badge}
           </div>
         )}
-        <div
-          className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-xs font-medium"
-          style={{
-            backgroundColor: product.inStock ? 'var(--color-success-light)' : 'var(--color-error-light)',
-            color: product.inStock ? 'var(--color-success)' : 'var(--color-error)',
-          }}
-        >
-          {product.inStock ? "In Stock" : "Out of Stock"}
-        </div>
+        {isPhysical(product.productType) ? (
+          <div
+            className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-xs font-medium"
+            style={{
+              backgroundColor: product.inStock ? 'var(--color-success-light)' : 'var(--color-error-light)',
+              color: product.inStock ? 'var(--color-success)' : 'var(--color-error)',
+            }}
+          >
+            {product.inStock ? "In Stock" : "Out of Stock"}
+          </div>
+        ) : (
+          <div
+            className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-xs font-medium"
+            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+          >
+            {productTypeLabel(product.productType)}
+          </div>
+        )}
       </Link>
 
       <div className="p-4">

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { isPhysical } from "../utils/productTypes";
 
 export interface CartItem {
   productId: string;
@@ -7,11 +8,13 @@ export interface CartItem {
   price: number;
   codEligible: boolean;
   quantity: number;
+  // Missing on carts saved before product types existed - treated as physical.
+  productType?: string;
 }
 
 interface CartContextValue {
   items: CartItem[];
-  addItem: (product: { id: string; name: string; image: string; price: number; codEligible: boolean }, quantity?: number) => void;
+  addItem: (product: { id: string; name: string; image: string; price: number; codEligible: boolean; productType?: string }, quantity?: number) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
@@ -39,12 +42,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
+  // Non-physical items (downloads, courses, tickets) are one per order -
+  // you can't own the same ebook twice.
   const addItem: CartContextValue["addItem"] = (product, quantity = 1) => {
+    const single = !isPhysical(product.productType);
     setItems((prev) => {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
         return prev.map((item) =>
-          item.productId === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          item.productId === product.id ? { ...item, quantity: single ? 1 : item.quantity + quantity } : item
         );
       }
       return [
@@ -55,7 +61,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           image: product.image,
           price: product.price,
           codEligible: product.codEligible,
-          quantity,
+          productType: product.productType ?? "physical",
+          quantity: single ? 1 : quantity,
         },
       ];
     });
@@ -65,7 +72,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) =>
       quantity <= 0
         ? prev.filter((item) => item.productId !== productId)
-        : prev.map((item) => (item.productId === productId ? { ...item, quantity } : item))
+        : prev.map((item) =>
+            item.productId === productId ? { ...item, quantity: isPhysical(item.productType) ? quantity : 1 } : item
+          )
     );
   };
 

@@ -199,7 +199,7 @@ function FieldBlock({
             </SelectTrigger>
             <SelectContent>
               {field.options.map((opt) => (
-                <SelectItem key={opt || BLANK} value={opt || BLANK}>{opt || "— None —"}</SelectItem>
+                <SelectItem key={opt || BLANK} value={opt || BLANK}>{field.optionLabels?.[opt] ?? (opt || "— None —")}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -213,6 +213,8 @@ function FieldBlock({
   );
 }
 
+export type ExtraSection = { label: string; content: ReactNode };
+
 export function ResourceForm({
   config,
   initialData,
@@ -224,9 +226,10 @@ export function ResourceForm({
   initialData: Record<string, any> | null;
   onSuccess: () => void;
   onCancel: () => void;
-  // An extra labeled section rendered after the config-driven fields, e.g.
-  // commission negotiation on Products - see ResourceTable's formExtra prop.
-  extraSection?: { label: string; content: ReactNode } | null;
+  // Extra labeled section(s) rendered after the config-driven fields, e.g.
+  // commission negotiation and digital files on Products - see
+  // ResourceTable's formExtra prop.
+  extraSection?: ExtraSection | ExtraSection[] | null;
 }) {
   const { authHeader } = useAuth();
   const isEdit = !!initialData;
@@ -234,8 +237,10 @@ export function ResourceForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const visibleFields = config.fields.filter((f) => !(isEdit && f.createOnly) && !(!isEdit && f.hideOnCreate));
+  const isShown = (f: FieldConfig) => !f.showIf || f.showIf(formData);
+  const visibleFields = config.fields.filter((f) => !(isEdit && f.createOnly) && !(!isEdit && f.hideOnCreate) && isShown(f));
   const groups = groupFields(visibleFields);
+  const extraSections = (Array.isArray(extraSection) ? extraSection : extraSection ? [extraSection] : []).filter(Boolean);
 
   const setValue = (key: string, value: any) => setFormData((prev) => ({ ...prev, [key]: value }));
 
@@ -248,6 +253,7 @@ export function ResourceForm({
     for (const field of config.fields) {
       if (isEdit && field.createOnly) continue;
       if (!isEdit && field.hideOnCreate) continue;
+      if (!isShown(field)) continue;
       if (field.type === "password" && isEdit && !formData[field.key]) continue; // blank = unchanged
       if (field.type === "tags") {
         payload[field.key] = String(formData[field.key] ?? "")
@@ -302,17 +308,17 @@ export function ResourceForm({
         </div>
       ))}
 
-      {extraSection && (
-        <div>
+      {extraSections.map((section) => (
+        <div key={section.label}>
           <p
             className="text-[11px] font-semibold uppercase tracking-wider mb-3 pb-2"
             style={{ color: 'var(--color-text-muted)', borderBottom: '1px solid var(--color-border)' }}
           >
-            {extraSection.label}
+            {section.label}
           </p>
-          {extraSection.content}
+          {section.content}
         </div>
-      )}
+      ))}
 
       {error && <p className="text-sm" style={{ color: 'var(--color-error)' }}>{error}</p>}
 

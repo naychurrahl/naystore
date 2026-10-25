@@ -144,10 +144,12 @@ export function MerchantOrdersPage() {
                                 <p style={{ color: 'var(--color-text-muted)' }}>Contact</p>
                                 <p style={{ color: 'var(--color-text-primary)' }}>{row.email} · {row.phone}</p>
                               </div>
-                              <div>
-                                <p style={{ color: 'var(--color-text-muted)' }}>Ship To</p>
-                                <p style={{ color: 'var(--color-text-primary)' }}>{row.fullAddress}</p>
-                              </div>
+                              {row.delivery !== "digital" && (
+                                <div>
+                                  <p style={{ color: 'var(--color-text-muted)' }}>Ship To</p>
+                                  <p style={{ color: 'var(--color-text-primary)' }}>{row.fullAddress}</p>
+                                </div>
+                              )}
                             </div>
 
                             <div className="space-y-1 mb-4">
@@ -159,6 +161,12 @@ export function MerchantOrdersPage() {
                               ))}
                             </div>
 
+                            {row.delivery === "digital" ? (
+                              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                                Delivered digitally - the buyer got instant access in their Library when payment went through. Nothing to ship.
+                              </p>
+                            ) : (
+                            <>
                             <div className="flex items-center gap-2 mb-3">
                               <Truck className="h-4 w-4" style={{ color: 'var(--color-primary)' }} />
                               <span className="font-medium text-sm" style={{ color: 'var(--color-text-primary)' }}>
@@ -227,6 +235,8 @@ export function MerchantOrdersPage() {
                                   </Button>
                                 </div>
                               </div>
+                            )}
+                            </>
                             )}
                           </div>
                         </TableCell>

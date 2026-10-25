@@ -13,12 +13,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
-import { ResourceForm } from "./ResourceForm";
+import { ResourceForm, type ExtraSection } from "./ResourceForm";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 import type { ColumnConfig, ResourceConfig } from "../types/resources";
+import { productTypeLabel } from "../utils/productTypes";
 
 // Mirrors the backend's LOW_STOCK_THRESHOLD (Functions.php) so the pill
 // agrees with the dashboard's own low-stock count.
@@ -186,7 +187,7 @@ export function ResourceTable({
   // Commission negotiation panel on Products - kept as a prop rather than
   // part of ResourceConfig since it needs JSX (config files stay plain data).
   // Only called for an existing row (create has no id to negotiate against).
-  formExtra?: (row: Record<string, any>, refetch: () => void) => { label: string; content: ReactNode } | null;
+  formExtra?: (row: Record<string, any>, refetch: () => void) => ExtraSection | ExtraSection[] | null;
 }) {
   const { user, authHeader } = useAuth();
   const { data, loading, error, refetch } = useAPI(`${API_BASE}${config.listEndpoint ?? config.endpoint}`, { headers: authHeader });
@@ -215,7 +216,13 @@ export function ResourceTable({
     if (col.product) return <ProductCell row={row} />;
     if (col.price) return <PriceCell row={row} />;
     if (col.toggle) return <VisibleToggle row={row} config={config} refetch={refetch} />;
-    if (col.stock) return <StockToggle row={row} config={config} refetch={refetch} />;
+    if (col.stock) {
+      // Downloads (and later courses/tickets) have no stock to toggle.
+      if (row.productType && row.productType !== "physical") {
+        return <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{productTypeLabel(row.productType)}</span>;
+      }
+      return <StockToggle row={row} config={config} refetch={refetch} />;
+    }
     if (col.icon) return <BooleanIcon value={!!row[col.key]} label={col.label || col.key} />;
     return <CellValue column={col} value={row[col.key]} />;
   };
