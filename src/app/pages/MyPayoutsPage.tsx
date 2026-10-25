@@ -17,6 +17,7 @@ interface Commission {
   commissionAmount: number;
   merchantAmount: number;
   payoutStatus: "pending" | "paid";
+  payoutMethod: "naira" | "wallet" | null;
   paidAt: string | null;
   createdAt: string;
 }
@@ -86,15 +87,20 @@ export function MyPayoutsPage() {
                 <TableCell className="text-right tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>{money(item.commissionAmount)}</TableCell>
                 <TableCell className="text-right tabular-nums font-medium" style={{ color: 'var(--color-text-primary)' }}>{money(item.merchantAmount)}</TableCell>
                 <TableCell>
-                  <span
-                    className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium capitalize"
-                    style={{
-                      backgroundColor: item.payoutStatus === "paid" ? 'var(--color-success-light)' : 'var(--color-accent-light)',
-                      color: item.payoutStatus === "paid" ? 'var(--color-success)' : 'var(--color-accent)',
-                    }}
-                  >
-                    {item.payoutStatus}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium capitalize"
+                      style={{
+                        backgroundColor: item.payoutStatus === "paid" ? 'var(--color-success-light)' : 'var(--color-accent-light)',
+                        color: item.payoutStatus === "paid" ? 'var(--color-success)' : 'var(--color-accent)',
+                      }}
+                    >
+                      {item.payoutStatus}
+                    </span>
+                    {item.payoutStatus === "paid" && item.payoutMethod === "wallet" && (
+                      <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>via wallet</span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                   {new Date(item.createdAt).toLocaleDateString()}

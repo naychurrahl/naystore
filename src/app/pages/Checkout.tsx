@@ -9,6 +9,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { FulfillmentStatus } from "../components/FulfillmentStatus";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
+import { isPhysical } from "../utils/productTypes";
 
 type PaymentChoice = "cod" | "card" | "split";
 
@@ -38,6 +39,10 @@ export function Checkout() {
       }));
     }
   }, [user]);
+
+  // Only carts with something to ship need a delivery address - downloads,
+  // courses and tickets are delivered to the buyer's email and Library.
+  const needsAddress = items.some((item) => isPhysical(item.productType));
 
   const codItems = items.filter((item) => item.codEligible);
   const cardOnlyItems = items.filter((item) => !item.codEligible);
@@ -131,6 +136,15 @@ export function Checkout() {
             </div>
           ))}
 
+          {!paymentFailed && placedOrders.some((o) => o.items.some((i: any) => !isPhysical(i.productType))) && (
+            <Link
+              to="/library"
+              className="inline-flex items-center gap-2 px-6 py-3 mb-3 mr-2 rounded-lg font-medium transition-colors"
+              style={{ border: '1px solid var(--color-primary)', color: 'var(--color-primary)' }}
+            >
+              Open my Library
+            </Link>
+          )}
           <Link
             to="/orders"
             state={{ placedOrders, paymentFailed }}
@@ -195,7 +209,7 @@ export function Checkout() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
-    if (user && saveDetails) {
+    if (user && saveDetails && needsAddress) {
       setShowSaveConfirm(true);
       return;
     }
@@ -279,6 +293,13 @@ export function Checkout() {
               </div>
             ))}
 
+            {!needsAddress && (
+              <p className="p-4 rounded-lg border text-sm" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
+                Nothing to ship &mdash; your purchase is delivered to your email and your Library right after payment.
+              </p>
+            )}
+
+            {needsAddress && (
             <div className="p-4 rounded-lg border space-y-4" style={{ borderColor: 'var(--color-border)' }}>
               <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Delivery Address</h3>
 
@@ -370,6 +391,7 @@ export function Checkout() {
                 </p>
               )}
             </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>

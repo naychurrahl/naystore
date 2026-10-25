@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Wallet as WalletIcon } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
@@ -184,6 +185,60 @@ function FulfillmentSection({ method, onChange }: { method: string | null; onCha
   );
 }
 
+// Connecting is a real OAuth+PKCE round trip against the external wallet
+// (Naytery) - the merchant's browser leaves the app entirely, logs into/
+// authorizes on the wallet's own page, then lands back on this same page
+// via a server-side redirect carrying ?wallet=connected|error (consumed by
+// MyShopPage's effect below, not by this component - it only knows the
+// current connected/disconnected state).
+function WalletSection({ connected, onChange }: { connected: boolean | null; onChange: (connected: boolean) => void }) {
+  const { authHeader } = useAuth();
+  const [busy, setBusy] = useState(false);
+
+  const connect = async () => {
+    setBusy(true);
+    try {
+      const { url } = await api.get(`${API_BASE}/wallet-connect`, { headers: authHeader });
+      window.location.href = url;
+    } catch (err: any) {
+      toast.error(err.message || "Could not start wallet connection");
+      setBusy(false);
+    }
+  };
+
+  const disconnect = async () => {
+    setBusy(true);
+    try {
+      await api.delete(`${API_BASE}/wallet-connect`, { headers: authHeader });
+      onChange(false);
+      toast.success("Wallet disconnected");
+    } catch (err: any) {
+      toast.error(err.message || "Could not disconnect wallet");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="p-4 rounded-lg border space-y-3" style={{ borderColor: 'var(--color-border)' }}>
+      <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Wallet</h3>
+      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        Connect your wallet so admin can pay your commission out as tokens instead of (or alongside) a naira payout.
+      </p>
+      {connected ? (
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--color-success)' }}>
+            <WalletIcon className="h-4 w-4" /> Connected
+          </span>
+          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={disconnect}>Disconnect</Button>
+        </div>
+      ) : (
+        <Button type="button" size="sm" disabled={busy} onClick={connect}>{busy ? "Redirecting..." : "Connect Wallet"}</Button>
+      )}
+    </div>
+  );
+}
+
 export function MyShopPage() {
   const { authHeader } = useAuth();
   const [form, setForm] = useState({
@@ -196,9 +251,38 @@ export function MyShopPage() {
     pendingCommissionType: null, pendingCommissionRate: null, pendingCommissionProposedBy: null,
   });
   const [fulfillmentMethod, setFulfillmentMethod] = useState<string | null>(null);
+  const [walletConnected, setWalletConnected] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [slugError, setSlugError] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Lands here after the OAuth+PKCE round trip against the external wallet -
+  // the backend's completeWalletConnect() redirects back with this query
+  // param rather than returning JSON, since that leg is a browser
+  // navigation, not an XHR.
+  useEffect(() => {
+    const wallet = searchParams.get("wallet");
+    if (!wallet) return;
+    if (wallet === "connected") {
+      setWalletConnected(true);
+      toast.success("Wallet connected");
+    } else {
+      toast.error("Could not connect wallet" + (searchParams.get("reason") ? ` (${searchParams.get("reason")})` : ""));
+    }
+    setSearchParams((prev) => {
+      prev.delete("wallet");
+      prev.delete("reason");
+      return prev;
+    }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    api.get(`${API_BASE}/wallet-status`, { headers: authHeader })
+      .then((r) => setWalletConnected(r.connected))
+      .catch(() => setWalletConnected(false));
+  }, []);
 
   useEffect(() => {
     api.get(`${API_BASE}/my-shop`, { headers: authHeader })
@@ -344,6 +428,8 @@ export function MyShopPage() {
           <CommissionSection state={commission} onProposed={setCommission} />
 
           <FulfillmentSection method={fulfillmentMethod} onChange={setFulfillmentMethod} />
+
+          <WalletSection connected={walletConnected} onChange={setWalletConnected} />
 
           <div>
             <Label className="mb-1.5 block">Bio</Label>

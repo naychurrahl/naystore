@@ -6,6 +6,7 @@ import { getGuestId } from "../utils/guestId.js";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { FulfillmentStatus } from "../components/FulfillmentStatus";
+import { isPhysical, productTypeLabel } from "../utils/productTypes";
 
 function OrderCard({ order, highlight = false }: { order: any; highlight?: boolean }) {
   const paymentLine =
@@ -39,7 +40,12 @@ function OrderCard({ order, highlight = false }: { order: any; highlight?: boole
       </p>
       {order.items.map((item: any, index: number) => (
         <div key={index} className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          <span>{item.quantity} × {item.name}</span>
+          <span>
+            {item.quantity} × {item.name}
+            {!isPhysical(item.productType) && (
+              <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}> · {productTypeLabel(item.productType)}</span>
+            )}
+          </span>
           <span>₦{(item.price * item.quantity).toFixed(2)}</span>
         </div>
       ))}

@@ -18,6 +18,11 @@ export interface FieldConfig {
   // the array's field order still controls each field's position within its
   // section, and a section's own position is set by its first field.
   section?: string;
+  // Display text for `options` values in a select (value -> label).
+  optionLabels?: Record<string, string>;
+  // Show this field (and send it on save) only while this returns true for
+  // the form's current values - e.g. stock fields only for physical products.
+  showIf?: (data: Record<string, any>) => boolean;
 }
 
 export interface ColumnConfig {
@@ -67,6 +72,9 @@ export interface ResourceConfig {
 // whenever it's locked, so the toggle can look like it "did nothing" in that
 // case - the helpText explains why, and the row's real state always wins on
 // refetch.
+// Stock, Cash on Delivery and fulfilment only apply to products that ship.
+const isPhysicalForm = (data: Record<string, any>) => !data.productType || data.productType === "physical";
+
 export const merchantProductsConfig: ResourceConfig = {
   key: "my-products",
   label: "Products",
@@ -82,15 +90,23 @@ export const merchantProductsConfig: ResourceConfig = {
     { key: "visible", label: "Visible", toggle: true },
   ],
   fields: [
+    {
+      // Fixed once created - it decides how the product is delivered.
+      key: "productType", label: "Product type", type: "select", createOnly: true, required: true, defaultValue: "physical",
+      options: ["physical", "digital"],
+      optionLabels: { physical: "Physical product (shipped)", digital: "Digital download (ebook, software, files)" },
+      helpText: "Can't be changed later. Digital products are card-only and delivered instantly to the buyer's Library - you'll add the files after creating it.",
+      section: "Basics",
+    },
     { key: "name", label: "Name", type: "text", required: true, section: "Basics" },
     { key: "categories", label: "Categories", type: "multiselect-create", optionsFrom: "/categories?type=product", required: true, section: "Basics" },
     { key: "description", label: "Description", type: "textarea", required: true, section: "Basics" },
     { key: "image", label: "Image", type: "image", folder: "products", section: "Photo" },
     { key: "price", label: "Price", type: "number", required: true, section: "Pricing & Stock" },
     { key: "originalPrice", label: "Original Price", type: "number", section: "Pricing & Stock" },
-    { key: "inStock", label: "In Stock", type: "checkbox", defaultValue: true, section: "Pricing & Stock" },
-    { key: "stockQuantity", label: "Stock Quantity", type: "number", helpText: "Optional. Leave blank if you don't track exact quantity - low-stock alerts only show once this is set.", section: "Pricing & Stock" },
-    { key: "codEligible", label: "Cash on Delivery", type: "checkbox", defaultValue: true, section: "Settings" },
+    { key: "inStock", label: "In Stock", type: "checkbox", defaultValue: true, section: "Pricing & Stock", showIf: isPhysicalForm },
+    { key: "stockQuantity", label: "Stock Quantity", type: "number", helpText: "Optional. Leave blank if you don't track exact quantity - low-stock alerts only show once this is set.", section: "Pricing & Stock", showIf: isPhysicalForm },
+    { key: "codEligible", label: "Cash on Delivery", type: "checkbox", defaultValue: true, section: "Settings", showIf: isPhysicalForm },
     { key: "badge", label: "Badge", type: "text", section: "Settings" },
     { key: "visible", label: "Visible", type: "checkbox", defaultValue: true, helpText: "You can show or hide your own listing. If staff hides it for moderation, only they can turn it back on.", section: "Settings" },
     {
@@ -100,7 +116,7 @@ export const merchantProductsConfig: ResourceConfig = {
       // creation, when editing shows the actual value in effect.
       key: "fulfillmentMethod", label: "Fulfillment", type: "fulfillment", hideOnCreate: true,
       helpText: "How this product is fulfilled. Defaults to what you set on the Orders page - change it here only if this product needs different handling.",
-      section: "Settings",
+      section: "Settings", showIf: isPhysicalForm,
     },
   ],
 };

@@ -6,6 +6,7 @@ import { getGuestId } from "../utils/guestId.js";
 import { useAuth } from "../context/AuthContext";
 import { FULFILLMENT_LABELS } from "../components/FulfillmentStatus";
 import { NotFound } from "./NotFound";
+import { isPhysical, productTypeLabel } from "../utils/productTypes";
 
 function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
   const location = [fulfillment.city, fulfillment.state, fulfillment.country].filter(Boolean).join(", ");
@@ -109,10 +110,12 @@ export function OrderDetail() {
 
         <div className="grid sm:grid-cols-2 gap-6 mb-8">
           <div className="p-4 rounded-lg" style={{ border: '1px solid var(--color-border)' }}>
-            <h2 className="font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Delivery details</h2>
+            <h2 className="font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+              {order.fullAddress ? "Delivery details" : "Contact details"}
+            </h2>
             <div className="text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
               <p>{order.customerName}</p>
-              <p>{order.fullAddress}</p>
+              {order.fullAddress && <p>{order.fullAddress}</p>}
               <p>{order.phone}</p>
               <p>{order.email}</p>
               {order.notes && <p className="italic mt-2">Note: {order.notes}</p>}
@@ -123,7 +126,22 @@ export function OrderDetail() {
             <h2 className="font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>Items</h2>
             {order.items.map((item: any, index: number) => (
               <div key={index} className="flex justify-between text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>
-                <span>{item.quantity} × {item.name}</span>
+                <span>
+                  {item.quantity} × {item.name}
+                  {!isPhysical(item.productType) && (
+                    <span className="block text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      {productTypeLabel(item.productType)}
+                      {order.paymentStatus === "success" && order.status !== "cancelled" && (
+                        <>
+                          {" · "}
+                          <Link to="/library" className="hover:underline" style={{ color: 'var(--color-primary)' }}>
+                            Open in Library
+                          </Link>
+                        </>
+                      )}
+                    </span>
+                  )}
+                </span>
                 <span>₦{(item.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
@@ -138,14 +156,18 @@ export function OrderDetail() {
           </div>
         </div>
 
-        <h2 className="font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-          <Package className="h-4 w-4" /> Shipments
-        </h2>
-        <div className="space-y-3">
-          {(order.fulfillments ?? []).map((f: any) => (
-            <FulfillmentCard key={f.id} fulfillment={f} />
-          ))}
-        </div>
+        {(order.fulfillments ?? []).length > 0 && (
+          <>
+            <h2 className="font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <Package className="h-4 w-4" /> Shipments
+            </h2>
+            <div className="space-y-3">
+              {(order.fulfillments ?? []).map((f: any) => (
+                <FulfillmentCard key={f.id} fulfillment={f} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

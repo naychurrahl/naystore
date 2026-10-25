@@ -16,6 +16,7 @@ import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Profile } from "./pages/Profile";
 import { OrderHistory } from "./pages/OrderHistory";
+import { Library } from "./pages/Library";
 import { OrderDetail } from "./pages/OrderDetail";
 import { NotFound } from "./pages/NotFound";
 import { BecomeMerchant } from "./pages/BecomeMerchant";
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
       { path: "register", Component: Register },
       { path: "profile", Component: Profile },
       { path: "orders", Component: OrderHistory },
+      { path: "library", Component: Library },
       { path: "orders/:id", Component: OrderDetail },
       { path: "become-merchant", Component: BecomeMerchant },
       { path: "*", Component: NotFound }
