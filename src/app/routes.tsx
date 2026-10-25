@@ -28,6 +28,7 @@ import { MyPayoutsPage } from "./pages/MyPayoutsPage";
 import { MerchantChatPage } from "./pages/MerchantChatPage";
 import { MerchantSupportPage } from "./pages/MerchantSupportPage";
 import { MerchantProfilePage } from "./pages/MerchantProfilePage";
+import { Learn } from "./pages/Learn";
 
 export const router = createBrowserRouter([
   {
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
       { path: "profile", Component: Profile },
       { path: "orders", Component: OrderHistory },
       { path: "library", Component: Library },
+      { path: "learn/:productId", Component: Learn },
       { path: "orders/:id", Component: OrderDetail },
       { path: "become-merchant", Component: BecomeMerchant },
       { path: "*", Component: NotFound }
@@ -64,6 +66,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, Component: MerchantDashboard },
           { path: "products", Component: MerchantProductsPage },
+          // Lazy: keeps the rich-text editor out of the shop's main bundle.
+          { path: "products/:id/course", lazy: () => import("./pages/MerchantCourseBuilderPage").then((m) => ({ Component: m.MerchantCourseBuilderPage })) },
           { path: "orders", Component: MerchantOrdersPage },
           { path: "shop", Component: MyShopPage },
           { path: "payouts", Component: MyPayoutsPage },

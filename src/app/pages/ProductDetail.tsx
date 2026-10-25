@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { ArrowLeft, Minus, Plus, ShoppingCart, Star, MessageCircle, Store } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingCart, Star, MessageCircle, Store, GraduationCap, Lock, PlayCircle, FileText } from "lucide-react";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useCart } from "../context/CartContext";
@@ -10,6 +10,8 @@ import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
+import { getGuestId } from "../utils/guestId.js";
+import { formatDuration } from "../utils/formatDuration";
 
 function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
   return (
@@ -45,6 +47,13 @@ export function ProductDetail() {
   const { data: reviewsData, refetch: refetchReviews } = useAPI(`${API_BASE}/reviews?productId=${id}`);
   const reviews = (reviewsData ?? []) as any[];
 
+  // Courses: the curriculum, and whether this visitor is already enrolled.
+  const { data: courseData } = useAPI(
+    product?.productType === "course" ? `${API_BASE}/learn/${id}?guestId=${encodeURIComponent(getGuestId())}` : null,
+    user ? { headers: authHeader } : {}
+  );
+  const course = courseData as any;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-surface)' }}>
@@ -74,6 +83,7 @@ export function ProductDetail() {
   }
 
   const physical = isPhysical(product.productType);
+  const emptyCourse = product.productType === "course" && !product.lessonCount;
 
   const handleAddToCart = () => {
     addItem(
@@ -210,15 +220,26 @@ export function ProductDetail() {
               </div>
               )}
 
+              {course?.enrolled ? (
+                <Link
+                  to={`/learn/${id}?token=${encodeURIComponent(course.token)}`}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors"
+                  style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                >
+                  <GraduationCap className="h-5 w-5" />
+                  Go to course
+                </Link>
+              ) : (
               <button
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
+                disabled={!product.inStock || emptyCourse}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
                 style={{ backgroundColor: 'var(--color-cart-button)', color: 'white' }}
               >
                 <ShoppingCart className="h-5 w-5" />
-                Add to Cart
+                {emptyCourse ? "Enrolment opens soon" : "Add to Cart"}
               </button>
+              )}
             </div>
 
             {product.merchantSlug && (
@@ -244,6 +265,45 @@ export function ProductDetail() {
             )}
           </div>
         </div>
+
+        {course && course.lessonCount > 0 && (
+          <div className="mt-12 max-w-3xl">
+            <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Course content</h2>
+            <p className="text-sm mb-4" style={{ color: 'var(--color-text-muted)' }}>
+              {course.modules.length} module{course.modules.length === 1 ? "" : "s"} · {course.lessonCount} lesson{course.lessonCount === 1 ? "" : "s"}
+              {course.durationSeconds ? ` · ${formatDuration(course.durationSeconds)} of video` : ""}
+            </p>
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
+              {course.modules.map((module: any, mi: number) => (
+                <div key={module.id} style={{ borderTop: mi ? '1px solid var(--color-border)' : undefined }}>
+                  <p className="px-4 py-3 font-semibold" style={{ color: 'var(--color-text-primary)', backgroundColor: 'var(--color-product-card)' }}>
+                    {mi + 1}. {module.title}
+                  </p>
+                  <ul>
+                    {module.lessons.map((lesson: any) => {
+                      const open = !lesson.locked;
+                      const Icon = !open ? Lock : lesson.hasVideo ? PlayCircle : FileText;
+                      return (
+                        <li key={lesson.id} className="flex items-center gap-3 px-4 py-2.5 text-sm" style={{ borderTop: '1px solid var(--color-border)' }}>
+                          <Icon className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} />
+                          <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--color-text-secondary)' }}>{lesson.title}</span>
+                          {lesson.isPreview && !course.enrolled && (
+                            <Link to={`/learn/${id}?lesson=${encodeURIComponent(lesson.id)}`} className="font-medium hover:underline flex-shrink-0" style={{ color: 'var(--color-primary)' }}>
+                              Preview
+                            </Link>
+                          )}
+                          {lesson.durationSeconds ? (
+                            <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-muted)' }}>{formatDuration(lesson.durationSeconds)}</span>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Reviews */}
         <div className="mt-12 max-w-3xl">

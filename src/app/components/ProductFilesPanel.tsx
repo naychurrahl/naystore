@@ -11,7 +11,7 @@ interface ProductFile {
   size: number | null;
 }
 
-function formatSize(bytes: number | null): string {
+export function formatSize(bytes: number | null): string {
   if (!bytes) return "";
   const units = ["B", "KB", "MB", "GB"];
   let size = bytes;
@@ -25,7 +25,7 @@ function formatSize(bytes: number | null): string {
 
 // PUT straight to the signed R2 link (the file never passes through our
 // backend), reporting progress - fetch() can't report upload progress.
-function uploadToSignedUrl(url: string, file: File, onProgress: (pct: number) => void): Promise<void> {
+export function uploadToSignedUrl(url: string, file: File, onProgress: (pct: number) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url);

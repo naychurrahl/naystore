@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from "react-router";
-import { Download, Library as LibraryIcon, FileText } from "lucide-react";
+import { Download, Library as LibraryIcon, FileText, GraduationCap } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { getGuestId } from "../utils/guestId.js";
@@ -22,6 +22,8 @@ interface LibraryItem {
   name: string;
   image: string | null;
   files: LibraryFile[];
+  lessonCount: number;
+  completedCount: number;
   createdAt: string;
 }
 
@@ -60,7 +62,7 @@ export function Library() {
         <p className="mb-8" style={{ color: 'var(--color-text-secondary)' }}>
           {token
             ? "Your purchase, opened from your email link."
-            : "Downloads and other digital purchases you've bought."}
+            : "Downloads, courses and other digital purchases you've bought."}
         </p>
 
         {loading && <p style={{ color: 'var(--color-text-muted)' }}>Loading your Library…</p>}
@@ -128,7 +130,32 @@ export function Library() {
                     ))}
                   </ul>
                 )}
-                {item.productType !== "digital" && (
+                {item.productType === "course" && item.productId && (
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex-1 min-w-[160px]">
+                      <p className="text-xs mb-1" style={{ color: 'var(--color-text-secondary)' }}>
+                        {item.completedCount} of {item.lessonCount} lessons complete
+                      </p>
+                      <div className="h-2 rounded" style={{ backgroundColor: 'var(--color-border)' }}>
+                        <div
+                          className="h-2 rounded"
+                          style={{
+                            width: `${item.lessonCount ? Math.round((item.completedCount / item.lessonCount) * 100) : 0}%`,
+                            backgroundColor: 'var(--color-success)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <Link
+                      to={`/learn/${encodeURIComponent(item.productId)}?token=${encodeURIComponent(item.token)}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium flex-shrink-0"
+                      style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                    >
+                      <GraduationCap className="h-4 w-4" /> {item.completedCount > 0 ? "Continue course" : "Start course"}
+                    </Link>
+                  </div>
+                )}
+                {item.productType !== "digital" && item.productType !== "course" && (
                   <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
                     Access for this item is coming soon.
                   </p>
