@@ -1,0 +1,38 @@
+/* Lesson text - shared by the rich-text editor and the course player.
+   Tailwind's preflight resets headings and lists, so they're restyled here. */
+.lesson-content {
+  color: var(--color-text-primary);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.lesson-content > * + * { margin-top: 0.85em; }
+.lesson-content h2 { font-size: 1.4rem; font-weight: 700; margin-top: 1.4em; }
+.lesson-content h3 { font-size: 1.15rem; font-weight: 600; margin-top: 1.2em; }
+.lesson-content ul { list-style: disc; padding-left: 1.5em; }
+.lesson-content ol { list-style: decimal; padding-left: 1.5em; }
+.lesson-content li + li { margin-top: 0.3em; }
+.lesson-content li > p { margin: 0; }
+.lesson-content a { color: var(--color-primary); text-decoration: underline; }
+.lesson-content blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 1em;
+  color: var(--color-text-secondary);
+}
+.lesson-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+}
+.lesson-content pre {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+}
+.lesson-content pre code { background: none; border: 0; padding: 0; }
+.lesson-content img { max-width: 100%; height: auto; border-radius: 8px; }
+.lesson-content hr { border: 0; border-top: 1px solid var(--color-border); }
