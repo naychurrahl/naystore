@@ -14,6 +14,13 @@ export function isPhysical(type?: string | null): boolean {
   return !type || type === "physical";
 }
 
+// Downloads and courses live in the buyer's account, so guests can't buy
+// them (physical goods and tickets are fine). Mirrors the backend's
+// ACCOUNT_ONLY_TYPES.
+export function requiresAccount(type?: string | null): boolean {
+  return type === "digital" || type === "course";
+}
+
 export function productTypeLabel(type?: string | null): string {
   return PRODUCT_TYPE_LABELS[(type as ProductType) || "physical"] ?? PRODUCT_TYPE_LABELS.physical;
 }

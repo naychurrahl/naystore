@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from "react-router";
-import { Award, Download, Library as LibraryIcon, FileText, GraduationCap } from "lucide-react";
+import { Award, CalendarDays, CalendarPlus, CheckCircle2, Download, Globe, Library as LibraryIcon, FileText, GraduationCap, MapPin, QrCode } from "lucide-react";
+import { formatEventRange } from "../utils/eventTime";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { getGuestId } from "../utils/guestId.js";
@@ -25,6 +26,16 @@ interface LibraryItem {
   lessonCount: number;
   completedCount: number;
   certificateCode: string | null;
+  tickets: { code: string; attendeeName: string; tierName: string; checkedInAt: string | null }[];
+  event: {
+    startsAt: string;
+    endsAt: string | null;
+    locationType: "venue" | "online";
+    venueName: string | null;
+    venueAddress: string | null;
+    onlineUrl: string | null;
+    accessNotes: string | null;
+  } | null;
   createdAt: string;
 }
 
@@ -165,7 +176,53 @@ export function Library() {
                     )}
                   </div>
                 )}
-                {item.productType !== "digital" && item.productType !== "course" && (
+                {item.productType === "ticket" && (
+                  <div className="space-y-3 text-sm">
+                    {item.event && (
+                      <div className="space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
+                        <p className="flex items-start gap-2"><CalendarDays className="h-4 w-4 mt-0.5 flex-shrink-0" /> {formatEventRange(item.event.startsAt, item.event.endsAt)}</p>
+                        {item.event.locationType === "online" ? (
+                          <p className="flex items-start gap-2 min-w-0">
+                            <Globe className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <a href={item.event.onlineUrl ?? "#"} target="_blank" rel="noreferrer" className="hover:underline truncate" style={{ color: 'var(--color-primary)' }}>
+                              Join online
+                            </a>
+                          </p>
+                        ) : (
+                          <p className="flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" /> {[item.event.venueName, item.event.venueAddress].filter(Boolean).join(", ")}</p>
+                        )}
+                        {item.event.accessNotes && <p className="whitespace-pre-line" style={{ color: 'var(--color-text-muted)' }}>{item.event.accessNotes}</p>}
+                      </div>
+                    )}
+                    <ul className="space-y-2">
+                      {item.tickets.map((ticket) => (
+                        <li key={ticket.code} className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg" style={{ border: '1px solid var(--color-border)' }}>
+                          <span style={{ color: 'var(--color-text-secondary)' }}>
+                            <strong style={{ color: 'var(--color-text-primary)' }}>{ticket.attendeeName}</strong> &middot; {ticket.tierName}
+                            {ticket.checkedInAt && (
+                              <span className="inline-flex items-center gap-1 ml-2 text-xs" style={{ color: 'var(--color-success)' }}>
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Checked in
+                              </span>
+                            )}
+                          </span>
+                          <span className="flex items-center gap-3">
+                            <a href={`${API_BASE}/tickets/${encodeURIComponent(ticket.code)}/calendar`} className="inline-flex items-center gap-1 text-xs hover:underline" style={{ color: 'var(--color-text-secondary)' }}>
+                              <CalendarPlus className="h-3.5 w-3.5" /> Calendar
+                            </a>
+                            <Link
+                              to={`/tickets/${encodeURIComponent(ticket.code)}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium"
+                              style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                            >
+                              <QrCode className="h-4 w-4" /> Show ticket
+                            </Link>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {!["digital", "course", "ticket"].includes(item.productType) && (
                   <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
                     Access for this item is coming soon.
                   </p>

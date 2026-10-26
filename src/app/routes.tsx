@@ -30,6 +30,8 @@ import { MerchantSupportPage } from "./pages/MerchantSupportPage";
 import { MerchantProfilePage } from "./pages/MerchantProfilePage";
 import { Learn } from "./pages/Learn";
 import { Certificate } from "./pages/Certificate";
+import { TicketPage } from "./pages/TicketPage";
+import { MerchantEventBuilderPage } from "./pages/MerchantEventBuilderPage";
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +54,7 @@ export const router = createBrowserRouter([
       { path: "orders", Component: OrderHistory },
       { path: "library", Component: Library },
       { path: "learn/:productId", Component: Learn },
+      { path: "tickets/:code", Component: TicketPage },
       { path: "orders/:id", Component: OrderDetail },
       { path: "become-merchant", Component: BecomeMerchant },
       { path: "*", Component: NotFound }
@@ -68,6 +71,7 @@ export const router = createBrowserRouter([
           { index: true, Component: MerchantDashboard },
           { path: "products", Component: MerchantProductsPage },
           // Lazy: keeps the rich-text editor out of the shop's main bundle.
+          { path: "products/:id/event", Component: MerchantEventBuilderPage },
           { path: "products/:id/course", lazy: () => import("./pages/MerchantCourseBuilderPage").then((m) => ({ Component: m.MerchantCourseBuilderPage })) },
           { path: "orders", Component: MerchantOrdersPage },
           { path: "shop", Component: MyShopPage },
@@ -81,4 +85,8 @@ export const router = createBrowserRouter([
   },
   // Outside the shop layout, so it prints as just the certificate.
   { path: "/certificates/:code", Component: Certificate },
+  // Full-screen door scanner for phones (lazy: keeps the camera/QR reader
+  // out of the shop bundle). Organizer by product, door staff by link + PIN.
+  { path: "/check-in/:productId", lazy: () => import("./pages/CheckIn").then((m) => ({ Component: m.CheckIn })) },
+  { path: "/door/:token", lazy: () => import("./pages/CheckIn").then((m) => ({ Component: m.CheckIn })) },
 ]);

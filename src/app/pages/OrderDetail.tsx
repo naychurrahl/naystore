@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { FULFILLMENT_LABELS } from "../components/FulfillmentStatus";
 import { NotFound } from "./NotFound";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
+import { paymentLine as paymentLineFor } from "../utils/paymentLabel";
 
 function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
   const location = [fulfillment.city, fulfillment.state, fulfillment.country].filter(Boolean).join(", ");
@@ -78,14 +79,7 @@ export function OrderDetail() {
     return <NotFound />;
   }
 
-  const paymentLine =
-    order.paymentMethod === "cod"
-      ? "Cash on Delivery"
-      : order.paymentStatus === "success"
-      ? "Paid by card"
-      : order.paymentStatus === "failed"
-      ? "Card payment failed"
-      : "Card payment pending";
+  const paymentLine = paymentLineFor(order);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>

@@ -10,13 +10,34 @@ export interface CartItem {
   quantity: number;
   // Missing on carts saved before product types existed - treated as physical.
   productType?: string;
+  // Tickets: one cart line per ticket type.
+  tierId?: string;
+  tierName?: string;
+}
+
+export const MAX_TICKETS_PER_LINE = 10;
+
+// A cart line is a product - or, for tickets, a product + ticket type.
+export const lineKey = (item: { productId: string; tierId?: string }) =>
+  item.tierId ? `${item.productId}:${item.tierId}` : item.productId;
+
+// Physical goods: any quantity. Tickets: several per type. Everything else
+// (downloads, courses) is one per order - you can't own the same ebook twice.
+function clampQuantity(productType: string | undefined, quantity: number): number {
+  if (isPhysical(productType)) return quantity;
+  if (productType === "ticket") return Math.min(quantity, MAX_TICKETS_PER_LINE);
+  return 1;
 }
 
 interface CartContextValue {
   items: CartItem[];
-  addItem: (product: { id: string; name: string; image: string; price: number; codEligible: boolean; productType?: string }, quantity?: number) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  removeItem: (productId: string) => void;
+  addItem: (
+    product: { id: string; name: string; image: string; price: number; codEligible: boolean; productType?: string; tierId?: string; tierName?: string },
+    quantity?: number
+  ) => void;
+  // Both take lineKey(item).
+  updateQuantity: (key: string, quantity: number) => void;
+  removeItem: (key: string) => void;
   clearCart: () => void;
   itemCount: number;
   subtotal: number;
@@ -42,15 +63,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  // Non-physical items (downloads, courses, tickets) are one per order -
-  // you can't own the same ebook twice.
   const addItem: CartContextValue["addItem"] = (product, quantity = 1) => {
-    const single = !isPhysical(product.productType);
+    const key = lineKey({ productId: product.id, tierId: product.tierId });
     setItems((prev) => {
-      const existing = prev.find((item) => item.productId === product.id);
+      const existing = prev.find((item) => lineKey(item) === key);
       if (existing) {
         return prev.map((item) =>
-          item.productId === product.id ? { ...item, quantity: single ? 1 : item.quantity + quantity } : item
+          lineKey(item) === key ? { ...item, quantity: clampQuantity(item.productType, item.quantity + quantity) } : item
         );
       }
       return [
@@ -62,24 +81,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
           price: product.price,
           codEligible: product.codEligible,
           productType: product.productType ?? "physical",
-          quantity: single ? 1 : quantity,
+          ...(product.tierId ? { tierId: product.tierId, tierName: product.tierName } : {}),
+          quantity: clampQuantity(product.productType, quantity),
         },
       ];
     });
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (key: string, quantity: number) => {
     setItems((prev) =>
       quantity <= 0
-        ? prev.filter((item) => item.productId !== productId)
+        ? prev.filter((item) => lineKey(item) !== key)
         : prev.map((item) =>
-            item.productId === productId ? { ...item, quantity: isPhysical(item.productType) ? quantity : 1 } : item
+            lineKey(item) === key ? { ...item, quantity: clampQuantity(item.productType, quantity) } : item
           )
     );
   };
 
-  const removeItem = (productId: string) => {
-    setItems((prev) => prev.filter((item) => item.productId !== productId));
+  const removeItem = (key: string) => {
+    setItems((prev) => prev.filter((item) => lineKey(item) !== key));
   };
 
   const clearCart = () => setItems([]);

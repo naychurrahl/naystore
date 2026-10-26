@@ -1,9 +1,12 @@
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { ShoppingCart, Star } from "lucide-react";
+import { CalendarDays, ShoppingCart, Star, Ticket } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCart } from "../context/CartContext";
-import { isPhysical, productTypeLabel } from "../utils/productTypes";
+import { isPhysical, productTypeLabel, requiresAccount } from "../utils/productTypes";
+import { useAuth } from "../context/AuthContext";
+import { useAuthModal } from "../context/AuthModalContext";
+import { formatEventTime } from "../utils/eventTime";
 
 export interface ShopProduct {
   id: string;
@@ -17,6 +20,7 @@ export interface ShopProduct {
   inStock: boolean;
   codEligible: boolean;
   productType?: string;
+  eventStartsAt?: string | null;
   avgRating?: number;
   reviewCount?: number;
   merchantName?: string | null;
@@ -25,6 +29,8 @@ export interface ShopProduct {
 
 export function ProductCard({ product, showMerchant = true }: { product: ShopProduct; showMerchant?: boolean }) {
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const { openLogin } = useAuthModal();
 
   return (
     <div
@@ -117,13 +123,18 @@ export function ProductCard({ product, showMerchant = true }: { product: ShopPro
             </>
           )}
         </div>
+        {product.eventStartsAt && (
+          <p className="text-xs mb-1 flex items-center gap-1" style={{ color: 'var(--color-text-secondary)' }}>
+            <CalendarDays className="h-3.5 w-3.5" /> {formatEventTime(product.eventStartsAt)} WAT
+          </p>
+        )}
         <p className="text-sm mb-3 line-clamp-2" style={{ color: 'var(--color-text-secondary)' }}>
           {product.description}
         </p>
         <div className="flex items-center justify-between">
           <div>
             <span className="font-bold text-lg" style={{ color: 'var(--color-text-primary)' }}>
-              ₦{product.price}
+              {product.productType === "ticket" && <span className="text-xs font-normal">from </span>}₦{product.price}
             </span>
             {product.originalPrice && (
               <span className="ml-2 text-sm line-through" style={{ color: 'var(--color-text-muted)' }}>
@@ -131,9 +142,26 @@ export function ProductCard({ product, showMerchant = true }: { product: ShopPro
               </span>
             )}
           </div>
+          {product.productType === "ticket" ? (
+            // Tickets need a ticket type, chosen on the event page.
+            <Link
+              to={`/shop/${product.id}`}
+              className="p-2 rounded-lg"
+              style={{ backgroundColor: 'var(--color-cart-button)', color: 'white' }}
+              aria-label={`Get tickets for ${product.name}`}
+              title="Get tickets"
+            >
+              <Ticket className="h-5 w-5" />
+            </Link>
+          ) : (
           <button
             disabled={!product.inStock}
             onClick={() => {
+              if (!user && requiresAccount(product.productType)) {
+                toast.info(`Log in to buy ${productTypeLabel(product.productType).toLowerCase()}s`);
+                openLogin(`/shop/${product.id}`);
+                return;
+              }
               addItem(product, 1);
               toast.success(`Added ${product.name} to cart`);
             }}
@@ -155,6 +183,7 @@ export function ProductCard({ product, showMerchant = true }: { product: ShopPro
           >
             <ShoppingCart className="h-5 w-5" />
           </button>
+          )}
         </div>
       </div>
     </div>
