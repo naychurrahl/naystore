@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { PasswordInput } from "./PasswordInput";
 import { useAuthModal } from "../context/AuthModalContext";
 import { router } from "../routes";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
@@ -24,6 +25,7 @@ export function AuthModal() {
 
   const [usertype, setUsertype] = useState<"customer" | "merchant">(defaultUsertype);
   const [name, setName] = useState("");
+  const [legalName, setLegalName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -127,9 +129,9 @@ export function AuthModal() {
         name,
         email,
         password,
-        username: usertype === "customer" && username ? username : undefined,
+        username: username || undefined,
         ...(usertype === "merchant"
-          ? { commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim() }
+          ? { legalName: legalName.trim(), commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim() }
           : {}),
       });
       close();
@@ -180,8 +182,8 @@ export function AuthModal() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1" style={labelStyle}>Password</label>
-                <input
-                  type="password"
+                <PasswordInput
+                  native
                   required
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
@@ -234,7 +236,7 @@ export function AuthModal() {
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1" style={labelStyle}>
-                  {usertype === "merchant" ? "Business Name" : "Full Name"}
+                  {usertype === "merchant" ? "Shop name" : "Full Name"}
                 </label>
                 <input
                   type="text"
@@ -246,21 +248,36 @@ export function AuthModal() {
                 />
               </div>
 
-              {usertype === "customer" && (
+              {usertype === "merchant" && (
                 <div>
-                  <label className="block text-sm font-medium mb-1" style={labelStyle}>Username (optional)</label>
+                  <label className="block text-sm font-medium mb-1" style={labelStyle}>Your legal name</label>
                   <input
                     type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    value={legalName}
+                    onChange={(e) => setLegalName(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg border"
                     style={inputStyle}
                   />
                   <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-                    Lets you log in with a username instead of your email, if you'd rather.
+                    As it appears on your bank account. Payouts only go to an account in this name or your shop's name.
                   </p>
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium mb-1" style={labelStyle}>Username (optional)</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border"
+                  style={inputStyle}
+                />
+                <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
+                  Lets you log in with a username instead of your email, if you'd rather.
+                </p>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1" style={labelStyle}>Email</label>
@@ -276,8 +293,8 @@ export function AuthModal() {
 
               <div>
                 <label className="block text-sm font-medium mb-1" style={labelStyle}>Password</label>
-                <input
-                  type="password"
+                <PasswordInput
+                  native
                   required
                   minLength={8}
                   value={password}

@@ -6,6 +6,8 @@ import { API_BASE } from "../utils/apiBase.js";
 export interface AuthUser {
   id: string;
   name: string | null;
+  legalName?: string | null;
+  legalNameLocked?: boolean;
   username?: string | null;
   email: string;
   phone?: string | null;
@@ -20,6 +22,7 @@ export interface AuthUser {
 export interface RegisterInput {
   usertype: "customer" | "merchant";
   name: string;
+  legalName?: string;
   email: string;
   password: string;
   username?: string;
@@ -39,7 +42,7 @@ interface AuthContextValue {
   authHeader: Record<string, string>;
   login: (identifier: string, password: string) => Promise<void>;
   register: (data: RegisterInput) => Promise<void>;
-  becomeMerchant: (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string) => Promise<void>;
+  becomeMerchant: (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string, shopName: string, legalName: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
 }
@@ -83,8 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Upgrades the current customer's own account to a merchant in place -
   // same login/email going forward, no new account.
-  const becomeMerchant = async (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string) => {
-    const result = await api.put(`${API_BASE}/become-merchant`, { commissionType, commissionRate, fulfillmentMethod, location, state, lga, area, landmark }, { headers: authHeader });
+  const becomeMerchant = async (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string, shopName: string, legalName: string) => {
+    const result = await api.put(`${API_BASE}/become-merchant`, { commissionType, commissionRate, fulfillmentMethod, location, state, lga, area, landmark, shopName, legalName }, { headers: authHeader });
     persist({ user: result.user, token: result.token });
   };
 

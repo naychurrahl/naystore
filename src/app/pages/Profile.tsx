@@ -5,6 +5,7 @@ import { ChevronRight, Package } from "lucide-react";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { PasswordInput } from "../components/PasswordInput";
 import { useAuthModal } from "../context/AuthModalContext";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 
@@ -266,8 +267,8 @@ export function Profile() {
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Current Password</label>
-              <input
-                type="password"
+              <PasswordInput
+                native
                 required
                 value={passwordForm.currentPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
@@ -277,8 +278,8 @@ export function Profile() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>New Password</label>
-              <input
-                type="password"
+              <PasswordInput
+                native
                 required
                 minLength={8}
                 value={passwordForm.password}
