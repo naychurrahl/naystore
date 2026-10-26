@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LayoutDashboard, ShoppingBag, MessageCircle, LogOut, Menu, X, UserCircle, Headset, Store, Wallet, Package, ArrowUpRight } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, MessageCircle, LogOut, Menu, X, UserCircle, Headset, Store, Wallet, Package, ArrowUpRight, TicketPercent } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
@@ -15,6 +15,7 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: typ
       { to: "/merchant/products", label: "My Products", icon: ShoppingBag },
       { to: "/merchant/orders", label: "Orders", icon: Package },
       { to: "/merchant/shop", label: "My Shop", icon: Store },
+      { to: "/merchant/coupons", label: "Coupons", icon: TicketPercent },
     ],
   },
   { label: "Money", items: [{ to: "/merchant/payouts", label: "My Payouts", icon: Wallet }] },

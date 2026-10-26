@@ -155,7 +155,14 @@ export function MerchantOrdersPage() {
                             <div className="space-y-1 mb-4">
                               {row.items.map((item: any, i: number) => (
                                 <div key={i} className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                                  <span>{item.quantity} × {item.name}</span>
+                                  <span>
+                                    {item.quantity} × {item.name}
+                                    {item.discount > 0 && (
+                                      <span className="block text-xs" style={{ color: 'var(--color-success)' }}>
+                                        Coupon −₦{item.discount.toLocaleString()} (your payout shows what you receive)
+                                      </span>
+                                    )}
+                                  </span>
                                   <span>₦{(item.price * item.quantity).toFixed(2)}</span>
                                 </div>
                               ))}

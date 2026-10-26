@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { FULFILLMENT_LABELS } from "../components/FulfillmentStatus";
 import { NotFound } from "./NotFound";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
+import { OrderDiscountLines } from "../components/OrderDiscountLines";
 import { paymentLine as paymentLineFor } from "../utils/paymentLabel";
 
 function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
@@ -143,6 +144,7 @@ export function OrderDetail() {
               <span>Subtotal</span>
               <span>₦{order.subtotal}</span>
             </div>
+            <OrderDiscountLines discounts={order.discounts} />
             <div className="flex justify-between font-bold" style={{ color: 'var(--color-text-primary)' }}>
               <span>Total</span>
               <span>₦{order.total}</span>
