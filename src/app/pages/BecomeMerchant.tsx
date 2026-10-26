@@ -10,6 +10,8 @@ export function BecomeMerchant() {
   const { user, becomeMerchant } = useAuth();
   const { openLogin } = useAuthModal();
   const navigate = useNavigate();
+  const [shopName, setShopName] = useState("");
+  const [legalName, setLegalName] = useState(user?.name ?? "");
   const [commissionType, setCommissionType] = useState<"percentage" | "flat">("percentage");
   const [commissionRate, setCommissionRate] = useState("");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"fbu" | "fbm">("fbm");
@@ -35,6 +37,14 @@ export function BecomeMerchant() {
   }
 
   const handleUpgrade = async () => {
+    if (!shopName.trim()) {
+      setError("Enter your shop name");
+      return;
+    }
+    if (!legalName.trim()) {
+      setError("Enter your legal name");
+      return;
+    }
     const rate = Number(commissionRate);
     if (!commissionRate || Number.isNaN(rate) || rate < 0) {
       setError("Enter a valid, non-negative commission rate");
@@ -60,7 +70,7 @@ export function BecomeMerchant() {
     setSubmitting(true);
     setError(null);
     try {
-      await becomeMerchant(commissionType, rate, fulfillmentMethod, location.trim(), state, lga, area.trim(), landmark.trim());
+      await becomeMerchant(commissionType, rate, fulfillmentMethod, location.trim(), state, lga, area.trim(), landmark.trim(), shopName.trim(), legalName.trim());
       navigate("/merchant", { replace: true });
     } catch (err: any) {
       setError(err.message || "Could not upgrade your account");
@@ -85,6 +95,34 @@ export function BecomeMerchant() {
         </p>
 
         <div className="space-y-4 text-left">
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Shop name</label>
+            <input
+              type="text"
+              required
+              value={shopName}
+              onChange={(e) => setShopName(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            />
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Shown on your products and shop page.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Your legal name</label>
+            <input
+              type="text"
+              required
+              value={legalName}
+              onChange={(e) => setLegalName(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            />
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+              As it appears on your bank account. Payouts only go to an account in this name or your shop's name.
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Commission</label>
             <div className="flex gap-2">

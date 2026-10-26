@@ -1,5 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Input } from "./ui/input";
+import { PasswordInput } from "./PasswordInput";
 import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
@@ -127,9 +128,13 @@ function FieldBlock({
         <Textarea required={required} value={value ?? ""} onChange={(e) => onChange(e.target.value)} rows={4} />
       )}
 
-      {(field.type === "text" || field.type === "password" || field.type === "date") && (
+      {field.type === "password" && (
+        <PasswordInput required={required} value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={field.helpText} />
+      )}
+
+      {(field.type === "text" || field.type === "date") && (
         <Input
-          type={field.type === "password" ? "password" : field.type === "date" ? "date" : "text"}
+          type={field.type === "date" ? "date" : "text"}
           required={required}
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}

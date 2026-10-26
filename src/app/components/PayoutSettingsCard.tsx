@@ -15,22 +15,33 @@ interface PayoutSettings {
   walletConnected: boolean;
 }
 
-// "How you get paid": the merchant's Naylet wallet, or a bank account that
-// Paystack verifies (showing the holder's name) before it's saved. Admin
-// pays out to whichever is chosen here.
+interface Profile {
+  name: string | null;
+  legalName: string | null;
+  legalNameLocked: boolean;
+}
+
+type AccountType = "personal" | "business";
+
+// "How you get paid": the merchant's Naylet wallet, or a bank account in
+// their own legal name or their shop's name. The account is checked with
+// the bank only when it's saved, and the bank's name for it is only shown
+// once it matches. Admin pays out to whichever is chosen here.
 export function PayoutSettingsCard() {
   const { authHeader } = useAuth();
   const opts = { headers: authHeader };
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, refetch } = useAPI(`${API_BASE}/payout-settings`, opts);
   const settings = data as PayoutSettings | null;
+  const { data: profileData, refetch: refetchProfile } = useAPI(`${API_BASE}/profile`, opts);
+  const profile = profileData as Profile | null;
 
   const [choice, setChoice] = useState<"wallet" | "bank" | null>(null);
   const [banks, setBanks] = useState<{ code: string; name: string }[] | null>(null);
+  const [accountType, setAccountType] = useState<AccountType>("personal");
+  const [legalNameDraft, setLegalNameDraft] = useState("");
   const [bankCode, setBankCode] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
-  const [accountName, setAccountName] = useState<string | null>(null);
-  const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,30 +73,24 @@ export function PayoutSettingsCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [choice]);
 
-  // Look the account up as soon as there's a bank and 10 digits.
-  useEffect(() => {
-    setAccountName(null);
-    if (!bankCode || !/^\d{10}$/.test(accountNumber)) return;
-    let stale = false;
-    setChecking(true);
-    setError(null);
-    api.post(`${API_BASE}/payout-settings/resolve`, { bankCode, accountNumber }, opts)
-      .then((r: any) => { if (!stale) setAccountName(r.accountName); })
-      .catch((err: any) => { if (!stale) setError(err.message || "Could not verify the account"); })
-      .finally(() => { if (!stale) setChecking(false); });
-    return () => { stale = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bankCode, accountNumber]);
-
   const save = async (body: Record<string, string>) => {
     setSaving(true);
     setError(null);
     try {
-      await api.put(`${API_BASE}/payout-settings`, body, opts);
-      toast.success("Payout method saved");
+      // A personal account is checked against the legal name, so it has to
+      // be there first - and it locks once the account is saved.
+      if (body.method === "bank" && body.accountType === "personal" && !profile?.legalName) {
+        if (!legalNameDraft.trim()) {
+          setError("Enter your legal name, exactly as your bank has it");
+          return;
+        }
+        await api.put(`${API_BASE}/profile`, { legalName: legalNameDraft.trim() }, opts);
+      }
+      const saved = await api.put(`${API_BASE}/payout-settings`, body, opts) as PayoutSettings;
+      toast.success(saved.method === "bank" && saved.bank ? `Payouts will go to ${saved.bank.accountName}` : "Payout method saved");
       setBankCode("");
       setAccountNumber("");
-      await refetch();
+      await Promise.all([refetch(), refetchProfile()]);
     } catch (err: any) {
       setError(err.message || "Could not save");
     } finally {
@@ -102,13 +107,15 @@ export function PayoutSettingsCard() {
     }
   };
 
-  if (!settings) return null;
+  if (!settings || !profile) return null;
 
   const current = settings.method === "bank" && settings.bank
     ? `${settings.bank.bankName ?? "Bank"} ····${settings.bank.accountNumber.slice(-4)} (${settings.bank.accountName})`
     : settings.method === "wallet"
     ? `Naylet wallet${settings.walletConnected ? "" : " - not connected any more, reconnect it"}`
     : null;
+
+  const canSave = !!bankCode && /^\d{10}$/.test(accountNumber) && (accountType === "business" || !!profile.legalName || !!legalNameDraft.trim());
 
   return (
     <Card className="mb-6">
@@ -162,11 +169,40 @@ export function PayoutSettingsCard() {
         {choice === "bank" && (
           <div className="space-y-3 max-w-md">
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              {settings.bank ? "Change the account payouts go to:" : "Payouts are sent by bank transfer through Paystack."}
+              {settings.bank ? "Change the account payouts go to." : "Payouts are sent by bank transfer through Paystack."}{" "}
+              The account must be in your own name or your shop's name - we check with your bank when you save.
             </p>
+
+            <div className="space-y-1.5" role="radiogroup" aria-label="Whose name the account is in">
+              <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>The account is in</p>
+              {([
+                { value: "personal", label: "My name", name: profile.legalName },
+                { value: "business", label: "My shop's name", name: profile.name },
+              ] as const).map(({ value, label, name }) => (
+                <label key={value} className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                  <input type="radio" name="accountType" checked={accountType === value} onChange={() => { setAccountType(value); setError(null); }} />
+                  <span>{label}{name ? <> (<strong style={{ color: 'var(--color-text-primary)' }}>{name}</strong>)</> : ""}</span>
+                </label>
+              ))}
+            </div>
+
+            {accountType === "personal" && !profile.legalName && (
+              <div className="space-y-1">
+                <Input
+                  placeholder="Your legal name, as on your bank account"
+                  value={legalNameDraft}
+                  onChange={(e) => setLegalNameDraft(e.target.value)}
+                  aria-label="Legal name"
+                />
+                <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                  Once a bank account is saved with it, your legal name can only be changed by contacting support.
+                </p>
+              </div>
+            )}
+
             <select
               value={bankCode}
-              onChange={(e) => setBankCode(e.target.value)}
+              onChange={(e) => { setBankCode(e.target.value); setError(null); }}
               className="w-full px-3 py-2 rounded-lg border text-sm"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', backgroundColor: 'var(--color-background)' }}
               aria-label="Bank"
@@ -179,26 +215,20 @@ export function PayoutSettingsCard() {
               maxLength={10}
               placeholder="10-digit account number"
               value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
+              onChange={(e) => { setAccountNumber(e.target.value.replace(/\D/g, "")); setError(null); }}
               aria-label="Account number"
             />
-            {checking && <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Checking the account…</p>}
-            {accountName && (
-              <p className="text-sm flex items-center gap-1.5" style={{ color: 'var(--color-success)' }}>
-                <CheckCircle2 className="h-4 w-4" /> {accountName}
-              </p>
-            )}
             <Button
               type="button"
               size="sm"
-              disabled={!accountName || saving}
-              onClick={() => void save({ method: "bank", bankCode, accountNumber, bankName: banks?.find((b) => b.code === bankCode)?.name ?? "" })}
+              disabled={!canSave || saving}
+              onClick={() => void save({ method: "bank", accountType, bankCode, accountNumber, bankName: banks?.find((b) => b.code === bankCode)?.name ?? "" })}
             >
-              {saving ? "Saving…" : "Save this account"}
+              {saving ? "Checking with your bank…" : "Save this account"}
             </Button>
             {settings.method !== "bank" && settings.bank && !bankCode && (
               <Button type="button" size="sm" variant="outline" disabled={saving}
-                onClick={() => void save({ method: "bank", bankCode: settings.bank!.bankCode, accountNumber: settings.bank!.accountNumber })}>
+                onClick={() => void save({ method: "bank", accountType, bankCode: settings.bank!.bankCode, accountNumber: settings.bank!.accountNumber })}>
                 Use {settings.bank.bankName} ····{settings.bank.accountNumber.slice(-4)} again
               </Button>
             )}
