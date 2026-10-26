@@ -29,6 +29,7 @@ import { MerchantChatPage } from "./pages/MerchantChatPage";
 import { MerchantSupportPage } from "./pages/MerchantSupportPage";
 import { MerchantProfilePage } from "./pages/MerchantProfilePage";
 import { Learn } from "./pages/Learn";
+import { Certificate } from "./pages/Certificate";
 
 export const router = createBrowserRouter([
   {
@@ -78,4 +79,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  // Outside the shop layout, so it prints as just the certificate.
+  { path: "/certificates/:code", Component: Certificate },
 ]);

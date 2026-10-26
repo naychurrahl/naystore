@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from "react-router";
-import { Download, Library as LibraryIcon, FileText, GraduationCap } from "lucide-react";
+import { Award, Download, Library as LibraryIcon, FileText, GraduationCap } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { getGuestId } from "../utils/guestId.js";
@@ -24,6 +24,7 @@ interface LibraryItem {
   files: LibraryFile[];
   lessonCount: number;
   completedCount: number;
+  certificateCode: string | null;
   createdAt: string;
 }
 
@@ -153,6 +154,15 @@ export function Library() {
                     >
                       <GraduationCap className="h-4 w-4" /> {item.completedCount > 0 ? "Continue course" : "Start course"}
                     </Link>
+                    {item.certificateCode && (
+                      <Link
+                        to={`/certificates/${encodeURIComponent(item.certificateCode)}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium flex-shrink-0"
+                        style={{ border: '1px solid var(--color-success)', color: 'var(--color-success)' }}
+                      >
+                        <Award className="h-4 w-4" /> Certificate
+                      </Link>
+                    )}
                   </div>
                 )}
                 {item.productType !== "digital" && item.productType !== "course" && (

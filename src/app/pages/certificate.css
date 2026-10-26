@@ -1,0 +1,69 @@
+/* Certificate page: on screen a centred sheet, in print exactly one A4
+   landscape page (the toolbar is hidden). Colours are fixed rather than
+   themed so the certificate looks the same in dark mode and on paper. */
+.cert-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--color-surface);
+}
+
+.cert-sheet {
+  aspect-ratio: 297 / 210;
+  width: 100%;
+  background: #fffdf7;
+  color: #1f2937;
+  padding: 3.2%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  font-family: Georgia, "Times New Roman", serif;
+  container-type: inline-size;
+}
+.cert-frame {
+  height: 100%;
+  border: 3px double #a16207;
+  outline: 1px solid #d6b56d;
+  outline-offset: -10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3% 6%;
+  gap: 1.2cqw;
+}
+.cert-seal { width: 6cqw; height: 6cqw; color: #a16207; }
+.cert-kicker { font-size: 3.4cqw; letter-spacing: 0.12em; text-transform: uppercase; color: #78350f; }
+.cert-small { font-size: 1.6cqw; color: #4b5563; font-style: italic; }
+.cert-name { font-size: 4.6cqw; font-weight: 700; border-bottom: 1px solid #d6b56d; padding: 0 4% 0.6cqw; }
+.cert-course { font-size: 2.8cqw; font-weight: 600; color: #111827; max-width: 90%; }
+.cert-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 4%;
+  width: 100%;
+  margin-top: 2.5cqw;
+}
+.cert-footer > div { flex: 1; }
+.cert-label { font-size: 1.1cqw; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; }
+.cert-value { font-size: 1.6cqw; margin-top: 0.3cqw; }
+.cert-mono { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0.05em; }
+.cert-verify { font-size: 1.1cqw; color: #6b7280; margin-top: 1cqw; overflow-wrap: anywhere; }
+.cert-void { opacity: 0.45; filter: grayscale(1); }
+
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+  html, body { background: #fff !important; }
+  .cert-toolbar { display: none !important; }
+  .cert-screen { padding: 0; min-height: 0; display: block; background: #fff; }
+  .cert-screen > div { max-width: none; }
+  .cert-sheet {
+    width: 297mm;
+    height: 210mm;
+    aspect-ratio: auto;
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

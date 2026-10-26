@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, Download, FileText, Lock, Paperclip, PlayCircle,
+  ArrowLeft, ArrowRight, Award, CheckCircle2, ClipboardCheck, Download, FileText, Lock, Paperclip, PlayCircle, XCircle,
 } from "lucide-react";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
@@ -17,6 +17,7 @@ interface OutlineLesson {
   isPreview: boolean;
   durationSeconds: number | null;
   hasVideo: boolean;
+  hasQuiz: boolean;
   completed: boolean;
   locked: boolean;
 }
@@ -32,6 +33,8 @@ interface CourseState {
   completedCount: number;
   durationSeconds: number;
   resumeLessonId: string | null;
+  certificateEnabled: boolean;
+  certificate: { code: string } | null;
 }
 
 interface LessonContent {
@@ -41,6 +44,154 @@ interface LessonContent {
   contentHtml: string;
   videoUrl: string | null;
   attachments: { id: string; name: string; size: number | null; url: string | null }[];
+  quiz: {
+    passPercent: number;
+    questions: { id: string; prompt: string; options: string[] }[];
+    passed: boolean;
+  } | null;
+}
+
+interface QuizResult {
+  scorePercent: number;
+  passPercent: number;
+  passed: boolean;
+  correctCount: number;
+  questionCount: number;
+  results: { questionId: string; correct: boolean; correctIndex?: number; explanation?: string }[];
+  course: Partial<CourseState>;
+}
+
+// A lesson's multiple-choice quiz. Scored by the backend, which only reveals
+// the right answers once the learner passes.
+function QuizPanel({ quiz, canSubmit, blockedReason, onSubmit }: {
+  quiz: NonNullable<LessonContent["quiz"]>;
+  canSubmit: boolean;
+  blockedReason: string;
+  onSubmit: (answers: Record<string, number>) => Promise<QuizResult>;
+}) {
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [result, setResult] = useState<QuizResult | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const allAnswered = quiz.questions.every((q) => answers[q.id] !== undefined);
+  const byId = Object.fromEntries((result?.results ?? []).map((r) => [r.questionId, r]));
+  const locked = !!result?.passed;
+
+  const choose = (questionId: string, index: number) => {
+    if (locked) return;
+    setAnswers((a) => ({ ...a, [questionId]: index }));
+    if (result) setResult(null); // a failed attempt's marks no longer apply
+  };
+
+  const submit = async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      setResult(await onSubmit(answers));
+    } catch (err: any) {
+      setError(err.message || "Could not submit the quiz");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl p-4 md:p-5 space-y-5" style={{ border: '1px solid var(--color-border)' }}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-semibold flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+          <ClipboardCheck className="h-5 w-5" /> Quiz
+        </h3>
+        <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+          {quiz.questions.length} question{quiz.questions.length === 1 ? "" : "s"} · pass mark {quiz.passPercent}%
+        </span>
+      </div>
+
+      {quiz.passed && !result && (
+        <p className="text-sm flex items-center gap-2" style={{ color: 'var(--color-success)' }}>
+          <CheckCircle2 className="h-4 w-4" /> You've passed this quiz. You can take it again any time.
+        </p>
+      )}
+
+      <ol className="space-y-5">
+        {quiz.questions.map((q, qi) => {
+          const mark = byId[q.id];
+          return (
+            <li key={q.id}>
+              <p className="font-medium mb-2 flex items-start gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                <span>{qi + 1}.</span>
+                <span className="flex-1 whitespace-pre-line">{q.prompt}</span>
+                {mark && (mark.correct
+                  ? <CheckCircle2 className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--color-success)' }} aria-label="Correct" />
+                  : <XCircle className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--color-error)' }} aria-label="Incorrect" />)}
+              </p>
+              <div className="space-y-1.5" role="radiogroup" aria-label={`Question ${qi + 1}`}>
+                {q.options.map((option, oi) => {
+                  const isRight = mark?.correctIndex === oi;
+                  return (
+                    <label
+                      key={oi}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm cursor-pointer"
+                      style={{
+                        border: `1px solid ${isRight ? 'var(--color-success)' : 'var(--color-border)'}`,
+                        backgroundColor: answers[q.id] === oi ? 'var(--color-primary-light)' : 'transparent',
+                        color: 'var(--color-text-secondary)',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name={`q-${q.id}`}
+                        checked={answers[q.id] === oi}
+                        disabled={locked || !canSubmit}
+                        onChange={() => choose(q.id, oi)}
+                      />
+                      <span className="flex-1">{option}</span>
+                      {isRight && <span className="text-xs font-medium" style={{ color: 'var(--color-success)' }}>Correct answer</span>}
+                    </label>
+                  );
+                })}
+              </div>
+              {mark?.explanation && (
+                <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>{mark.explanation}</p>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+
+      {result && (
+        <p className="text-sm font-medium" style={{ color: result.passed ? 'var(--color-success)' : 'var(--color-error)' }}>
+          {result.passed
+            ? `Passed - you scored ${result.scorePercent}% (${result.correctCount} of ${result.questionCount}).`
+            : `You scored ${result.scorePercent}% - you need ${result.passPercent}%. Change your answers and try again.`}
+        </p>
+      )}
+      {error && <p className="text-sm" style={{ color: 'var(--color-error)' }}>{error}</p>}
+
+      {!canSubmit ? (
+        <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{blockedReason}</p>
+      ) : locked ? (
+        <button
+          type="button"
+          onClick={() => { setResult(null); setAnswers({}); }}
+          className="text-sm font-medium"
+          style={{ color: 'var(--color-primary)' }}
+        >
+          Retake quiz
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled={!allAnswered || submitting || (!!result && !result.passed)}
+          onClick={() => void submit()}
+          className="px-4 py-2 rounded-lg font-medium disabled:opacity-50"
+          style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+        >
+          {submitting ? "Checking…" : "Submit answers"}
+        </button>
+      )}
+    </div>
+  );
 }
 
 function formatSize(bytes: number | null): string {
@@ -72,6 +223,8 @@ export function Learn() {
   const [course, setCourse] = useState<CourseState | null>(null);
   const [saving, setSaving] = useState(false);
   const [progressError, setProgressError] = useState<string | null>(null);
+  // Quizzes passed during this visit (the loaded lesson still says not passed).
+  const [passedQuizzes, setPassedQuizzes] = useState<string[]>([]);
   useEffect(() => {
     if (data) setCourse(data as CourseState);
   }, [data]);
@@ -95,6 +248,18 @@ export function Learn() {
     headers
   );
   const lesson = lessonData as LessonContent | null;
+
+  const submitQuiz = async (answers: Record<string, number>): Promise<QuizResult> => {
+    if (!course || !current) throw new Error("No lesson open");
+    const result = (await api.post(`${API_BASE}/learn/quiz`, {
+      lessonId: current.id,
+      answers,
+      ...(course.token ? { token: course.token } : { guestId: getGuestId() }),
+    }, headers)) as QuizResult;
+    setCourse({ ...course, ...result.course });
+    if (result.passed) setPassedQuizzes((ids) => [...ids, current.id]);
+    return result;
+  };
 
   const goTo = (id: string) => {
     setProgressError(null);
@@ -148,6 +313,10 @@ export function Learn() {
   }
 
   const pct = course.lessonCount ? Math.round((course.completedCount / course.lessonCount) * 100) : 0;
+  const courseDone = course.enrolled && course.lessonCount > 0 && course.completedCount >= course.lessonCount;
+  // A quiz lesson completes by passing its quiz, not by "Mark complete".
+  const quizPending = !!(current && lesson?.id === current.id && lesson.quiz && !lesson.quiz.passed
+    && !passedQuizzes.includes(current.id) && !current.completed);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
@@ -173,6 +342,23 @@ export function Learn() {
             </div>
           )}
         </div>
+
+        {courseDone && (
+          <div className="mb-5 p-4 rounded-lg flex flex-wrap items-center justify-between gap-3" style={{ border: '1px solid var(--color-success)', color: 'var(--color-text-primary)' }}>
+            <span className="flex items-center gap-2 font-medium">
+              <Award className="h-5 w-5" style={{ color: 'var(--color-success)' }} /> You've completed this course!
+            </span>
+            {course.certificate && (
+              <Link
+                to={`/certificates/${encodeURIComponent(course.certificate.code)}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium"
+                style={{ backgroundColor: 'var(--color-success)', color: 'white' }}
+              >
+                <Award className="h-4 w-4" /> View your certificate
+              </Link>
+            )}
+          </div>
+        )}
 
         {!course.enrolled && (
           <div className="mb-5 p-3 rounded-lg text-sm flex flex-wrap items-center justify-between gap-3" style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-text-primary)' }}>
@@ -248,6 +434,16 @@ export function Learn() {
                       {/* Cleaned by the backend's allow-list sanitiser when the lesson was saved. */}
                       {lesson.contentHtml && <div className="lesson-content" dangerouslySetInnerHTML={{ __html: lesson.contentHtml }} />}
 
+                      {lesson.quiz && (
+                        <QuizPanel
+                          key={lesson.id}
+                          quiz={lesson.quiz}
+                          canSubmit={course.enrolled}
+                          blockedReason={course.manager ? "Owner preview: quizzes are scored for enrolled learners only." : "Enrol in the course to take this quiz."}
+                          onSubmit={submitQuiz}
+                        />
+                      )}
+
                       {lesson.attachments.length > 0 && (
                         <div>
                           <h3 className="text-sm font-semibold mb-2 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
@@ -295,7 +491,10 @@ export function Learn() {
 
                 <div className="flex flex-wrap items-center gap-3">
                   {progressError && <span className="text-sm" style={{ color: 'var(--color-error)' }}>{progressError}</span>}
-                  {course.enrolled && !current.locked && (
+                  {quizPending && (
+                    <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Pass the quiz to complete this lesson</span>
+                  )}
+                  {course.enrolled && !current.locked && !quizPending && (
                     current.completed ? (
                       <button
                         type="button"
@@ -351,7 +550,7 @@ export function Learn() {
                   <ul className="pb-2">
                     {module.lessons.map((l) => {
                       const active = l.id === current?.id;
-                      const Icon = l.completed ? CheckCircle2 : l.locked ? Lock : l.hasVideo ? PlayCircle : FileText;
+                      const Icon = l.completed ? CheckCircle2 : l.locked ? Lock : l.hasVideo ? PlayCircle : l.hasQuiz ? ClipboardCheck : FileText;
                       return (
                         <li key={l.id}>
                           <button
