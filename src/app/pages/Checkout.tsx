@@ -220,7 +220,7 @@ export function Checkout() {
           </p>
           <p className="text-3xl font-mono" style={{ color: 'var(--color-text-primary)' }} aria-live="polite">{mm}:{ss}</p>
           <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-            This page updates by itself once you approve or decline. Order {awaiting.orderId}.
+            This page updates by itself once you approve or decline. Checkout {awaiting.orderId}.
           </p>
           <button
             type="button"
@@ -248,8 +248,17 @@ export function Checkout() {
             {paymentFailed ? "Payment not completed" : placedOrders.length > 1 ? "Orders placed!" : "Order placed!"}
           </h1>
 
+          {placedOrders.length > 1 && (
+            <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+              Your checkout became {placedOrders.length} orders - one for each seller and way of paying - so each is delivered (and can be refunded) on its own.
+            </p>
+          )}
+
           {placedOrders.map((order) => (
             <div key={order.id} className="text-left mb-6">
+              {order.sellerName && (
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>Sold by {order.sellerName}</p>
+              )}
               <p className="mb-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                 Order <strong style={{ color: 'var(--color-text-primary)' }}>{order.id}</strong> —{" "}
                 {paymentLine(order)}
@@ -295,31 +304,32 @@ export function Checkout() {
     );
   }
 
-  const finalizeOrders = async (orders: any[]) => {
-    const cardOrder = orders.find((o) => o.paymentMethod === "card");
-
-    if (cardOrder) {
-      const verified = await api.get(`${API_BASE}/payment/${cardOrder.id}`, { headers: authHeader }).catch(() => null);
-      const succeeded = verified?.paymentStatus === "success";
-      orders = orders.map((o) =>
-        o.id === cardOrder.id && verified ? { ...o, paymentStatus: verified.paymentStatus, status: verified.status } : o
-      );
-      setPaymentFailed(!succeeded);
+  // The checkout's one online payment covers all its online orders, so it's
+  // verified once and every order takes its new status from the answer.
+  const finalizeOrders = async (orders: any[], checkoutId: string) => {
+    if (orders.some((o) => o.paymentMethod === "card")) {
+      const verified = await api.get(`${API_BASE}/payment/${checkoutId}`, { headers: authHeader }).catch(() => null);
+      const latest = new Map<string, any>((verified?.orders ?? []).map((o: any) => [o.id, o]));
+      orders = orders.map((o) => {
+        const now = latest.get(o.id);
+        return now ? { ...o, paymentStatus: now.paymentStatus, status: now.status } : o;
+      });
+      setPaymentFailed(verified?.paymentStatus !== "success");
     }
 
     clearCart();
     setPlacedOrders(orders);
   };
 
-  // Polls the order every few seconds (or at once on "check now") until the
-  // Naylet charge is approved, declined or times out.
-  const waitForNaylet = async (orderId: string, until: number) => {
+  // Polls the checkout every few seconds (or at once on "check now") until
+  // the Naylet charge is approved, declined or times out.
+  const waitForNaylet = async (checkoutId: string, until: number) => {
     while (Date.now() < until) {
       await new Promise<void>((resolve) => {
         const timer = setTimeout(resolve, 3000);
         checkNow.current = () => { clearTimeout(timer); resolve(); };
       });
-      const status = await api.get(`${API_BASE}/payment/${orderId}`, { headers: authHeader }).catch(() => null);
+      const status = await api.get(`${API_BASE}/payment/${checkoutId}`, { headers: authHeader }).catch(() => null);
       if (status && status.paymentStatus !== "pending") return;
     }
   };
@@ -359,28 +369,30 @@ export function Checkout() {
         })),
       }, { headers: authHeader });
 
-      const orders: any[] = result.split ? result.orders : [result.order];
-      const cardOrder = orders.find((o) => o.paymentMethod === "card" && o.payment);
+      // One order per seller and payment method; the online ones share one payment.
+      const orders: any[] = result.orders;
+      const checkoutId: string = result.checkoutId;
+      const payment = result.payment;
 
-      if (cardOrder?.payment?.provider === "naylet") {
-        setAwaiting({ orderId: cardOrder.id, amount: cardOrder.payment.amountNgn, deadline: Date.now() + NAYLET_APPROVAL_MS });
-        await waitForNaylet(cardOrder.id, Date.now() + NAYLET_APPROVAL_MS + 30000);
-        await finalizeOrders(orders);
+      if (payment?.provider === "naylet") {
+        setAwaiting({ orderId: checkoutId, amount: payment.amountNgn, deadline: Date.now() + NAYLET_APPROVAL_MS });
+        await waitForNaylet(checkoutId, Date.now() + NAYLET_APPROVAL_MS + 30000);
+        await finalizeOrders(orders, checkoutId);
         setAwaiting(null);
         setSubmitting(false);
         return;
       }
 
-      if (!cardOrder?.payment?.access_code) {
-        await finalizeOrders(orders);
+      if (!payment?.access_code) {
+        await finalizeOrders(orders, checkoutId);
         setSubmitting(false);
         return;
       }
 
-      paystack.resumeTransaction(cardOrder.payment.access_code, {
-        onSuccess: () => finalizeOrders(orders).finally(() => setSubmitting(false)),
-        onCancel: () => finalizeOrders(orders).finally(() => setSubmitting(false)),
-        onError: () => finalizeOrders(orders).finally(() => setSubmitting(false)),
+      paystack.resumeTransaction(payment.access_code, {
+        onSuccess: () => finalizeOrders(orders, checkoutId).finally(() => setSubmitting(false)),
+        onCancel: () => finalizeOrders(orders, checkoutId).finally(() => setSubmitting(false)),
+        onError: () => finalizeOrders(orders, checkoutId).finally(() => setSubmitting(false)),
       });
     } catch (err: any) {
       // 422 is the coupon no longer applying (used up, expired...) - drop it
