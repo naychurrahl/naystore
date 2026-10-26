@@ -1,6 +1,8 @@
-import { useLocation, useParams, Link } from "react-router";
+import { useState } from "react";
+import { useLocation, useNavigate, useParams, Link } from "react-router";
+import { toast } from "sonner";
 import { ArrowLeft, Truck, ExternalLink, Package } from "lucide-react";
-import { useAPI } from "../utils/api.js";
+import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { getGuestId } from "../utils/guestId.js";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +10,7 @@ import { FULFILLMENT_LABELS } from "../components/FulfillmentStatus";
 import { NotFound } from "./NotFound";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
 import { OrderDiscountLines } from "../components/OrderDiscountLines";
+import { ReportProblem } from "../components/ReportProblem";
 import { paymentLine as paymentLineFor } from "../utils/paymentLabel";
 
 function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
@@ -45,6 +48,37 @@ function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
         )}
       </div>
     </div>
+  );
+}
+
+// The buyer cancels one seller's order before it ships; a paid order is
+// refunded its share of the checkout's payment.
+function CancelOrderButton({ order }: { order: any }) {
+  const { user, authHeader } = useAuth();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+
+  const cancel = async () => {
+    const refund = order.paymentMethod === "card" && order.total > 0
+      ? ` ₦${Number(order.total).toLocaleString()} will be refunded to your ${order.paymentProvider === "naylet" ? "Naylet wallet" : "card or bank account"}.`
+      : "";
+    if (!confirm(`Cancel this order${order.sellerName ? ` from ${order.sellerName}` : ""}?${refund}`)) return;
+    setBusy(true);
+    try {
+      await api.post(`${API_BASE}/orders/${encodeURIComponent(order.id)}/cancel`, { guestId: user ? undefined : getGuestId() }, { headers: authHeader });
+      toast.success(refund ? "Order cancelled - your refund is on its way" : "Order cancelled");
+      navigate("/orders", { replace: true });
+    } catch (err: any) {
+      toast.error(err.message || "Could not cancel the order");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button type="button" disabled={busy} onClick={() => void cancel()} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+      style={{ border: '1px solid var(--color-error)', color: 'var(--color-error)' }}>
+      {busy ? "Cancelling…" : "Cancel order"}
+    </button>
   );
 }
 
@@ -98,10 +132,17 @@ export function OrderDetail() {
             {order.status}
           </span>
         </div>
-        <p className="text-sm mb-8" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-sm mb-1" style={{ color: 'var(--color-text-muted)' }}>
+          {order.sellerName ? `Sold by ${order.sellerName} · ` : ""}
           {paymentLine}
           {order.createdAt ? ` · Placed ${new Date(order.createdAt).toLocaleString()}` : ""}
         </p>
+        {order.checkoutId && (
+          <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>
+            Part of a checkout split by seller - <Link to="/orders" style={{ color: 'var(--color-primary)' }}>see its other orders</Link>
+          </p>
+        )}
+        <div className="mb-8">{order.canCancel && <div className="mt-3"><CancelOrderButton order={order} /></div>}</div>
 
         <div className="grid sm:grid-cols-2 gap-6 mb-8">
           <div className="p-4 rounded-lg" style={{ border: '1px solid var(--color-border)' }}>
@@ -164,6 +205,8 @@ export function OrderDetail() {
             </div>
           </>
         )}
+
+        <ReportProblem orderId={order.id} />
       </div>
     </div>
   );

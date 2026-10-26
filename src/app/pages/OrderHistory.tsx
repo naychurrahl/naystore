@@ -30,6 +30,7 @@ function OrderCard({ order, highlight = false }: { order: any; highlight?: boole
         </span>
       </div>
       <p className="text-xs mb-2" style={{ color: 'var(--color-text-muted)' }}>
+        {order.sellerName ? `Sold by ${order.sellerName} · ` : ""}
         {paymentLine}
         {order.createdAt ? ` · ${new Date(order.createdAt).toLocaleDateString()}` : ""}
       </p>
@@ -60,6 +61,44 @@ function OrderCard({ order, highlight = false }: { order: any; highlight?: boole
         View details <ChevronRight className="h-3.5 w-3.5" />
       </div>
     </Link>
+  );
+}
+
+// A checkout becomes one order per seller and payment method; its orders
+// are shown together. Orders from before checkouts stand alone.
+function groupByCheckout(orders: any[]): any[][] {
+  const groups: any[][] = [];
+  const byCheckout = new Map<string, any[]>();
+  for (const order of orders) {
+    if (!order.checkoutId) {
+      groups.push([order]);
+      continue;
+    }
+    let group = byCheckout.get(order.checkoutId);
+    if (!group) {
+      group = [];
+      byCheckout.set(order.checkoutId, group);
+      groups.push(group);
+    }
+    group.push(order);
+  }
+  return groups;
+}
+
+function CheckoutGroup({ orders, highlight = false }: { orders: any[]; highlight?: boolean }) {
+  if (orders.length === 1) return <OrderCard order={orders[0]} highlight={highlight} />;
+  const total = orders.reduce((sum, o) => sum + Number(o.total), 0);
+  const placed = orders[0].createdAt ? new Date(orders[0].createdAt).toLocaleDateString() : null;
+  return (
+    <div className="p-3 rounded-xl space-y-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+      <p className="text-sm px-1" style={{ color: 'var(--color-text-secondary)' }}>
+        <strong style={{ color: 'var(--color-text-primary)' }}>Checkout</strong>
+        {placed ? ` · ${placed}` : ""} · ₦{total.toLocaleString(undefined, { maximumFractionDigits: 2 })} · {orders.length} orders
+      </p>
+      {orders.map((order) => (
+        <OrderCard key={order.id} order={order} highlight={highlight} />
+      ))}
+    </div>
   );
 }
 
@@ -107,8 +146,8 @@ export function OrderHistory() {
               </h2>
             </div>
             <div className="space-y-4">
-              {justPlaced.map((order) => (
-                <OrderCard key={order.id} order={order} highlight />
+              {groupByCheckout(justPlaced).map((group) => (
+                <CheckoutGroup key={group[0].id} orders={group} highlight />
               ))}
             </div>
           </div>
@@ -126,8 +165,8 @@ export function OrderHistory() {
           )}
 
           <div className="space-y-4">
-            {historyOrders.map((order) => (
-              <OrderCard key={order.id} order={order} />
+            {groupByCheckout(historyOrders).map((group) => (
+              <CheckoutGroup key={group[0].id} orders={group} />
             ))}
           </div>
         </div>
