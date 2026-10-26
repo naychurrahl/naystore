@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { ArrowLeft, Minus, Plus, ShoppingCart, Star, MessageCircle, Store, GraduationCap, Lock, PlayCircle, FileText } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingCart, Star, MessageCircle, Store, GraduationCap, Lock, PlayCircle, FileText, ClipboardCheck, Award } from "lucide-react";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useCart } from "../context/CartContext";
@@ -273,6 +273,11 @@ export function ProductDetail() {
               {course.modules.length} module{course.modules.length === 1 ? "" : "s"} · {course.lessonCount} lesson{course.lessonCount === 1 ? "" : "s"}
               {course.durationSeconds ? ` · ${formatDuration(course.durationSeconds)} of video` : ""}
             </p>
+            {course.certificateEnabled && (
+              <p className="text-sm mb-4 -mt-2 flex items-center gap-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                <Award className="h-4 w-4" /> Certificate of completion included
+              </p>
+            )}
             <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--color-border)' }}>
               {course.modules.map((module: any, mi: number) => (
                 <div key={module.id} style={{ borderTop: mi ? '1px solid var(--color-border)' : undefined }}>
@@ -282,7 +287,7 @@ export function ProductDetail() {
                   <ul>
                     {module.lessons.map((lesson: any) => {
                       const open = !lesson.locked;
-                      const Icon = !open ? Lock : lesson.hasVideo ? PlayCircle : FileText;
+                      const Icon = !open ? Lock : lesson.hasVideo ? PlayCircle : lesson.hasQuiz ? ClipboardCheck : FileText;
                       return (
                         <li key={lesson.id} className="flex items-center gap-3 px-4 py-2.5 text-sm" style={{ borderTop: '1px solid var(--color-border)' }}>
                           <Icon className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} />

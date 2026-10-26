@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  ArrowDown, ArrowUp, Check, Eye, FileText, Paperclip, Pencil, Plus, Trash2, Upload, Video, X,
+  ArrowDown, ArrowUp, Check, ClipboardCheck, Eye, FileText, Paperclip, Pencil, Plus, Trash2, Upload, Video, X,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Switch } from "./ui/switch";
 import { RichTextEditor } from "./RichTextEditor";
+import { QuizEditor, type QuizDraft } from "./QuizEditor";
 import { formatSize, uploadToSignedUrl } from "./ProductFilesPanel";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
@@ -27,9 +28,11 @@ interface BuilderLesson {
   hasVideo: boolean;
   hasText: boolean;
   attachmentCount: number;
+  hasQuiz: boolean;
   contentHtml: string;
   video: { name: string; size: number | null } | null;
   attachments: BuilderFile[];
+  quiz: QuizDraft | null;
 }
 
 interface BuilderModule {
@@ -43,7 +46,19 @@ interface BuilderCourse {
   name: string;
   visible: boolean;
   sequentialUnlock: boolean;
+  certificateEnabled: boolean;
   modules: BuilderModule[];
+}
+
+// The server's quiz (question ids included) as an editable draft.
+function toQuizDraft(quiz: QuizDraft | null): QuizDraft | null {
+  if (!quiz) return null;
+  return {
+    passPercent: quiz.passPercent,
+    questions: quiz.questions.map((q) => ({
+      prompt: q.prompt, options: [...q.options], correctIndex: q.correctIndex, explanation: q.explanation ?? "",
+    })),
+  };
 }
 
 // Read a local video's length before uploading it, so the curriculum can
@@ -218,6 +233,13 @@ export function CourseBuilder({ productId, previewHref }: { productId: string; p
             />
             Sequential unlock
           </label>
+          <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            <Switch
+              checked={course.certificateEnabled}
+              onCheckedChange={(checked) => void call(api.put(url("/settings"), { productId, certificateEnabled: checked }, opts))}
+            />
+            Certificate
+          </label>
           {previewHref && (
             <a href={previewHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: 'var(--color-primary)' }}>
               <Eye className="h-4 w-4" /> Preview course
@@ -227,6 +249,7 @@ export function CourseBuilder({ productId, previewHref }: { productId: string; p
       </div>
       <p className="text-xs -mt-3" style={{ color: 'var(--color-text-muted)' }}>
         With sequential unlock, learners must finish each lesson before the next one opens. Free preview lessons are always open, even before buying.
+        With certificates on, learners who complete every lesson get a certificate anyone can verify online.
       </p>
 
       {lessons.length === 0 && (
@@ -292,13 +315,18 @@ export function CourseBuilder({ productId, previewHref }: { productId: string; p
                       style={{ backgroundColor: active ? 'var(--color-primary-light)' : 'transparent' }}
                     >
                       <button type="button" onClick={() => select(lesson.id)} className="flex-1 min-w-0 flex items-center gap-2 text-left text-sm py-1">
-                        {lesson.hasVideo ? <Video className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} /> : <FileText className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} />}
+                        {lesson.hasVideo ? <Video className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} />
+                          : lesson.hasQuiz && !lesson.hasText ? <ClipboardCheck className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} />
+                          : <FileText className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} />}
                         <span className="truncate" style={{ color: 'var(--color-text-primary)' }}>{lesson.title}</span>
                         {lesson.isPreview && (
                           <span className="px-1.5 rounded text-[10px] font-semibold uppercase flex-shrink-0" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>Preview</span>
                         )}
                         {lesson.durationSeconds ? <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-muted)' }}>{formatDuration(lesson.durationSeconds)}</span> : null}
-                        {!lesson.hasVideo && !lesson.hasText && lesson.attachmentCount === 0 && (
+                        {lesson.hasQuiz && (
+                          <span className="px-1.5 rounded text-[10px] font-semibold uppercase flex-shrink-0" style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>Quiz</span>
+                        )}
+                        {!lesson.hasVideo && !lesson.hasText && !lesson.hasQuiz && lesson.attachmentCount === 0 && (
                           <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-error)' }}>empty</span>
                         )}
                       </button>
@@ -341,6 +369,7 @@ export function CourseBuilder({ productId, previewHref }: { productId: string; p
               lesson={selected}
               onDirtyChange={setDirty}
               call={call}
+              error={error}
               onDeleted={() => { setDirty(false); setSelectedId(null); }}
             />
           ) : (
@@ -354,42 +383,49 @@ export function CourseBuilder({ productId, previewHref }: { productId: string; p
   );
 }
 
-function LessonEditor({ productId, lesson, onDirtyChange, call, onDeleted }: {
+function LessonEditor({ productId, lesson, onDirtyChange, call, error, onDeleted }: {
   productId: string;
   lesson: BuilderLesson;
   onDirtyChange: (dirty: boolean) => void;
   call: (request: Promise<any>) => Promise<BuilderCourse | null>;
+  error: string | null;
   onDeleted: () => void;
 }) {
   const { authHeader } = useAuth();
   const opts = { headers: authHeader };
   const lessonUrl = `${API_BASE}/course-builder/lesson`;
 
-  // Title, preview and text are saved together with "Save lesson"; video and
-  // attachments save as soon as their upload finishes.
+  // Title, preview, text and quiz are saved together with "Save lesson";
+  // video and attachments save as soon as their upload finishes.
   const [title, setTitle] = useState(lesson.title);
   const [isPreview, setIsPreview] = useState(lesson.isPreview);
   const [contentHtml, setContentHtml] = useState(lesson.contentHtml);
+  const [quiz, setQuiz] = useState<QuizDraft | null>(() => toQuizDraft(lesson.quiz));
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [upload, setUpload] = useState<{ name: string; progress: number } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const videoInput = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const saved = useRef({ title: lesson.title, isPreview: lesson.isPreview, contentHtml: lesson.contentHtml });
+  const saved = useRef({ title: lesson.title, isPreview: lesson.isPreview, contentHtml: lesson.contentHtml, quiz: JSON.stringify(toQuizDraft(lesson.quiz)) });
 
-  const dirty = title !== saved.current.title || isPreview !== saved.current.isPreview || contentHtml !== saved.current.contentHtml;
+  const dirty = title !== saved.current.title || isPreview !== saved.current.isPreview
+    || contentHtml !== saved.current.contentHtml || JSON.stringify(quiz) !== saved.current.quiz;
   useEffect(() => onDirtyChange(dirty), [dirty]);
 
   const save = async () => {
     setSaving(true);
-    const next = await call(api.put(lessonUrl, { id: lesson.id, title, isPreview, contentHtml }, opts));
+    const next = await call(api.put(lessonUrl, {
+      id: lesson.id, title, isPreview, contentHtml, quiz: quiz?.questions.length ? quiz : null,
+    }, opts));
     setSaving(false);
     const fresh = next?.modules.flatMap((m) => m.lessons).find((l) => l.id === lesson.id);
     if (fresh) {
       // The server cleans the HTML; keep what it stored as the new baseline.
-      saved.current = { title: fresh.title, isPreview: fresh.isPreview, contentHtml };
+      const freshQuiz = toQuizDraft(fresh.quiz);
+      saved.current = { title: fresh.title, isPreview: fresh.isPreview, contentHtml, quiz: JSON.stringify(freshQuiz) };
       setTitle(fresh.title);
+      setQuiz(freshQuiz);
       setSavedAt(Date.now());
       onDirtyChange(false);
     }
@@ -516,6 +552,11 @@ function LessonEditor({ productId, lesson, onDirtyChange, call, onDeleted }: {
         />
       </div>
 
+      <div>
+        <p className={label} style={labelStyle}>Quiz</p>
+        <QuizEditor value={quiz} onChange={setQuiz} />
+      </div>
+
       {upload && <UploadProgress name={upload.name} progress={upload.progress} />}
       {uploadError && <p className="text-sm" style={{ color: 'var(--color-error)' }}>{uploadError}</p>}
 
@@ -533,7 +574,8 @@ function LessonEditor({ productId, lesson, onDirtyChange, call, onDeleted }: {
         </button>
         <div className="flex items-center gap-3">
           {!dirty && savedAt && <span className="text-xs" style={{ color: 'var(--color-success)' }}>Saved</span>}
-          {dirty && <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Unsaved changes</span>}
+          {error && <span className="text-xs" style={{ color: 'var(--color-error)' }}>{error}</span>}
+          {dirty && !error && <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Unsaved changes</span>}
           <Button type="button" disabled={saving || !dirty || !title.trim()} onClick={() => void save()}>
             {saving ? "Saving…" : "Save lesson"}
           </Button>
