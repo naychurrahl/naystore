@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { FulfillmentStatus } from "../components/FulfillmentStatus";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
+import { OrderDiscountLines } from "../components/OrderDiscountLines";
 import { paymentLine as paymentLineFor } from "../utils/paymentLabel";
 
 function OrderCard({ order, highlight = false }: { order: any; highlight?: boolean }) {
@@ -43,6 +44,11 @@ function OrderCard({ order, highlight = false }: { order: any; highlight?: boole
           <span>₦{(item.price * item.quantity).toFixed(2)}</span>
         </div>
       ))}
+      {order.discounts?.length > 0 && (
+        <div className="pt-1">
+          <OrderDiscountLines discounts={order.discounts} />
+        </div>
+      )}
       <div className="flex justify-between font-bold pt-2 mt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
         <span>Total</span>
         <span>₦{order.total}</span>

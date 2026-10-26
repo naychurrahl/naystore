@@ -32,6 +32,7 @@ import { Learn } from "./pages/Learn";
 import { Certificate } from "./pages/Certificate";
 import { TicketPage } from "./pages/TicketPage";
 import { MerchantEventBuilderPage } from "./pages/MerchantEventBuilderPage";
+import { MerchantCouponsPage } from "./pages/MerchantCouponsPage";
 
 export const router = createBrowserRouter([
   {
@@ -74,6 +75,7 @@ export const router = createBrowserRouter([
           { path: "products/:id/event", Component: MerchantEventBuilderPage },
           { path: "products/:id/course", lazy: () => import("./pages/MerchantCourseBuilderPage").then((m) => ({ Component: m.MerchantCourseBuilderPage })) },
           { path: "orders", Component: MerchantOrdersPage },
+          { path: "coupons", Component: MerchantCouponsPage },
           { path: "shop", Component: MyShopPage },
           { path: "payouts", Component: MyPayoutsPage },
           { path: "chat", Component: MerchantChatPage },

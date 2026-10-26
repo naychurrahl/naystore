@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router";
-import { CheckCircle2, XCircle, ArrowLeft, CreditCard, Truck, Layers, Ticket, Wallet, Smartphone } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowLeft, CreditCard, Truck, Layers, Ticket, Wallet, Smartphone, TicketPercent, X } from "lucide-react";
 import { toast } from "sonner";
 import PaystackPop from "@paystack/inline-js";
 import { api, useAPI } from "../utils/api.js";
@@ -13,10 +13,13 @@ import { FulfillmentStatus } from "../components/FulfillmentStatus";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 import { isPhysical, requiresAccount } from "../utils/productTypes";
 import { paymentLine } from "../utils/paymentLabel";
+import { OrderDiscountLines } from "../components/OrderDiscountLines";
 
 type PaymentChoice = "cod" | "card" | "split";
 type Provider = "paystack" | "naylet";
 type Attendee = { name: string; email: string };
+// What coupons/check says a code takes off, per cart line (index into items).
+type AppliedCoupon = { code: string; label: string; amount: number; lines: { index: number; amount: number }[] };
 
 // The checkout form survives the round trip to Naylet to connect a wallet.
 const DRAFT_KEY = "naychurrahl_checkout_draft";
@@ -95,6 +98,7 @@ export function Checkout() {
       if (draft) {
         setForm((prev) => ({ ...prev, ...draft.form }));
         setAttendees(draft.attendees ?? {});
+        if (draft.couponCode) setCouponInput(draft.couponCode);
       }
       sessionStorage.removeItem(DRAFT_KEY);
     } catch {
@@ -159,10 +163,43 @@ export function Checkout() {
   const [placedOrders, setPlacedOrders] = useState<any[] | null>(null);
   const [paymentFailed, setPaymentFailed] = useState(false);
 
+  // Coupon: previewed by coupons/check; the order works it out again itself.
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+  const discountAt = (index: number) => coupon?.lines.find((l) => l.index === index)?.amount ?? 0;
+  const discountOn = (subset: typeof items) =>
+    items.reduce((sum, item, index) => sum + (subset.includes(item) ? discountAt(index) : 0), 0);
+  const discount = coupon?.amount ?? 0;
+
+  const applyCoupon = async (code: string) => {
+    if (!code.trim()) return;
+    setCheckingCoupon(true);
+    setCouponError(null);
+    try {
+      const result = await api.post(`${API_BASE}/coupons/check`, {
+        code,
+        email: form.email,
+        items: items.map((item) => ({ productId: item.productId, quantity: item.quantity, ...(item.tierId ? { tierId: item.tierId } : {}) })),
+      }, { headers: authHeader });
+      setCoupon(result);
+      setCouponInput("");
+    } catch (err: any) {
+      setCoupon(null);
+      setCouponError(err.message || "That code can't be used");
+    } finally {
+      setCheckingCoupon(false);
+    }
+  };
+
   // What the online part costs (the whole order, or the card-only half of a split).
-  const onlineTotal = paymentMethod === "card" ? subtotal : cardOnlyItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const onlineTotal = paymentMethod === "card"
+    ? subtotal - discount
+    : cardOnlyItems.reduce((sum, i) => sum + i.price * i.quantity, 0) - discountOn(cardOnlyItems);
+  const nothingToPayOnline = paymentMethod !== "cod" && onlineTotal <= 0;
   const nayletUsable = !!user && !!wallet?.connected && Math.abs(onlineTotal - Math.round(onlineTotal)) < 0.001;
-  const usingNaylet = paymentMethod !== "cod" && provider === "naylet";
+  const usingNaylet = paymentMethod !== "cod" && provider === "naylet" && !nothingToPayOnline;
 
   if (items.length === 0 && !placedOrders && !awaiting) {
     return <Navigate to="/cart" replace />;
@@ -224,6 +261,7 @@ export function Checkout() {
                     <span>₦{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
+                <OrderDiscountLines discounts={order.discounts} />
               </div>
               <div className="flex justify-between font-bold pt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
                 <span>Total</span>
@@ -288,7 +326,7 @@ export function Checkout() {
 
   const connectNaylet = async () => {
     try {
-      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form, attendees }));
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form, attendees, couponCode: coupon?.code }));
     } catch {
       // Storage blocked: the form just won't be refilled.
     }
@@ -308,7 +346,8 @@ export function Checkout() {
       const result = await api.post(`${API_BASE}/orders`, {
         ...form,
         paymentMethod,
-        paymentProvider: paymentMethod === "cod" ? undefined : provider,
+        paymentProvider: paymentMethod === "cod" || nothingToPayOnline ? undefined : provider,
+        couponCode: coupon?.code,
         guestId: user ? undefined : getGuestId(),
         items: items.map((item) => ({
           productId: item.productId,
@@ -344,7 +383,15 @@ export function Checkout() {
         onError: () => finalizeOrders(orders).finally(() => setSubmitting(false)),
       });
     } catch (err: any) {
-      setError(err.message || "Could not place order. Please try again.");
+      // 422 is the coupon no longer applying (used up, expired...) - drop it
+      // so the buyer sees the new total before trying again.
+      if (err.status === 422 && coupon) {
+        setCoupon(null);
+        setCouponError(err.message);
+        setError("Your coupon couldn't be used, so it was removed. Check the new total and try again.");
+      } else {
+        setError(err.message || "Could not place order. Please try again.");
+      }
       setSubmitting(false);
     }
   };
@@ -647,7 +694,12 @@ export function Checkout() {
                 ))}
               </div>
 
-              {paymentMethod !== "cod" && (
+              {nothingToPayOnline && (
+                <p className="mt-3 text-sm" style={{ color: 'var(--color-success)' }}>
+                  Your coupon covers {paymentMethod === "card" ? "the whole order" : "the online part"} - there's nothing to pay online.
+                </p>
+              )}
+              {paymentMethod !== "cod" && !nothingToPayOnline && (
                 <div className="mt-4 space-y-2">
                   <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Pay online with</p>
                   {([
@@ -743,24 +795,82 @@ export function Checkout() {
               className="w-full px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
               style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
             >
-              {submitting ? "Processing..." : paymentMethod === "cod" ? "Place Order" : usingNaylet ? "Pay with Naylet" : "Continue to Payment"}
+              {submitting ? "Processing..." : paymentMethod === "cod" || nothingToPayOnline ? "Place Order" : usingNaylet ? "Pay with Naylet" : "Continue to Payment"}
             </button>
           </form>
 
           <div className="p-6 rounded-xl h-fit" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
             <h2 className="font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>Order Summary</h2>
             <div className="space-y-2 mb-4">
-              {items.map((item) => (
-                <div key={lineKey(item)} className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              {items.map((item, index) => (
+                <div key={lineKey(item)} className="flex justify-between gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                   <span>{item.quantity} × {item.name}{item.tierName ? ` (${item.tierName})` : ""}</span>
-                  <span>₦{(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="text-right shrink-0">
+                    ₦{(item.price * item.quantity).toFixed(2)}
+                    {discountAt(index) > 0 && (
+                      <span className="block text-xs" style={{ color: 'var(--color-success)' }}>−₦{discountAt(index).toLocaleString()}</span>
+                    )}
+                  </span>
                 </div>
               ))}
             </div>
-            <div className="flex justify-between font-bold pt-4" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
-              <span>Total</span>
-              <span>₦{subtotal.toFixed(2)}</span>
+
+            <div className="pt-4 mb-4 space-y-2" style={{ borderTop: '1px solid var(--color-border)' }}>
+              {coupon ? (
+                <div className="flex items-center justify-between gap-2 text-sm" style={{ color: 'var(--color-success)' }}>
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <TicketPercent className="h-4 w-4 shrink-0" />
+                    <span className="truncate"><strong>{coupon.code}</strong> · {coupon.label}</span>
+                  </span>
+                  <span className="flex items-center gap-2 shrink-0">
+                    −₦{discount.toLocaleString()}
+                    <button type="button" onClick={() => setCoupon(null)} aria-label="Remove coupon" title="Remove coupon">
+                      <X className="h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
+                    </button>
+                  </span>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => { e.preventDefault(); void applyCoupon(couponInput); }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null); }}
+                    placeholder="Coupon code"
+                    aria-label="Coupon code"
+                    className="min-w-0 flex-1 px-3 py-2 rounded-lg border text-sm"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={checkingCoupon || !couponInput.trim()}
+                    className="px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                    style={{ border: '1px solid var(--color-primary)', color: 'var(--color-primary)' }}
+                  >
+                    {checkingCoupon ? "Checking…" : "Apply"}
+                  </button>
+                </form>
+              )}
+              {couponError && <p className="text-xs" style={{ color: 'var(--color-error)' }}>{couponError}</p>}
             </div>
+
+            {discount > 0 && (
+              <div className="flex justify-between text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>
+                <span>Subtotal</span>
+                <span>₦{subtotal.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold pt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
+              <span>Total</span>
+              <span>₦{(subtotal - discount).toFixed(2)}</span>
+            </div>
+            {paymentMethod === "split" && discount > 0 && (
+              <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
+                Online now: ₦{onlineTotal.toFixed(2)} · on delivery: ₦{(subtotal - discount - onlineTotal).toFixed(2)}
+              </p>
+            )}
           </div>
         </div>
       </div>
