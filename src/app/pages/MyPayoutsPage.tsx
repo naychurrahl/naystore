@@ -4,6 +4,7 @@ import { Wallet, CheckCircle2 } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { PayoutSettingsCard } from "../components/PayoutSettingsCard";
 
 const money = (n: number) => `₦${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -17,7 +18,7 @@ interface Commission {
   commissionAmount: number;
   merchantAmount: number;
   payoutStatus: "pending" | "paid";
-  payoutMethod: "naira" | "wallet" | null;
+  payoutMethod: "naira" | "wallet" | "bank" | null;
   paidAt: string | null;
   createdAt: string;
 }
@@ -54,6 +55,8 @@ export function MyPayoutsPage() {
       <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
         What you're owed and what's already been paid out, per order line.
       </p>
+
+      <PayoutSettingsCard />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <PayoutStat label="Owed to You" value={money(totalPending)} icon={Wallet} tone="primary" />
@@ -97,8 +100,8 @@ export function MyPayoutsPage() {
                     >
                       {item.payoutStatus}
                     </span>
-                    {item.payoutStatus === "paid" && item.payoutMethod === "wallet" && (
-                      <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>via wallet</span>
+                    {item.payoutStatus === "paid" && (item.payoutMethod === "wallet" || item.payoutMethod === "bank") && (
+                      <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>via {item.payoutMethod}</span>
                     )}
                   </div>
                 </TableCell>

@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Ticket } from "lucide-react";
 import { ResourceTable } from "../components/ResourceTable";
 import { CommissionNegotiation } from "../components/CommissionNegotiation";
 import { ProductFilesPanel } from "../components/ProductFilesPanel";
@@ -12,6 +12,25 @@ export function MerchantProductsPage() {
       formExtra={(row, refetch) => [
         ...(row.productType === "digital"
           ? [{ label: "Files", content: <ProductFilesPanel productId={row.id} /> }]
+          : []),
+        ...(row.productType === "ticket"
+          ? [{
+              label: "Event & tickets",
+              content: (
+                <div className="space-y-2">
+                  <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                    Date, venue or online link, ticket types, check-in and attendees.
+                  </p>
+                  <Link
+                    to={`/merchant/products/${encodeURIComponent(row.id)}/event`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium"
+                    style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                  >
+                    <Ticket className="h-4 w-4" /> Set up event
+                  </Link>
+                </div>
+              ),
+            }]
           : []),
         ...(row.productType === "course"
           ? [{

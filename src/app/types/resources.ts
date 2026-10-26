@@ -93,13 +93,14 @@ export const merchantProductsConfig: ResourceConfig = {
     {
       // Fixed once created - it decides how the product is delivered.
       key: "productType", label: "Product type", type: "select", createOnly: true, required: true, defaultValue: "physical",
-      options: ["physical", "digital", "course"],
+      options: ["physical", "digital", "course", "ticket"],
       optionLabels: {
         physical: "Physical product (shipped)",
         digital: "Digital download (ebook, software, files)",
         course: "Online course (video and text lessons)",
+        ticket: "Event tickets (in person or online)",
       },
-      helpText: "Can't be changed later. Digital products and courses are card-only and delivered instantly to the buyer's Library - you'll add the files or lessons after creating it.",
+      helpText: "Can't be changed later. Digital products, courses and tickets are card-only and delivered instantly to the buyer's Library - you'll add the files, lessons or event details after creating it. For tickets, the price shown follows your cheapest ticket type.",
       section: "Basics",
     },
     { key: "name", label: "Name", type: "text", required: true, section: "Basics" },

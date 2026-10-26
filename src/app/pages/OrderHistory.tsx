@@ -7,16 +7,10 @@ import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { FulfillmentStatus } from "../components/FulfillmentStatus";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
+import { paymentLine as paymentLineFor } from "../utils/paymentLabel";
 
 function OrderCard({ order, highlight = false }: { order: any; highlight?: boolean }) {
-  const paymentLine =
-    order.paymentMethod === "cod"
-      ? "Cash on Delivery"
-      : order.paymentStatus === "success"
-      ? "Paid by card"
-      : order.paymentStatus === "failed"
-      ? "Card payment failed"
-      : "Card payment pending";
+  const paymentLine = paymentLineFor(order);
 
   return (
     <Link

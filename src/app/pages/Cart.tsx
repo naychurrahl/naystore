@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Minus, Plus, Trash2, ArrowRight, ShoppingCart } from "lucide-react";
-import { useCart } from "../context/CartContext";
+import { useCart, lineKey } from "../context/CartContext";
 
 export function Cart() {
   const { items, updateQuantity, removeItem, subtotal } = useCart();
@@ -40,7 +40,7 @@ export function Cart() {
         <div className="space-y-4 mb-8">
           {items.map((item) => (
             <div
-              key={item.productId}
+              key={lineKey(item)}
               className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl"
               style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}
             >
@@ -50,6 +50,9 @@ export function Cart() {
 
               <div className="flex-1">
                 <h3 className="font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>{item.name}</h3>
+                {item.tierName && (
+                  <p className="text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>{item.tierName} ticket</p>
+                )}
                 <p className="mb-2" style={{ color: 'var(--color-text-secondary)' }}>₦{item.price} each</p>
                 {!item.codEligible && (
                   <span
@@ -63,7 +66,7 @@ export function Cart() {
 
               <div className="flex items-center rounded-lg" style={{ border: '1px solid var(--color-border)' }}>
                 <button
-                  onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                  onClick={() => updateQuantity(lineKey(item), item.quantity - 1)}
                   className="p-2 transition-colors"
                   style={{ color: 'var(--color-text-primary)' }}
                   aria-label="Decrease quantity"
@@ -72,7 +75,7 @@ export function Cart() {
                 </button>
                 <span className="px-3 font-medium" style={{ color: 'var(--color-text-primary)' }}>{item.quantity}</span>
                 <button
-                  onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                  onClick={() => updateQuantity(lineKey(item), item.quantity + 1)}
                   className="p-2 transition-colors"
                   style={{ color: 'var(--color-text-primary)' }}
                   aria-label="Increase quantity"
@@ -86,7 +89,7 @@ export function Cart() {
               </div>
 
               <button
-                onClick={() => removeItem(item.productId)}
+                onClick={() => removeItem(lineKey(item))}
                 className="p-2 rounded-lg transition-colors"
                 style={{ color: 'var(--color-error)' }}
                 aria-label="Remove item"
