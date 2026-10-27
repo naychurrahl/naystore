@@ -7,6 +7,7 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Button } from "./ui/button";
 import { ImageUploadField } from "./ImageUploadField";
+import { MediaGalleryField } from "./MediaGalleryField";
 import { CategoryMultiSelect } from "./CategoryMultiSelect";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
@@ -15,7 +16,7 @@ import type { ResourceConfig, FieldConfig } from "../types/resources";
 
 // Field types whose control needs the full form width rather than sharing a
 // two-column row with another field.
-const FULL_WIDTH_TYPES = new Set(["textarea", "image", "multiselect-create", "checkbox-group", "checkbox"]);
+const FULL_WIDTH_TYPES = new Set(["textarea", "image", "multiselect-create", "checkbox-group", "checkbox", "media"]);
 
 function initialFormData(fields: FieldConfig[], initialData: Record<string, any> | null): Record<string, any> {
   const data: Record<string, any> = {};
@@ -25,7 +26,7 @@ function initialFormData(fields: FieldConfig[], initialData: Record<string, any>
       value = value.join(", ");
     }
     if (value === undefined) {
-      value = field.defaultValue ?? (field.type === "checkbox" ? false : field.type === "multiselect-create" || field.type === "checkbox-group" ? [] : "");
+      value = field.defaultValue ?? (field.type === "checkbox" ? false : field.type === "multiselect-create" || field.type === "checkbox-group" || field.type === "media" ? [] : "");
     }
     data[field.key] = value;
   }
@@ -152,6 +153,10 @@ function FieldBlock({
 
       {field.type === "image" && (
         <ImageUploadField value={value ?? ""} onChange={onChange} folder={field.folder || "site"} />
+      )}
+
+      {field.type === "media" && (
+        <MediaGalleryField value={value} onChange={onChange} folder={field.folder || "products"} />
       )}
 
       {field.type === "select" && field.optionsFrom && (

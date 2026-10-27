@@ -1,4 +1,4 @@
-export type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "checkbox-group" | "select" | "multiselect-create" | "image" | "tags" | "date" | "fulfillment";
+export type FieldType = "text" | "password" | "number" | "textarea" | "checkbox" | "checkbox-group" | "select" | "multiselect-create" | "image" | "tags" | "date" | "fulfillment" | "media";
 
 export interface FieldConfig {
   key: string;
@@ -106,7 +106,7 @@ export const merchantProductsConfig: ResourceConfig = {
     { key: "name", label: "Name", type: "text", required: true, section: "Basics" },
     { key: "categories", label: "Categories", type: "multiselect-create", optionsFrom: "/categories?type=product", required: true, section: "Basics" },
     { key: "description", label: "Description", type: "textarea", required: true, section: "Basics" },
-    { key: "image", label: "Image", type: "image", folder: "products", section: "Photo" },
+    { key: "media", label: "Photos & videos", type: "media", folder: "products", section: "Photos & videos" },
     { key: "price", label: "Price", type: "number", required: true, section: "Pricing & Stock" },
     { key: "originalPrice", label: "Original Price", type: "number", section: "Pricing & Stock" },
     { key: "inStock", label: "In Stock", type: "checkbox", defaultValue: true, section: "Pricing & Stock", showIf: isPhysicalForm },

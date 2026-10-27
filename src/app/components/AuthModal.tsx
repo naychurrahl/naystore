@@ -5,6 +5,9 @@ import { PasswordInput } from "./PasswordInput";
 import { useAuthModal } from "../context/AuthModalContext";
 import { router } from "../routes";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
+import { CodeField, ForgotPasswordForm } from "./EmailCode";
+import { api } from "../utils/api.js";
+import { API_BASE } from "../utils/apiBase.js";
 
 const inputStyle = { borderColor: "var(--color-border)", color: "var(--color-text-primary)" };
 const labelStyle = { color: "var(--color-text-primary)" };
@@ -40,9 +43,17 @@ export function AuthModal() {
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Sign-up confirms the email with a code first; login can switch to
+  // "forgot password".
+  const [codeSent, setCodeSent] = useState<{ resendIn: number } | null>(null);
+  const [code, setCode] = useState("");
+  const [forgot, setForgot] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setCodeSent(null);
+      setCode("");
+      setForgot(false);
       setIdentifier("");
       setLoginPassword("");
       setName("");
@@ -94,6 +105,11 @@ export function AuthModal() {
     }
   };
 
+  const requestSignupCode = async () => {
+    const result = await api.post(`${API_BASE}/register/code`, { email: email.trim() });
+    return result.resendIn as number;
+  };
+
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -124,11 +140,16 @@ export function AuthModal() {
 
     setSubmitting(true);
     try {
+      if (!codeSent) {
+        setCodeSent({ resendIn: await requestSignupCode() });
+        return;
+      }
       await register({
         usertype,
         name,
         email,
         password,
+        code,
         username: username || undefined,
         ...(usertype === "merchant"
           ? { legalName: legalName.trim(), commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim() }
@@ -163,7 +184,20 @@ export function AuthModal() {
           <X className="h-5 w-5" />
         </button>
 
-        {mode === "login" ? (
+        {mode === "login" && forgot ? (
+          <>
+            <h1 className="text-2xl font-bold mb-6 text-center" style={labelStyle}>Reset Password</h1>
+            <ForgotPasswordForm
+              initialIdentifier={identifier}
+              onBack={() => setForgot(false)}
+              onDone={async (id, newPassword) => {
+                await login(id, newPassword);
+                close();
+                router.navigate(redirectTo ?? "/profile", { replace: true });
+              }}
+            />
+          </>
+        ) : mode === "login" ? (
           <>
             <h1 className="text-2xl font-bold mb-6 text-center" style={labelStyle}>Log In</h1>
 
@@ -190,6 +224,9 @@ export function AuthModal() {
                   className="w-full px-4 py-3 rounded-lg border"
                   style={inputStyle}
                 />
+                <button type="button" onClick={() => { setError(null); setForgot(true); }} className="text-xs mt-1.5" style={{ color: "var(--color-primary)" }}>
+                  Forgot password?
+                </button>
               </div>
 
               {error && <p className="text-sm" style={{ color: "var(--color-error)" }}>{error}</p>}
@@ -234,6 +271,15 @@ export function AuthModal() {
             </div>
 
             <form onSubmit={handleRegister} className="space-y-4">
+              {codeSent ? (
+                <>
+                  <CodeField value={code} onChange={setCode} sentTo={email.trim()} onResend={requestSignupCode} resendIn={codeSent.resendIn} />
+                  <button type="button" onClick={() => { setCodeSent(null); setCode(""); setError(null); }} className="text-xs" style={{ color: "var(--color-primary)" }}>
+                    Change my details or email
+                  </button>
+                </>
+              ) : (
+              <>
               <div>
                 <label className="block text-sm font-medium mb-1" style={labelStyle}>
                   {usertype === "merchant" ? "Shop name" : "Full Name"}
@@ -420,17 +466,22 @@ export function AuthModal() {
                   </div>
                 </>
               )}
+              </>
+              )}
 
               {error && <p className="text-sm" style={{ color: "var(--color-error)" }}>{error}</p>}
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || (!!codeSent && code.length !== 6)}
                 className="w-full px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
                 style={{ backgroundColor: "var(--color-primary)", color: "white" }}
               >
-                {submitting ? "Creating Account..." : "Create Account"}
+                {submitting ? (codeSent ? "Creating Account..." : "Sending code...") : codeSent ? "Create Account" : "Continue"}
               </button>
+              {!codeSent && (
+                <p className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>We'll email you a code to confirm it's your address.</p>
+              )}
             </form>
 
             <p className="mt-6 text-sm text-center" style={{ color: "var(--color-text-secondary)" }}>
