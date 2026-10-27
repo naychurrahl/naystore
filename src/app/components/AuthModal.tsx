@@ -8,6 +8,7 @@ import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 import { CodeField, ForgotPasswordForm } from "./EmailCode";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
+import { forgetReferral, savedReferral } from "../utils/referral";
 
 const inputStyle = { borderColor: "var(--color-border)", color: "var(--color-text-primary)" };
 const labelStyle = { color: "var(--color-text-primary)" };
@@ -40,6 +41,7 @@ export function AuthModal() {
   const [lga, setLga] = useState("");
   const [area, setArea] = useState("");
   const [landmark, setLandmark] = useState("");
+  const [referralCode, setReferralCode] = useState(savedReferral);
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -56,6 +58,7 @@ export function AuthModal() {
       setForgot(false);
       setIdentifier("");
       setLoginPassword("");
+      setReferralCode(savedReferral());
       setName("");
       setUsername("");
       setEmail("");
@@ -151,10 +154,12 @@ export function AuthModal() {
         password,
         code,
         username: username || undefined,
+        referralCode: referralCode.trim() || undefined,
         ...(usertype === "merchant"
           ? { legalName: legalName.trim(), commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim() }
           : {}),
       });
+      forgetReferral();
       close();
       router.navigate(redirectTo ?? (usertype === "merchant" ? "/merchant" : "/profile"), { replace: true });
     } catch (err: any) {
@@ -322,6 +327,20 @@ export function AuthModal() {
                 />
                 <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
                   Lets you log in with a username instead of your email, if you'd rather.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1" style={labelStyle}>Invite code (optional)</label>
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  className="w-full px-4 py-3 rounded-lg border"
+                  style={inputStyle}
+                />
+                <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
+                  From a friend's invite link - it takes money off your first order.
                 </p>
               </div>
 
