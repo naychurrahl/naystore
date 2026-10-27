@@ -33,6 +33,7 @@ import { Certificate } from "./pages/Certificate";
 import { TicketPage } from "./pages/TicketPage";
 import { MerchantEventBuilderPage } from "./pages/MerchantEventBuilderPage";
 import { MerchantCouponsPage } from "./pages/MerchantCouponsPage";
+import { InviteFriends } from "./pages/InviteFriends";
 
 export const router = createBrowserRouter([
   {
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
       { path: "profile", Component: Profile },
       { path: "orders", Component: OrderHistory },
       { path: "library", Component: Library },
+      { path: "invite", Component: InviteFriends },
       { path: "learn/:productId", Component: Learn },
       { path: "tickets/:code", Component: TicketPage },
       { path: "orders/:id", Component: OrderDetail },

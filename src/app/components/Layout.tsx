@@ -10,6 +10,7 @@ import { useChat } from "../context/ChatContext";
 import { ChatLauncher } from "./ChatLauncher";
 import { ChatPanel } from "./ChatPanel";
 import { NotificationBell } from "./NotificationBell";
+import { rememberReferral } from "../utils/referral";
 
 export function Layout() {
   const location = useLocation();
@@ -37,6 +38,11 @@ export function Layout() {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // An invite link (?ref=CODE) on any page.
+  useEffect(() => {
+    rememberReferral(location.search);
+  }, [location.search]);
 
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
@@ -315,6 +321,11 @@ export function Layout() {
                 <li>
                   <Link to="/library" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
                     My Library
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/invite" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                    Invite Friends
                   </Link>
                 </li>
                 <li>

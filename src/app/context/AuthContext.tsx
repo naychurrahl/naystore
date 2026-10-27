@@ -36,6 +36,8 @@ export interface RegisterInput {
   fulfillmentMethod?: "fbu" | "fbm";
   // The code emailed by POST register/code.
   code: string;
+  // A friend's invite code (optional).
+  referralCode?: string;
 }
 
 interface AuthContextValue {

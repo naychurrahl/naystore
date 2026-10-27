@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router";
-import { CheckCircle2, XCircle, ArrowLeft, CreditCard, Truck, Layers, Ticket, Wallet, Smartphone, TicketPercent, X } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowLeft, CreditCard, Truck, Layers, Ticket, Wallet, Smartphone, TicketPercent, X, Gift } from "lucide-react";
 import { toast } from "sonner";
 import PaystackPop from "@paystack/inline-js";
 import { api, useAPI } from "../utils/api.js";
@@ -20,6 +20,8 @@ type Provider = "paystack" | "naylet";
 type Attendee = { name: string; email: string };
 // What coupons/check says a code takes off, per cart line (index into items).
 type AppliedCoupon = { code: string; label: string; amount: number; lines: { index: number; amount: number }[] };
+// A referred friend's first-order discount, on top of any coupon.
+type InviteDiscount = { label: string; amount: number; lines: { index: number; amount: number }[] };
 
 // The checkout form survives the round trip to Naylet to connect a wallet.
 const DRAFT_KEY = "naychurrahl_checkout_draft";
@@ -168,10 +170,40 @@ export function Checkout() {
   const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [checkingCoupon, setCheckingCoupon] = useState(false);
-  const discountAt = (index: number) => coupon?.lines.find((l) => l.index === index)?.amount ?? 0;
+  const [invite, setInvite] = useState<InviteDiscount | null>(null);
+  const discountAt = (index: number) =>
+    (coupon?.lines.find((l) => l.index === index)?.amount ?? 0) + (invite?.lines.find((l) => l.index === index)?.amount ?? 0);
   const discountOn = (subset: typeof items) =>
     items.reduce((sum, item, index) => sum + (subset.includes(item) ? discountAt(index) : 0), 0);
-  const discount = coupon?.amount ?? 0;
+  const discount = (coupon?.amount ?? 0) + (invite?.amount ?? 0);
+
+  const checkLines = () =>
+    items.map((item) => ({ productId: item.productId, quantity: item.quantity, ...(item.tierId ? { tierId: item.tierId } : {}) }));
+
+  // The invite discount follows the cart, the login and the coupon (it comes
+  // off what the coupon leaves).
+  const refreshInvite = async (code?: string) => {
+    if (!user) {
+      setInvite(null);
+      return;
+    }
+    try {
+      const result = await api.post(`${API_BASE}/coupons/check`, { code: code ?? "", email: form.email, items: checkLines() }, { headers: authHeader });
+      setInvite(result.invite ?? null);
+    } catch {
+      setInvite(null);
+    }
+  };
+  const cartKey = items.map((item) => `${item.productId}:${item.tierId ?? ""}:${item.quantity}`).join("|");
+  useEffect(() => {
+    void refreshInvite(coupon?.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, cartKey]);
+
+  const removeCoupon = () => {
+    setCoupon(null);
+    void refreshInvite();
+  };
 
   const applyCoupon = async (code: string) => {
     if (!code.trim()) return;
@@ -181,9 +213,10 @@ export function Checkout() {
       const result = await api.post(`${API_BASE}/coupons/check`, {
         code,
         email: form.email,
-        items: items.map((item) => ({ productId: item.productId, quantity: item.quantity, ...(item.tierId ? { tierId: item.tierId } : {}) })),
+        items: checkLines(),
       }, { headers: authHeader });
       setCoupon(result);
+      setInvite(result.invite ?? null);
       setCouponInput("");
     } catch (err: any) {
       setCoupon(null);
@@ -398,7 +431,7 @@ export function Checkout() {
       // 422 is the coupon no longer applying (used up, expired...) - drop it
       // so the buyer sees the new total before trying again.
       if (err.status === 422 && coupon) {
-        setCoupon(null);
+        removeCoupon();
         setCouponError(err.message);
         setError("Your coupon couldn't be used, so it was removed. Check the new total and try again.");
       } else {
@@ -708,7 +741,7 @@ export function Checkout() {
 
               {nothingToPayOnline && (
                 <p className="mt-3 text-sm" style={{ color: 'var(--color-success)' }}>
-                  Your coupon covers {paymentMethod === "card" ? "the whole order" : "the online part"} - there's nothing to pay online.
+                  Your {coupon ? "coupon covers" : "discount covers"} {paymentMethod === "card" ? "the whole order" : "the online part"} - there's nothing to pay online.
                 </p>
               )}
               {paymentMethod !== "cod" && !nothingToPayOnline && (
@@ -835,8 +868,8 @@ export function Checkout() {
                     <span className="truncate"><strong>{coupon.code}</strong> · {coupon.label}</span>
                   </span>
                   <span className="flex items-center gap-2 shrink-0">
-                    −₦{discount.toLocaleString()}
-                    <button type="button" onClick={() => setCoupon(null)} aria-label="Remove coupon" title="Remove coupon">
+                    −₦{coupon.amount.toLocaleString()}
+                    <button type="button" onClick={removeCoupon} aria-label="Remove coupon" title="Remove coupon">
                       <X className="h-4 w-4" style={{ color: 'var(--color-text-muted)' }} />
                     </button>
                   </span>
@@ -866,6 +899,15 @@ export function Checkout() {
                 </form>
               )}
               {couponError && <p className="text-xs" style={{ color: 'var(--color-error)' }}>{couponError}</p>}
+              {invite && (
+                <div className="flex items-center justify-between gap-2 text-sm" style={{ color: 'var(--color-success)' }}>
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <Gift className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{invite.label} · your first order</span>
+                  </span>
+                  <span className="shrink-0">−₦{invite.amount.toLocaleString()}</span>
+                </div>
+              )}
             </div>
 
             {discount > 0 && (

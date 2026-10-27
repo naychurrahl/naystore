@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { ChevronRight, Package } from "lucide-react";
+import { ChevronRight, Gift, Package } from "lucide-react";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
@@ -123,6 +123,14 @@ export function Profile() {
             Log Out
           </button>
         </div>
+
+        <Link to="/invite" className="p-4 rounded-xl mb-6 flex items-center gap-3" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
+          <Gift className="h-6 w-6 shrink-0" style={{ color: 'var(--color-primary)' }} />
+          <span className="flex-1">
+            <span className="block font-bold" style={{ color: 'var(--color-text-primary)' }}>Invite friends</span>
+            <span className="block text-sm" style={{ color: 'var(--color-text-secondary)' }}>They save on their first order, and you earn a reward.</span>
+          </span>
+        </Link>
 
         <div className="p-6 rounded-xl mb-6" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
           <h2 className="font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>Account Details</h2>
