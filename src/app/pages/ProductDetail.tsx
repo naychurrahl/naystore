@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { ProductGallery } from "../components/ProductGallery";
 import { ArrowLeft, Minus, Plus, ShoppingCart, Star, MessageCircle, Store, GraduationCap, Lock, PlayCircle, FileText, ClipboardCheck, Award } from "lucide-react";
 import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
@@ -136,9 +136,11 @@ export function ProductDetail() {
         </Link>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="relative aspect-square rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
-            <ImageWithFallback src={product.image} alt={product.name} className="w-full h-full object-cover" />
-            {product.badge && (
+          <ProductGallery
+            media={product.media}
+            fallbackImage={product.image}
+            alt={product.name}
+            overlay={product.badge && (
               <div
                 className="absolute top-3 right-3 px-3 py-1 rounded text-white text-sm font-medium"
                 style={{ backgroundColor: product.inStock ? 'var(--color-product-badge)' : 'var(--color-text-secondary)' }}
@@ -146,7 +148,7 @@ export function ProductDetail() {
                 {product.badge}
               </div>
             )}
-          </div>
+          />
 
           <div>
             <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>

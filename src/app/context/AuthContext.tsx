@@ -34,6 +34,8 @@ export interface RegisterInput {
   commissionType?: "percentage" | "flat";
   commissionRate?: number;
   fulfillmentMethod?: "fbu" | "fbm";
+  // The code emailed by POST register/code.
+  code: string;
 }
 
 interface AuthContextValue {
