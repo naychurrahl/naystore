@@ -11,6 +11,7 @@ import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 import { NIGERIA_STATES } from "../data/nigeriaStates";
 import { formatPhone } from "../utils/phone";
+import { PhoneInput } from "../components/PhoneInput";
 
 const STATUSES = ["processing", "shipped", "in_transit", "delivered"];
 
@@ -71,6 +72,8 @@ export function MerchantOrdersPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [forms, setForms] = useState<Record<string, FulfillmentForm>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  // Rows whose contact phone is filled in but not a real number.
+  const [badPhones, setBadPhones] = useState<Record<string, boolean>>({});
 
   const getForm = (row: any): FulfillmentForm => forms[row.id] ?? toForm(row);
   const setField = (rowId: string, row: any, key: keyof FulfillmentForm, value: string) => {
@@ -79,6 +82,10 @@ export function MerchantOrdersPage() {
 
   const handleSave = async (row: any) => {
     const form = getForm(row);
+    if (badPhones[row.id]) {
+      toast.error("Check the contact phone - include the country code if it isn't Nigerian");
+      return;
+    }
     setSaving(row.id);
     try {
       await api.put(`${API_BASE}/order-fulfillment/${row.id}`, {
@@ -222,7 +229,14 @@ export function MerchantOrdersPage() {
                                 </div>
                                 <div>
                                   <Label className="mb-1 block text-xs">Contact Phone</Label>
-                                  <Input value={form.contactPhone} onChange={(e) => setField(row.id, row, "contactPhone", e.target.value)} />
+                                  <PhoneInput
+                                    compact
+                                    value={form.contactPhone}
+                                    onChange={(phone, valid) => {
+                                      setField(row.id, row, "contactPhone", phone);
+                                      setBadPhones((prev) => ({ ...prev, [row.id]: !valid }));
+                                    }}
+                                  />
                                 </div>
                                 <div>
                                   <Label className="mb-1 block text-xs">Contact Email</Label>

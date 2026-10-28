@@ -10,11 +10,13 @@ type Props = {
   required?: boolean;
   id?: string;
   style?: CSSProperties;
+  // Sized like the ui/Input box, for dense forms.
+  compact?: boolean;
 };
 
 // A country picker (Nigeria by default) and the number. Typing a number with
 // a + picks the country from it.
-export function PhoneInput({ value, onChange, required, id, style }: Props) {
+export function PhoneInput({ value, onChange, required, id, style, compact }: Props) {
   const [country, setCountry] = useState<CountryCode>(() => splitPhone(value).country);
   const [text, setText] = useState(() => splitPhone(value).national);
   const [touched, setTouched] = useState(false);
@@ -39,6 +41,7 @@ export function PhoneInput({ value, onChange, required, id, style }: Props) {
 
   const result = checkPhone(text, country);
   const showError = touched && !result.empty && !result.e164;
+  const box = compact ? "h-9 rounded-md border border-input bg-input-background text-sm" : "rounded-lg border";
 
   return (
     <div>
@@ -51,7 +54,7 @@ export function PhoneInput({ value, onChange, required, id, style }: Props) {
             setCountry(next);
             report(text, next);
           }}
-          className="w-28 shrink-0 px-2 py-3 rounded-lg border"
+          className={`w-28 shrink-0 px-2 ${compact ? "" : "py-3"} ${box}`}
           style={style}
         >
           {countryList().map((c) => (
@@ -73,7 +76,7 @@ export function PhoneInput({ value, onChange, required, id, style }: Props) {
             if (nextText.trim().startsWith("+") && checked.country && checked.country !== country) setCountry(checked.country);
           }}
           onBlur={() => setTouched(true)}
-          className="min-w-0 flex-1 px-4 py-3 rounded-lg border"
+          className={`min-w-0 flex-1 ${compact ? "px-3" : "px-4 py-3"} ${box}`}
           style={style}
         />
       </div>
