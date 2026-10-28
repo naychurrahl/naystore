@@ -3,9 +3,7 @@ import { toast } from "sonner";
 import { CalendarDays, ShoppingCart, Star, Ticket } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCart } from "../context/CartContext";
-import { isPhysical, productTypeLabel, requiresAccount } from "../utils/productTypes";
-import { useAuth } from "../context/AuthContext";
-import { useAuthModal } from "../context/AuthModalContext";
+import { isPhysical, productTypeLabel } from "../utils/productTypes";
 import { formatEventTime } from "../utils/eventTime";
 
 export interface ShopProduct {
@@ -29,8 +27,6 @@ export interface ShopProduct {
 
 export function ProductCard({ product, showMerchant = true }: { product: ShopProduct; showMerchant?: boolean }) {
   const { addItem } = useCart();
-  const { user } = useAuth();
-  const { openLogin } = useAuthModal();
 
   return (
     <div
@@ -157,11 +153,6 @@ export function ProductCard({ product, showMerchant = true }: { product: ShopPro
           <button
             disabled={!product.inStock}
             onClick={() => {
-              if (!user && requiresAccount(product.productType)) {
-                toast.info(`Log in to buy ${productTypeLabel(product.productType).toLowerCase()}s`);
-                openLogin(`/shop/${product.id}`);
-                return;
-              }
               addItem(product, 1);
               toast.success(`Added ${product.name} to cart`);
             }}

@@ -6,6 +6,7 @@ import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 import { PasswordInput } from "../components/PasswordInput";
+import { PhoneInput } from "../components/PhoneInput";
 import { useAuthModal } from "../context/AuthModalContext";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 
@@ -56,6 +57,7 @@ export function Profile() {
     name: "", username: "", email: "", phone: "",
     state: "", lga: "", area: "", landmark: "", address: "",
   });
+  const [phoneValid, setPhoneValid] = useState(true);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", password: "" });
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -83,6 +85,10 @@ export function Profile() {
 
   const handleDetailsSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!phoneValid) {
+      toast.error("Check your phone number - include the country code if it isn't Nigerian");
+      return;
+    }
     setSavingDetails(true);
     try {
       const updated = await api.put(`${API_BASE}/profile`, details, { headers: authHeader });
@@ -169,12 +175,14 @@ export function Profile() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Phone</label>
-              <input
-                type="text"
+              <label htmlFor="profile-phone" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Phone</label>
+              <PhoneInput
+                id="profile-phone"
                 value={details.phone}
-                onChange={(e) => setDetails({ ...details, phone: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border"
+                onChange={(phone, valid) => {
+                  setDetails((prev) => ({ ...prev, phone }));
+                  setPhoneValid(valid);
+                }}
                 style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
               />
             </div>

@@ -10,6 +10,7 @@ import { api, useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 import { NIGERIA_STATES } from "../data/nigeriaStates";
+import { formatPhone } from "../utils/phone";
 
 const STATUSES = ["processing", "shipped", "in_transit", "delivered"];
 
@@ -142,7 +143,7 @@ export function MerchantOrdersPage() {
                             <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                               <div>
                                 <p style={{ color: 'var(--color-text-muted)' }}>Contact</p>
-                                <p style={{ color: 'var(--color-text-primary)' }}>{row.email} · {row.phone}</p>
+                                <p style={{ color: 'var(--color-text-primary)' }}>{row.email}{row.phone ? ` · ${formatPhone(row.phone)}` : ""}</p>
                               </div>
                               {row.delivery !== "digital" && (
                                 <div>

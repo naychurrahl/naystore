@@ -2,15 +2,19 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 
 type AuthModalMode = "login" | "register";
 type Usertype = "customer" | "merchant";
+// Filled in when the modal opens or switches: the email to start with, and
+// whether login should go straight to "forgot password".
+type Prefill = { email?: string; forgot?: boolean } | null;
 
 interface AuthModalContextValue {
   isOpen: boolean;
   mode: AuthModalMode;
   redirectTo: string | null;
   defaultUsertype: Usertype;
+  prefill: Prefill;
   openLogin: (redirectTo?: string, defaultUsertype?: Usertype) => void;
-  openRegister: (redirectTo?: string, defaultUsertype?: Usertype) => void;
-  switchMode: (mode: AuthModalMode) => void;
+  openRegister: (redirectTo?: string, defaultUsertype?: Usertype, email?: string) => void;
+  switchMode: (mode: AuthModalMode, prefill?: Prefill) => void;
   close: () => void;
 }
 
@@ -24,22 +28,28 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<AuthModalMode>("login");
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
   const [defaultUsertype, setDefaultUsertype] = useState<Usertype>("customer");
+  const [prefill, setPrefill] = useState<Prefill>(null);
 
   const openLogin = (nextRedirectTo?: string, usertype?: Usertype) => {
     setRedirectTo(nextRedirectTo ?? null);
     setDefaultUsertype(usertype ?? "customer");
+    setPrefill(null);
     setMode("login");
     setIsOpen(true);
   };
 
-  const openRegister = (nextRedirectTo?: string, usertype?: Usertype) => {
+  const openRegister = (nextRedirectTo?: string, usertype?: Usertype, email?: string) => {
     setRedirectTo(nextRedirectTo ?? null);
     setDefaultUsertype(usertype ?? "customer");
+    setPrefill(email ? { email } : null);
     setMode("register");
     setIsOpen(true);
   };
 
-  const switchMode = (nextMode: AuthModalMode) => setMode(nextMode);
+  const switchMode = (nextMode: AuthModalMode, nextPrefill: Prefill = null) => {
+    setPrefill(nextPrefill);
+    setMode(nextMode);
+  };
 
   const close = () => {
     setIsOpen(false);
@@ -48,7 +58,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthModalContext.Provider value={{ isOpen, mode, redirectTo, defaultUsertype, openLogin, openRegister, switchMode, close }}>
+    <AuthModalContext.Provider value={{ isOpen, mode, redirectTo, defaultUsertype, prefill, openLogin, openRegister, switchMode, close }}>
       {children}
     </AuthModalContext.Provider>
   );

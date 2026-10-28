@@ -9,6 +9,8 @@ import { CodeField, ForgotPasswordForm } from "./EmailCode";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { forgetReferral, savedReferral } from "../utils/referral";
+import { toast } from "sonner";
+import { PhoneInput } from "./PhoneInput";
 
 const inputStyle = { borderColor: "var(--color-border)", color: "var(--color-text-primary)" };
 const labelStyle = { color: "var(--color-text-primary)" };
@@ -21,7 +23,7 @@ const labelStyle = { color: "var(--color-text-primary)" };
 // between them - "Create one" / "Already have an account?" - never closes
 // and reopens a separate modal.
 export function AuthModal() {
-  const { isOpen, mode, redirectTo, defaultUsertype, switchMode, close } = useAuthModal();
+  const { isOpen, mode, redirectTo, defaultUsertype, prefill, switchMode, close } = useAuthModal();
   const { login, register } = useAuth();
 
   const [identifier, setIdentifier] = useState("");
@@ -41,9 +43,13 @@ export function AuthModal() {
   const [lga, setLga] = useState("");
   const [area, setArea] = useState("");
   const [landmark, setLandmark] = useState("");
+  const [phone, setPhone] = useState("");
+  const [phoneValid, setPhoneValid] = useState(true);
   const [referralCode, setReferralCode] = useState(savedReferral);
 
   const [error, setError] = useState<string | null>(null);
+  // The email already has an account - offer log in / reset instead.
+  const [accountExists, setAccountExists] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   // Sign-up confirms the email with a code first; login can switch to
   // "forgot password".
@@ -55,13 +61,13 @@ export function AuthModal() {
     if (isOpen) {
       setCodeSent(null);
       setCode("");
-      setForgot(false);
-      setIdentifier("");
+      setForgot(mode === "login" && !!prefill?.forgot);
+      setIdentifier(mode === "login" ? prefill?.email ?? "" : "");
       setLoginPassword("");
       setReferralCode(savedReferral());
       setName("");
       setUsername("");
-      setEmail("");
+      setEmail(mode === "register" ? prefill?.email ?? "" : "");
       setPassword("");
       setCommissionType("percentage");
       setCommissionRate("");
@@ -71,8 +77,11 @@ export function AuthModal() {
       setLga("");
       setArea("");
       setLandmark("");
+      setPhone("");
+      setPhoneValid(true);
       setUsertype(defaultUsertype);
       setError(null);
+      setAccountExists(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, mode]);
@@ -113,9 +122,12 @@ export function AuthModal() {
     return result.resendIn as number;
   };
 
+  const toLogin = (forgotPassword: boolean) => switchMode("login", { email: email.trim(), forgot: forgotPassword });
+
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setAccountExists(false);
 
     if (usertype === "merchant") {
       const rate = Number(commissionRate);
@@ -139,6 +151,10 @@ export function AuthModal() {
         setError("Enter your area");
         return;
       }
+      if (!phone.trim() || !phoneValid) {
+        setError(phone.trim() ? "Check your phone number - include the country code if it isn't Nigerian" : "Add a phone number for your shop");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -147,7 +163,7 @@ export function AuthModal() {
         setCodeSent({ resendIn: await requestSignupCode() });
         return;
       }
-      await register({
+      const notice = await register({
         usertype,
         name,
         email,
@@ -156,14 +172,16 @@ export function AuthModal() {
         username: username || undefined,
         referralCode: referralCode.trim() || undefined,
         ...(usertype === "merchant"
-          ? { legalName: legalName.trim(), commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim() }
+          ? { legalName: legalName.trim(), phone, commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim() }
           : {}),
       });
       forgetReferral();
+      if (notice) toast(notice);
       close();
       router.navigate(redirectTo ?? (usertype === "merchant" ? "/merchant" : "/profile"), { replace: true });
     } catch (err: any) {
       setError(err.message || "Could not create account");
+      setAccountExists(err.response?.code === "account_exists");
     } finally {
       setSubmitting(false);
     }
@@ -282,6 +300,12 @@ export function AuthModal() {
                   <button type="button" onClick={() => { setCodeSent(null); setCode(""); setError(null); }} className="text-xs" style={{ color: "var(--color-primary)" }}>
                     Change my details or email
                   </button>
+                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    Got an email saying you already have an account instead of a code?{" "}
+                    <button type="button" onClick={() => toLogin(false)} style={{ color: "var(--color-primary)" }}>Log in</button>
+                    {" or "}
+                    <button type="button" onClick={() => toLogin(true)} style={{ color: "var(--color-primary)" }}>reset your password</button>.
+                  </p>
                 </>
               ) : (
               <>
@@ -313,6 +337,23 @@ export function AuthModal() {
                   <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
                     As it appears on your bank account. Payouts only go to an account in this name or your shop's name.
                   </p>
+                </div>
+              )}
+
+              {usertype === "merchant" && (
+                <div>
+                  <label htmlFor="signup-phone" className="block text-sm font-medium mb-1" style={labelStyle}>Phone</label>
+                  <PhoneInput
+                    id="signup-phone"
+                    required
+                    value={phone}
+                    onChange={(next, valid) => {
+                      setPhone(next);
+                      setPhoneValid(valid);
+                    }}
+                    style={inputStyle}
+                  />
+                  <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>So buyers and our team can reach your shop.</p>
                 </div>
               )}
 
@@ -489,6 +530,18 @@ export function AuthModal() {
               )}
 
               {error && <p className="text-sm" style={{ color: "var(--color-error)" }}>{error}</p>}
+              {accountExists && (
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => toLogin(false)} className="flex-1 px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{ border: "1px solid var(--color-primary)", color: "var(--color-primary)" }}>
+                    Log in
+                  </button>
+                  <button type="button" onClick={() => toLogin(true)} className="flex-1 px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{ border: "1px solid var(--color-primary)", color: "var(--color-primary)" }}>
+                    Reset password
+                  </button>
+                </div>
+              )}
 
               <button
                 type="submit"

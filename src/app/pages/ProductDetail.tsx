@@ -9,7 +9,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
-import { isPhysical, productTypeLabel, requiresAccount } from "../utils/productTypes";
+import { isPhysical, productTypeLabel } from "../utils/productTypes";
 import { getGuestId } from "../utils/guestId.js";
 import { formatDuration } from "../utils/formatDuration";
 import { TicketPicker } from "../components/TicketPicker";
@@ -87,11 +87,6 @@ export function ProductDetail() {
   const emptyCourse = product.productType === "course" && !product.lessonCount;
 
   const handleAddToCart = () => {
-    if (!user && requiresAccount(product.productType)) {
-      toast.info(`Log in to buy ${productTypeLabel(product.productType).toLowerCase()}s`);
-      openLogin(location.pathname);
-      return;
-    }
     addItem(
       {
         id: product.id,

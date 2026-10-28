@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { Button } from "../components/ui/button";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
+import { PhoneInput } from "../components/PhoneInput";
 
 export function BecomeMerchant() {
   const { user, becomeMerchant } = useAuth();
@@ -20,6 +21,9 @@ export function BecomeMerchant() {
   const [lga, setLga] = useState("");
   const [area, setArea] = useState("");
   const [landmark, setLandmark] = useState("");
+  // Merchants need one - buyers and the team have to be able to reach the shop.
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [phoneValid, setPhoneValid] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -66,11 +70,15 @@ export function BecomeMerchant() {
       setError("Enter your area");
       return;
     }
+    if (!phone.trim() || !phoneValid) {
+      setError(phone.trim() ? "Check your phone number - include the country code if it isn't Nigerian" : "Add a phone number for your shop");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
     try {
-      await becomeMerchant(commissionType, rate, fulfillmentMethod, location.trim(), state, lga, area.trim(), landmark.trim(), shopName.trim(), legalName.trim());
+      await becomeMerchant(commissionType, rate, fulfillmentMethod, location.trim(), state, lga, area.trim(), landmark.trim(), shopName.trim(), legalName.trim(), phone);
       navigate("/merchant", { replace: true });
     } catch (err: any) {
       setError(err.message || "Could not upgrade your account");
@@ -121,6 +129,21 @@ export function BecomeMerchant() {
             <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
               As it appears on your bank account. Payouts only go to an account in this name or your shop's name.
             </p>
+          </div>
+
+          <div>
+            <label htmlFor="merchant-phone" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Phone</label>
+            <PhoneInput
+              id="merchant-phone"
+              required
+              value={phone}
+              onChange={(next, valid) => {
+                setPhone(next);
+                setPhoneValid(valid);
+              }}
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            />
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>So buyers and our team can reach your shop.</p>
           </div>
 
           <div>

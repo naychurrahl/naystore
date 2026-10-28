@@ -8,10 +8,12 @@ import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 import { PasswordInput } from "../components/PasswordInput";
+import { PhoneInput } from "../components/PhoneInput";
 
 export function MerchantProfilePage() {
   const { user, authHeader, setUser } = useAuth();
-  const [details, setDetails] = useState({ name: "", legalName: "", username: "", email: "" });
+  const [details, setDetails] = useState({ name: "", legalName: "", username: "", email: "", phone: "" });
+  const [phoneValid, setPhoneValid] = useState(true);
   const [legalNameLocked, setLegalNameLocked] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", password: "" });
   const [savingDetails, setSavingDetails] = useState(false);
@@ -25,7 +27,7 @@ export function MerchantProfilePage() {
     setDetails((prev) => ({ ...prev, name: user.name ?? "", username: user.username ?? "", email: user.email }));
     api.get(`${API_BASE}/profile`, { headers: authHeader })
       .then((p: any) => {
-        setDetails((prev) => ({ ...prev, legalName: p.legalName ?? "" }));
+        setDetails((prev) => ({ ...prev, legalName: p.legalName ?? "", phone: p.phone ?? "" }));
         setLegalNameLocked(!!p.legalNameLocked);
       })
       .catch(() => {});
@@ -34,6 +36,10 @@ export function MerchantProfilePage() {
 
   const handleDetailsSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!details.phone.trim() || !phoneValid) {
+      toast.error(details.phone.trim() ? "Check your phone number - include the country code if it isn't Nigerian" : "Add a phone number for your shop");
+      return;
+    }
     setSavingDetails(true);
     try {
       const updated = await api.put(`${API_BASE}/profile`, details, { headers: authHeader });
@@ -95,6 +101,20 @@ export function MerchantProfilePage() {
           <div>
             <Label className="mb-1.5 block">Email</Label>
             <Input type="email" value={details.email} onChange={(e) => setDetails({ ...details, email: e.target.value })} />
+          </div>
+          <div>
+            <Label htmlFor="merchant-profile-phone" className="mb-1.5 block">Phone</Label>
+            <PhoneInput
+              id="merchant-profile-phone"
+              required
+              value={details.phone}
+              onChange={(phone, valid) => {
+                setDetails((prev) => ({ ...prev, phone }));
+                setPhoneValid(valid);
+              }}
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            />
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>So buyers and our team can reach your shop.</p>
           </div>
           <Button type="submit" disabled={savingDetails}>{savingDetails ? "Saving..." : "Save Changes"}</Button>
         </form>

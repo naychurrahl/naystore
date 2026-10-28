@@ -22,7 +22,7 @@ export function Layout() {
   const { data: navigationMenu } = useAPI(`${API_BASE}/nav`);
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
-  const { openLogin } = useAuthModal();
+  const { openLogin, openRegister } = useAuthModal();
 
   useEffect(() => {
     if (location.hash) {
@@ -42,6 +42,13 @@ export function Layout() {
   // An invite link (?ref=CODE) on any page.
   useEffect(() => {
     rememberReferral(location.search);
+  }, [location.search]);
+
+  // "Set a password" link from the guest-account email (?signup=email).
+  useEffect(() => {
+    const signupEmail = new URLSearchParams(location.search).get("signup");
+    if (signupEmail && !user) openRegister(undefined, "customer", signupEmail);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
   useEffect(() => {
