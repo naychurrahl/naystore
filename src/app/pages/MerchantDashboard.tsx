@@ -118,6 +118,8 @@ export function MerchantDashboard() {
   const [window_, setWindow] = useState("week");
   const { data } = useAPI(`${API_BASE}/merchant-dashboard?window=${window_}`, { headers: authHeader });
   const { data: commissions } = useAPI(`${API_BASE}/my-commissions`, { headers: authHeader });
+  // Shops from before phones were required may not have one yet.
+  const { data: profile } = useAPI(`${API_BASE}/profile`, { headers: authHeader });
 
   const sales = data?.sales ?? { revenue: 0, units: 0, priorRevenue: 0, priorUnits: 0 };
   const inventory = data?.inventory ?? { total: 0, inStock: 0, outOfStock: 0, locked: 0, lowStock: 0 };
@@ -128,6 +130,14 @@ export function MerchantDashboard() {
 
   return (
     <div>
+      {profile && !profile.phone && (
+        <div className="mb-4 p-4 rounded-lg text-sm flex flex-col sm:flex-row sm:items-center gap-2" style={{ border: '1px solid var(--color-accent)', color: 'var(--color-text-secondary)' }}>
+          <span className="flex-1">
+            <strong style={{ color: 'var(--color-text-primary)' }}>Add a phone number.</strong> Buyers and our team need a way to reach your shop.
+          </span>
+          <Link to="/merchant/profile" className="font-medium" style={{ color: 'var(--color-primary)' }}>Add it in My Profile</Link>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-1 gap-4">
         <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
           Welcome, {user?.name || user?.email}

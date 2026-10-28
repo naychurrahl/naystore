@@ -11,7 +11,8 @@ import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { FulfillmentStatus } from "../components/FulfillmentStatus";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
-import { isPhysical, requiresAccount } from "../utils/productTypes";
+import { isPhysical } from "../utils/productTypes";
+import { PhoneInput } from "../components/PhoneInput";
 import { paymentLine } from "../utils/paymentLabel";
 import { OrderDiscountLines } from "../components/OrderDiscountLines";
 
@@ -26,6 +27,8 @@ type InviteDiscount = { label: string; amount: number; lines: { index: number; a
 // The checkout form survives the round trip to Naylet to connect a wallet.
 const DRAFT_KEY = "naychurrahl_checkout_draft";
 const NAYLET_APPROVAL_MS = 15 * 60 * 1000;
+// One @, no spaces, a dot in the domain - the backend checks it properly.
+const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const paystack = new PaystackPop();
 
@@ -58,11 +61,13 @@ export function Checkout() {
   // courses and tickets are delivered to the buyer's email and Library.
   const needsAddress = items.some((item) => isPhysical(item.productType));
 
-  // Downloads/courses need an account (e.g. added to the cart before logging out).
-  const { openLogin } = useAuthModal();
+  const { openLogin, openRegister } = useAuthModal();
   const location = useLocation();
-  const accountOnlyItems = items.filter((item) => requiresAccount(item.productType));
-  const needsLogin = !user && accountOnlyItems.length > 0;
+  // Downloads, courses and tickets are sent to the email, so a guest is asked
+  // to check it before paying - a typo means the purchase never arrives.
+  const deliversByEmail = items.some((item) => !isPhysical(item.productType));
+  // Only a delivery needs a phone (the rider calls); a filled-in one must be real.
+  const [phoneValid, setPhoneValid] = useState(true);
 
   // Tickets: a name (and optional email) for every ticket, per cart line.
   const ticketLines = items.filter((item) => item.tierId);
@@ -159,6 +164,7 @@ export function Checkout() {
 
   const [saveDetails, setSaveDetails] = useState(true);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -315,6 +321,15 @@ export function Checkout() {
             </div>
           ))}
 
+          {!paymentFailed && !user && placedOrders.some((o) => o.items.some((i: any) => !isPhysical(i.productType))) && (
+            <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+              We've emailed your purchase to <strong style={{ color: 'var(--color-text-primary)' }}>{placedOrders[0]?.email || form.email}</strong>.{" "}
+              <button type="button" onClick={() => openRegister("/library", "customer", placedOrders[0]?.email || form.email)} className="underline" style={{ color: 'var(--color-primary)' }}>
+                Set a password
+              </button>{" "}
+              to keep it in your account.
+            </p>
+          )}
           {!paymentFailed && placedOrders.some((o) => o.items.some((i: any) => !isPhysical(i.productType))) && (
             <Link
               to="/library"
@@ -443,6 +458,24 @@ export function Checkout() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!EMAIL_PATTERN.test(form.email.trim())) {
+      setError("Enter a valid email address - your receipt and any downloads go there.");
+      return;
+    }
+    if (!phoneValid) {
+      setError("Check your phone number - include the country code if it isn't Nigerian.");
+      return;
+    }
+    if (needsAddress && !form.phone.trim()) {
+      setError("Add a phone number so the rider can reach you.");
+      return;
+    }
+    if (!user && deliversByEmail) {
+      setConfirmEmail(true);
+      return;
+    }
 
     if (user && saveDetails && needsAddress) {
       setShowSaveConfirm(true);
@@ -471,6 +504,33 @@ export function Checkout() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
+      {confirmEmail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+          <div className="max-w-sm w-full rounded-xl p-6" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
+            <h3 className="font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Is this your email?</h3>
+            <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+              We'll send your purchase to <strong style={{ color: 'var(--color-text-primary)' }}>{form.email.trim()}</strong>. If it's wrong, it won't reach you.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmEmail(false)}
+                className="px-4 py-2 rounded-lg font-medium transition-colors"
+                style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+              >
+                Change email
+              </button>
+              <button
+                onClick={() => { setConfirmEmail(false); void placeOrder(); }}
+                className="px-4 py-2 rounded-lg font-medium transition-colors"
+                style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+              >
+                Yes, place order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showSaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
           <div className="max-w-sm w-full rounded-xl p-6" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
@@ -512,10 +572,10 @@ export function Checkout() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <form onSubmit={handleSubmit} className="md:col-span-2 space-y-4">
-            {(["customerName", "email", "phone"] as const).map((field) => (
+            {(["customerName", "email"] as const).map((field) => (
               <div key={field}>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
-                  {field === "customerName" ? "Full Name" : field.charAt(0).toUpperCase() + field.slice(1)}
+                  {field === "customerName" ? "Full Name" : "Email"}
                 </label>
                 <input
                   type={field === "email" ? "email" : "text"}
@@ -527,6 +587,24 @@ export function Checkout() {
                 />
               </div>
             ))}
+            <div>
+              <label htmlFor="checkout-phone" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                {needsAddress ? "Phone" : "Phone (optional)"}
+              </label>
+              <PhoneInput
+                id="checkout-phone"
+                required={needsAddress}
+                value={form.phone}
+                onChange={(phone, valid) => {
+                  setForm((prev) => ({ ...prev, phone }));
+                  setPhoneValid(valid);
+                }}
+                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+              />
+              {needsAddress && (
+                <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>So the rider can reach you.</p>
+              )}
+            </div>
 
             {ticketLines.length > 0 && (
               <div className="p-4 rounded-lg border space-y-4" style={{ borderColor: 'var(--color-border)' }}>
@@ -816,27 +894,9 @@ export function Checkout() {
               <p className="text-sm" style={{ color: 'var(--color-error)' }}>{error}</p>
             )}
 
-            {needsLogin && (
-              <div className="p-4 rounded-lg text-sm space-y-2" style={{ border: '1px solid var(--color-accent)', color: 'var(--color-text-secondary)' }}>
-                <p>
-                  <strong style={{ color: 'var(--color-text-primary)' }}>Log in to continue.</strong>{" "}
-                  Courses and digital downloads are kept in your account, so you need one to buy{" "}
-                  {accountOnlyItems.map((item) => item.name).join(", ")}. Physical items and event tickets can be bought as a guest.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => openLogin(location.pathname)}
-                  className="px-4 py-2 rounded-lg font-medium"
-                  style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
-                >
-                  Log in or create an account
-                </button>
-              </div>
-            )}
-
             <button
               type="submit"
-              disabled={submitting || needsLogin || (usingNaylet && !nayletUsable)}
+              disabled={submitting || (usingNaylet && !nayletUsable)}
               className="w-full px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
               style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
             >

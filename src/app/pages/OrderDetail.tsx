@@ -10,6 +10,7 @@ import { FULFILLMENT_LABELS } from "../components/FulfillmentStatus";
 import { NotFound } from "./NotFound";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
 import { OrderDiscountLines } from "../components/OrderDiscountLines";
+import { formatPhone } from "../utils/phone";
 import { ReportProblem } from "../components/ReportProblem";
 import { paymentLine as paymentLineFor } from "../utils/paymentLabel";
 
@@ -32,7 +33,7 @@ function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
       </div>
       <div className="text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
         {location && !isDelivered && <p>Location: {location}</p>}
-        {fulfillment.contactPhone && <p>Contact phone: {fulfillment.contactPhone}</p>}
+        {fulfillment.contactPhone && <p>Contact phone: {formatPhone(fulfillment.contactPhone)}</p>}
         {fulfillment.contactEmail && <p>Contact email: {fulfillment.contactEmail}</p>}
         {fulfillment.meta?.trackingId && <p>Tracking ID: {fulfillment.meta.trackingId}</p>}
         {fulfillment.meta?.trackingLink && (
@@ -152,7 +153,7 @@ export function OrderDetail() {
             <div className="text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
               <p>{order.customerName}</p>
               {order.fullAddress && <p>{order.fullAddress}</p>}
-              <p>{order.phone}</p>
+              {order.phone && <p>{formatPhone(order.phone)}</p>}
               <p>{order.email}</p>
               {order.notes && <p className="italic mt-2">Note: {order.notes}</p>}
             </div>
