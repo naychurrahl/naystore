@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router";
 import { QRCodeSVG } from "qrcode.react";
-import { CalendarDays, CalendarPlus, CheckCircle2, Globe, MapPin, ShieldAlert } from "lucide-react";
+import { CalendarDays, CalendarPlus, CheckCircle2, FileDown, Globe, MapPin, ShieldAlert } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { formatEventRange, formatEventTime } from "../utils/eventTime";
@@ -40,13 +40,18 @@ export function TicketPage() {
     return <div className="min-h-[60vh] flex items-center justify-center"><p style={{ color: 'var(--color-text-secondary)' }}>Loading ticket…</p></div>;
   }
 
+  // Too many wrong codes from this network (see the backend's TICKET_MISSES_LIMIT).
+  const limited = (error as { status?: number } | null)?.status === 429;
+
   if (error || !ticket) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="text-center">
           <ShieldAlert className="h-12 w-12 mx-auto mb-3" style={{ color: 'var(--color-error)' }} />
-          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Ticket not found</h1>
-          <p className="mb-5" style={{ color: 'var(--color-text-secondary)' }}>Check the link in your ticket email, or open your Library.</p>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{limited ? "Too many tries" : "Ticket not found"}</h1>
+          <p className="mb-5" style={{ color: 'var(--color-text-secondary)' }}>
+            {limited ? "Wait a few minutes and reload this page." : "Check the link in your ticket email, or open your Library."}
+          </p>
           <Link to="/library" className="font-medium hover:underline" style={{ color: 'var(--color-primary)' }}>Go to my Library</Link>
         </div>
       </div>
@@ -102,14 +107,25 @@ export function TicketPage() {
           {event.accessNotes && (
             <p className="pt-2 whitespace-pre-line" style={{ borderTop: '1px solid var(--color-border)' }}>{event.accessNotes}</p>
           )}
-          {!event.ended && ticket.valid && (
-            <a
-              href={`${API_BASE}/tickets/${encodeURIComponent(ticket.code)}/calendar`}
-              className="mt-3 w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium"
-              style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
-            >
-              <CalendarPlus className="h-4 w-4" /> Add to calendar
-            </a>
+          {ticket.valid && (
+            <div className="mt-3 flex flex-col sm:flex-row gap-2">
+              <a
+                href={`${API_BASE}/tickets/${encodeURIComponent(ticket.code)}/pdf`}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium"
+                style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+              >
+                <FileDown className="h-4 w-4" /> Download PDF
+              </a>
+              {!event.ended && (
+                <a
+                  href={`${API_BASE}/tickets/${encodeURIComponent(ticket.code)}/calendar`}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium"
+                  style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+                >
+                  <CalendarPlus className="h-4 w-4" /> Add to calendar
+                </a>
+              )}
+            </div>
           )}
         </div>
       </div>

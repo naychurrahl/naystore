@@ -120,6 +120,8 @@ export function MerchantDashboard() {
   const { data: commissions } = useAPI(`${API_BASE}/my-commissions`, { headers: authHeader });
   // Shops from before phones were required may not have one yet.
   const { data: profile } = useAPI(`${API_BASE}/profile`, { headers: authHeader });
+  // Joined with a referral code: a lower commission for the first months.
+  const { data: referral } = useAPI(`${API_BASE}/referrals/me`, { headers: authHeader });
 
   const sales = data?.sales ?? { revenue: 0, units: 0, priorRevenue: 0, priorUnits: 0 };
   const inventory = data?.inventory ?? { total: 0, inStock: 0, outOfStock: 0, locked: 0, lowStock: 0 };
@@ -130,6 +132,12 @@ export function MerchantDashboard() {
 
   return (
     <div>
+      {referral?.shopPerk && (
+        <div className="mb-4 p-4 rounded-lg text-sm" style={{ border: '1px solid var(--color-primary)', color: 'var(--color-text-secondary)' }}>
+          <strong style={{ color: 'var(--color-text-primary)' }}>Reduced commission.</strong> You joined with a referral code, so you pay {referral.shopPerk.rate}% less commission
+          until {new Date(referral.shopPerk.until.replace(" ", "T")).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}.
+        </div>
+      )}
       {profile && !profile.phone && (
         <div className="mb-4 p-4 rounded-lg text-sm flex flex-col sm:flex-row sm:items-center gap-2" style={{ border: '1px solid var(--color-accent)', color: 'var(--color-text-secondary)' }}>
           <span className="flex-1">

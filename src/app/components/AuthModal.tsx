@@ -372,7 +372,7 @@ export function AuthModal() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1" style={labelStyle}>Invite code (optional)</label>
+                <label className="block text-sm font-medium mb-1" style={labelStyle}>{usertype === "merchant" ? "Referral code (optional)" : "Invite code (optional)"}</label>
                 <input
                   type="text"
                   value={referralCode}
@@ -381,7 +381,9 @@ export function AuthModal() {
                   style={inputStyle}
                 />
                 <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-                  From a friend's invite link - it takes money off your first order.
+                  {usertype === "merchant"
+                    ? "From whoever told you about us - shops that join with one can pay less commission at the start."
+                    : "From a friend's invite link - it takes money off your first order."}
                 </p>
               </div>
 

@@ -44,10 +44,13 @@ export function Layout() {
     rememberReferral(location.search);
   }, [location.search]);
 
-  // "Set a password" link from the guest-account email (?signup=email).
+  // "Set a password" link from the guest-account email (?signup=email), and
+  // a seller invite (?ref=CODE&join=seller) opening the shop sign-up.
   useEffect(() => {
-    const signupEmail = new URLSearchParams(location.search).get("signup");
+    const params = new URLSearchParams(location.search);
+    const signupEmail = params.get("signup");
     if (signupEmail && !user) openRegister(undefined, "customer", signupEmail);
+    else if (params.get("join") === "seller" && !user) openRegister("/merchant", "merchant");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
