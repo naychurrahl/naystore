@@ -36,7 +36,7 @@ type InviteData = {
     months: number;
     perkRate: number;
     perkMonths: number;
-    shops: { name: string; joinedAt: string; earningUntil: string | null }[];
+    shops: { name: string; joinedAt: string; earningUntil: string | null; bankAdded: boolean }[];
   };
   friends: { name: string; joinedAt: string; reward: Reward | null; affiliateUntil: string | null }[];
 };
@@ -257,7 +257,7 @@ export function InviteFriends() {
                 <p className="text-sm mb-4" style={{ color: "var(--color-text-secondary)" }}>
                   Know someone with a business? Shops that join with your link
                   {invite.sellers.perkRate > 0 ? ` pay ${invite.sellers.perkRate}% less commission for their first ${invite.sellers.perkMonths} months, and` : ""}
-                  {" "}you earn {invite.sellers.rate}% of our commission on their sales for {invite.sellers.months} months.
+                  {" "}you earn {invite.sellers.rate}% of our commission on their sales for {invite.sellers.months} months - paid once the shop has added its bank account.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input readOnly value={invite.sellers.link} aria-label="Seller invite link" onFocus={(e) => e.currentTarget.select()}
@@ -280,7 +280,7 @@ export function InviteFriends() {
                         </span>
                         <span style={{ color: "var(--color-text-secondary)" }}>
                           {shop.earningUntil && new Date(shop.earningUntil.replace(" ", "T")) > new Date()
-                            ? `Earning until ${day(shop.earningUntil)}` : "Finished"}
+                            ? `Earning until ${day(shop.earningUntil)}${shop.bankAdded ? "" : " · paid once they add a bank account"}` : "Finished"}
                         </span>
                       </li>
                     ))}
