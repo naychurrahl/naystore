@@ -11,6 +11,8 @@ import { ChatLauncher } from "./ChatLauncher";
 import { ChatPanel } from "./ChatPanel";
 import { NotificationBell } from "./NotificationBell";
 import { rememberReferral } from "../utils/referral";
+import { useShopMode } from "../context/ShopModeContext";
+import { MAIN_STORE_URL } from "../utils/shopHost";
 
 export function Layout() {
   const location = useLocation();
@@ -23,6 +25,8 @@ export function Layout() {
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
   const { openLogin, openRegister } = useAuthModal();
+  // On a merchant's own domain: their shop's name, none of the marketplace.
+  const { shop } = useShopMode();
 
   useEffect(() => {
     if (location.hash) {
@@ -74,9 +78,10 @@ export function Layout() {
     };
   }, [mobileMenuOpen]);
 
-  const companyName = settings?.companyName ?? "";
+  const storeName = settings?.companyName ?? "";
+  const companyName = shop ? shop.name : storeName;
   const logoInitial = companyName ? companyName.charAt(0).toUpperCase() : "";
-  const navItems = navigationMenu ?? [];
+  const navItems: any[] = shop ? [] : navigationMenu ?? [];
   const socialLinks = settings?.socialLinks ?? [];
   const emails = settings?.emails ?? [];
   const phones = settings?.phones ?? [];
@@ -161,7 +166,7 @@ export function Layout() {
 
               <NotificationBell />
 
-              {user?.role === "merchant" && (
+              {!shop && user?.role === "merchant" && (
                 <Link
                   to="/merchant"
                   className="p-2 rounded-md transition-colors"
@@ -174,7 +179,7 @@ export function Layout() {
                 </Link>
               )}
 
-              {user?.role === "customer" && (
+              {!shop && user?.role === "customer" && (
                 <Link
                   to="/become-merchant"
                   className="p-2 rounded-md transition-colors"
@@ -250,7 +255,7 @@ export function Layout() {
                   {item.name}
                 </Link>
               ))}
-              {user?.role === "merchant" && (
+              {!shop && user?.role === "merchant" && (
                 <Link
                   to="/merchant"
                   className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
@@ -260,7 +265,7 @@ export function Layout() {
                   Dashboard
                 </Link>
               )}
-              {user?.role === "customer" && (
+              {!shop && user?.role === "customer" && (
                 <Link
                   to="/become-merchant"
                   className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
@@ -287,7 +292,12 @@ export function Layout() {
             {/* Company Info */}
             <div className="col-span-1 md:col-span-2">
               <h3 className="font-bold text-lg mb-4 text-white">{companyName}</h3>
-              <p className="mb-4">{settings?.description}</p>
+              <p className="mb-4">{shop ? shop.bio : settings?.description}</p>
+              {shop ? (
+                <p className="text-sm">
+                  Powered by <a href={MAIN_STORE_URL} style={{ color: 'var(--color-footer-link)' }} className="hover:underline">{storeName}</a>
+                </p>
+              ) : (
               <div className="space-y-2 text-sm">
                 {emails.map((entry: any) => (
                   <p key={entry.id}>{entry.value}</p>
@@ -299,10 +309,11 @@ export function Layout() {
                   <p key={entry.id}>{entry.value}</p>
                 ))}
               </div>
+              )}
             </div>
 
             {/* Nav Links */}
-            <div>
+            <div className={shop ? "hidden" : ""}>
               <h4 className="font-bold text-white mb-4">Nav Links</h4>
               <ul className="space-y-2">
                 {navItems.map((item) => (
@@ -333,11 +344,13 @@ export function Layout() {
                     My Library
                   </Link>
                 </li>
-                <li>
-                  <Link to="/invite" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
-                    Invite Friends
-                  </Link>
-                </li>
+                {!shop && (
+                  <li>
+                    <Link to="/invite" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
+                      Invite Friends
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <Link to="/profile" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
                     Profile
@@ -348,14 +361,14 @@ export function Layout() {
                     Cart
                   </Link>
                 </li>
-                {user?.role === "merchant" && (
+                {!shop && user?.role === "merchant" && (
                   <li>
                     <Link to="/merchant" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
                       Merchant Dashboard
                     </Link>
                   </li>
                 )}
-                {user?.role === "customer" && (
+                {!shop && user?.role === "customer" && (
                   <li>
                     <Link to="/become-merchant" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
                       Become a Merchant
@@ -385,7 +398,7 @@ export function Layout() {
             </div>
 
             {/* Social Links */}
-            <div>
+            <div className={shop ? "hidden" : ""}>
               <h4 className="font-bold text-white mb-4">Follow Us</h4>
               <div className="space-y-2">
                 {socialLinks.map((social: any) => (
@@ -411,7 +424,7 @@ export function Layout() {
       </footer>
 
       <Link
-        to="/#shop"
+        to={shop ? "/" : "/#shop"}
         className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-transform hover:scale-105"
         style={{ backgroundColor: 'var(--color-primary)', color: 'white', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25)' }}
         aria-label="Back to Shop"

@@ -34,13 +34,21 @@ import { TicketPage } from "./pages/TicketPage";
 import { MerchantEventBuilderPage } from "./pages/MerchantEventBuilderPage";
 import { MerchantCouponsPage } from "./pages/MerchantCouponsPage";
 import { InviteFriends } from "./pages/InviteFriends";
+import { MerchantDomainPage } from "./pages/MerchantDomainPage";
+import { useShopMode } from "./context/ShopModeContext";
+
+// On a merchant's own domain the home page is their shop.
+function IndexPage() {
+  const { shop } = useShopMode();
+  return shop ? <SellerPage slug={shop.slug} /> : <Home />;
+}
 
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: Layout,
     children: [
-      { index: true, Component: Home },
+      { index: true, Component: IndexPage },
       { path: "shop/:id", Component: ProductDetail },
       { path: "sellers/:slug", Component: SellerPage },
       { path: "portfolio", Component: Portfolio },
@@ -79,6 +87,7 @@ export const router = createBrowserRouter([
           { path: "orders", Component: MerchantOrdersPage },
           { path: "coupons", Component: MerchantCouponsPage },
           { path: "shop", Component: MyShopPage },
+          { path: "domain", Component: MerchantDomainPage },
           { path: "payouts", Component: MyPayoutsPage },
           { path: "chat", Component: MerchantChatPage },
           { path: "support", Component: MerchantSupportPage },
