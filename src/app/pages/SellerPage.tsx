@@ -26,8 +26,10 @@ function StarRating({ rating, size = 16 }: { rating: number; size?: number }) {
   );
 }
 
-export function SellerPage() {
-  const { slug } = useParams();
+// slug: set when this is the home page of the shop's own domain.
+export function SellerPage({ slug: ownDomainSlug }: { slug?: string } = {}) {
+  const params = useParams();
+  const slug = ownDomainSlug ?? params.slug;
   const { user, authHeader } = useAuth();
   const { openLogin } = useAuthModal();
   const location = useLocation();
@@ -80,14 +82,16 @@ export function SellerPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface)' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link
-          to="/#shop"
-          className="inline-flex items-center gap-2 mb-6 transition-colors"
-          style={{ color: 'var(--color-primary)' }}
-        >
-          <ArrowLeft className="h-5 w-5" />
-          Back to Shop
-        </Link>
+        {!ownDomainSlug && (
+          <Link
+            to="/#shop"
+            className="inline-flex items-center gap-2 mb-6 transition-colors"
+            style={{ color: 'var(--color-primary)' }}
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to Shop
+          </Link>
+        )}
 
         {profile.bannerImage && (
           <div className="w-full aspect-[3/1] rounded-xl overflow-hidden mb-6" style={{ backgroundColor: 'var(--color-product-card)' }}>
