@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { trackInsight } from "../utils/insights";
 import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -39,6 +40,7 @@ export function SellerPage({ slug: ownDomainSlug }: { slug?: string } = {}) {
 
   const { data: profileData, loading: profileLoading, error: profileError } = useAPI(`${API_BASE}/sellers/${slug}`);
   const profile = profileData as any;
+  useEffect(() => trackInsight("visit", profile?.merchantId), [profile?.merchantId]);
 
   const { data: productsData, loading: productsLoading } = useAPI(
     profile ? `${API_BASE}/products?merchantId=${profile.merchantId}` : ""

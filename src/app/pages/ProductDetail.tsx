@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { trackInsight } from "../utils/insights";
 import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
 import { ProductGallery } from "../components/ProductGallery";
@@ -44,6 +45,7 @@ export function ProductDetail() {
 
   const { data, loading, error } = useAPI(`${API_BASE}/products/${id}`);
   const product = data as any;
+  useEffect(() => trackInsight("view", product?.id), [product?.id]);
 
   const { data: reviewsData, refetch: refetchReviews } = useAPI(`${API_BASE}/reviews?productId=${id}`);
   const reviews = (reviewsData ?? []) as any[];
