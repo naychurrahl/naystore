@@ -10,9 +10,13 @@ import { API_BASE } from "./apiBase.js";
 // that; pages they browse to afterwards count as "browsing the store". Cart
 // and checkout carry the visit's own source, so a sale traces back to what
 // brought the buyer in.
+//
+// A merchant's promo link is a tag on their normal links (?promo=CODE). The
+// code is kept for the visit and sent with every event and the order; the
+// API only counts it for that merchant's own shop and products.
 
 type Event = "visit" | "view" | "cart" | "checkout";
-type Landing = { from: string; ref: boolean; path: string };
+type Landing = { from: string; ref: boolean; promo: string; path: string };
 
 const VISITOR_KEY = "naychurrahl_visitor";
 const LANDING_KEY = "naychurrahl_landing";
@@ -53,7 +57,9 @@ function landing(): Landing {
   } catch {
     // no usable referrer
   }
-  const next = { from, ref: new URLSearchParams(window.location.search).has("ref"), path: window.location.pathname };
+  const params = new URLSearchParams(window.location.search);
+  const promo = (params.get("promo") ?? "").trim().toUpperCase();
+  const next = { from, ref: params.has("ref"), promo: /^[A-Z0-9]{4,16}$/.test(promo) ? promo : "", path: window.location.pathname };
   memoryLanding = next;
   try {
     sessionStorage.setItem(LANDING_KEY, JSON.stringify(next));
@@ -61,6 +67,11 @@ function landing(): Landing {
     // kept in memory for this page
   }
   return next;
+}
+
+// The promo code this visit arrived with, for the order ("" for none).
+export function landingPromo(): string {
+  return landing().promo ?? "";
 }
 
 export function trackInsight(event: Event, ids: string | (string | null | undefined)[] | null | undefined) {
@@ -75,6 +86,7 @@ export function trackInsight(event: Event, ids: string | (string | null | undefi
     from: browsed ? "" : land.from,
     ref: !browsed && land.ref,
     internal: browsed,
+    ...(land.promo ? { promo: land.promo } : {}),
     visitor: visitorId(),
   };
   fetch(`${API_BASE}/insights`, {

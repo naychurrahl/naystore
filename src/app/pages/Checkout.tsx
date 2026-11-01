@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { trackInsight } from "../utils/insights";
+import { landingPromo, trackInsight } from "../utils/insights";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router";
 import { CheckCircle2, XCircle, ArrowLeft, CreditCard, Truck, Layers, Ticket, Wallet, Smartphone, TicketPercent, X, Gift } from "lucide-react";
 import { toast } from "sonner";
@@ -409,6 +409,7 @@ export function Checkout() {
         paymentMethod,
         paymentProvider: paymentMethod === "cod" || nothingToPayOnline ? undefined : provider,
         couponCode: coupon?.code,
+        promo: landingPromo() || undefined,
         guestId: user ? undefined : getGuestId(),
         items: items.map((item) => ({
           productId: item.productId,
