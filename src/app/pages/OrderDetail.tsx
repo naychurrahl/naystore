@@ -62,7 +62,7 @@ function CancelOrderButton({ order }: { order: any }) {
 
   const cancel = async () => {
     const refund = order.paymentMethod === "card" && order.total > 0
-      ? ` ₦${Number(order.total).toLocaleString()} will be refunded to your ${order.paymentProvider === "naylet" ? "Naylet wallet" : "card or bank account"}.${order.onlineServiceFee > 0 ? " The service fee isn't refunded." : ""}`
+      ? ` ₦${Number(order.total).toLocaleString()} will be refunded to your ${order.paymentProvider === "naylet" ? "Naylet wallet" : "card or bank account"}.${order.onlineServiceFee > 0 ? " The payment fee isn't refunded." : ""}`
       : "";
     if (!confirm(`Cancel this order${order.sellerName ? ` from ${order.sellerName}` : ""}?${refund}`)) return;
     setBusy(true);
