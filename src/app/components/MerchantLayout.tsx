@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LayoutDashboard, ShoppingBag, MessageCircle, LogOut, Menu, X, UserCircle, Headset, Store, Wallet, Package, ArrowUpRight, TicketPercent, Globe } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, MessageCircle, LogOut, Menu, X, UserCircle, Headset, Store, Wallet, Package, ArrowUpRight, TicketPercent, Globe, History, BarChart3 } from "lucide-react";
 import { Outlet, Link, useLocation } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
@@ -8,7 +8,7 @@ import { ChatPanel } from "./ChatPanel";
 import { NotificationBell } from "./NotificationBell";
 
 const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: typeof ShoppingBag }[] }[] = [
-  { label: "Overview", items: [{ to: "/merchant", label: "Dashboard", icon: LayoutDashboard }] },
+  { label: "Overview", items: [{ to: "/merchant", label: "Dashboard", icon: LayoutDashboard }, { to: "/merchant/insights", label: "Insights", icon: BarChart3 }] },
   {
     label: "Selling",
     items: [
@@ -27,7 +27,13 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: typ
       { to: "/merchant/support", label: "Contact Support", icon: Headset },
     ],
   },
-  { label: "Account", items: [{ to: "/merchant/profile", label: "My Profile", icon: UserCircle }] },
+  {
+    label: "Account",
+    items: [
+      { to: "/merchant/profile", label: "My Profile", icon: UserCircle },
+      { to: "/merchant/activity", label: "Activity", icon: History },
+    ],
+  },
 ];
 
 function NavLink({ to, label, icon: Icon, onNavigate }: { to: string; label: string; icon: typeof ShoppingBag; onNavigate: () => void }) {
