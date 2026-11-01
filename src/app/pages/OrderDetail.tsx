@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { OrderFeeLines } from "../components/OrderFeeLines";
 import { useLocation, useNavigate, useParams, Link } from "react-router";
 import { toast } from "sonner";
 import { ArrowLeft, Truck, ExternalLink, Package } from "lucide-react";
@@ -61,7 +62,7 @@ function CancelOrderButton({ order }: { order: any }) {
 
   const cancel = async () => {
     const refund = order.paymentMethod === "card" && order.total > 0
-      ? ` ₦${Number(order.total).toLocaleString()} will be refunded to your ${order.paymentProvider === "naylet" ? "Naylet wallet" : "card or bank account"}.`
+      ? ` ₦${Number(order.total).toLocaleString()} will be refunded to your ${order.paymentProvider === "naylet" ? "Naylet wallet" : "card or bank account"}.${order.onlineServiceFee > 0 ? " The service fee isn't refunded." : ""}`
       : "";
     if (!confirm(`Cancel this order${order.sellerName ? ` from ${order.sellerName}` : ""}?${refund}`)) return;
     setBusy(true);
@@ -187,9 +188,10 @@ export function OrderDetail() {
               <span>₦{order.subtotal}</span>
             </div>
             <OrderDiscountLines discounts={order.discounts} />
+            <OrderFeeLines order={order} />
             <div className="flex justify-between font-bold" style={{ color: 'var(--color-text-primary)' }}>
               <span>Total</span>
-              <span>₦{order.total}</span>
+              <span>₦{(Number(order.total) + Number(order.serviceFee ?? 0)).toFixed(2)}</span>
             </div>
           </div>
         </div>

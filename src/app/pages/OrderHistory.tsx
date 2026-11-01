@@ -1,4 +1,5 @@
 import { useLocation, Link } from "react-router";
+import { OrderFeeLines, checkoutPaid } from "../components/OrderFeeLines";
 import { CheckCircle2, XCircle, Package, ChevronRight } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
@@ -50,9 +51,10 @@ function OrderCard({ order, highlight = false }: { order: any; highlight?: boole
           <OrderDiscountLines discounts={order.discounts} />
         </div>
       )}
+      <OrderFeeLines order={order} />
       <div className="flex justify-between font-bold pt-2 mt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
         <span>Total</span>
-        <span>₦{order.total}</span>
+        <span>₦{(Number(order.total) + Number(order.serviceFee ?? 0)).toFixed(2)}</span>
       </div>
       {(order.fulfillments ?? []).map((f: any) => (
         <FulfillmentStatus key={f.id} fulfillment={f} />
@@ -87,7 +89,7 @@ function groupByCheckout(orders: any[]): any[][] {
 
 function CheckoutGroup({ orders, highlight = false }: { orders: any[]; highlight?: boolean }) {
   if (orders.length === 1) return <OrderCard order={orders[0]} highlight={highlight} />;
-  const total = orders.reduce((sum, o) => sum + Number(o.total), 0);
+  const total = checkoutPaid(orders);
   const placed = orders[0].createdAt ? new Date(orders[0].createdAt).toLocaleDateString() : null;
   return (
     <div className="p-3 rounded-xl space-y-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>

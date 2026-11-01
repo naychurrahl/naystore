@@ -20,6 +20,16 @@ import { OrderDiscountLines } from "../components/OrderDiscountLines";
 type PaymentChoice = "cod" | "card" | "split";
 type Provider = "paystack" | "naylet";
 type Attendee = { name: string; email: string };
+// What the API says the cart costs (POST checkout-quote): the items, and the
+// service fee on top - on the online payment, and on each cash-on-delivery order.
+type Quote = {
+  online: { items: number; serviceFee: number; total: number } | null;
+  onDelivery: { items: number; serviceFee: number; total: number } | null;
+  itemsTotal: number;
+  serviceFee: number;
+  total: number;
+};
+
 // What coupons/check says a code takes off, per cart line (index into items).
 type AppliedCoupon = { code: string; label: string; amount: number; lines: { index: number; amount: number }[] };
 // A referred friend's first-order discount, on top of any coupon.
@@ -235,10 +245,26 @@ export function Checkout() {
     }
   };
 
+  // The service fee comes from the API's quote, priced as the order will be.
+  const [quote, setQuote] = useState<Quote | null>(null);
+  useEffect(() => {
+    let live = true;
+    if (items.length === 0) return;
+    api.post(`${API_BASE}/checkout-quote`, {
+      items: checkLines(), paymentMethod, paymentProvider: provider, couponCode: coupon?.code, email: form.email,
+    }, { headers: authHeader })
+      .then((q: Quote) => { if (live) setQuote(q); })
+      .catch(() => { if (live) setQuote(null); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartKey, paymentMethod, provider, coupon?.code, invite?.amount, user?.id]);
+
   // What the online part costs (the whole order, or the card-only half of a split).
   const onlineTotal = paymentMethod === "card"
     ? subtotal - discount
     : cardOnlyItems.reduce((sum, i) => sum + i.price * i.quantity, 0) - discountOn(cardOnlyItems);
+  // ...and with the service fee, what's actually charged.
+  const onlineCharge = quote?.online?.total ?? onlineTotal;
   const nothingToPayOnline = paymentMethod !== "cod" && onlineTotal <= 0;
   const nayletUsable = !!user && !!wallet?.connected && Math.abs(onlineTotal - Math.round(onlineTotal)) < 0.001;
   const usingNaylet = paymentMethod !== "cod" && provider === "naylet" && !nothingToPayOnline;
@@ -313,16 +339,31 @@ export function Checkout() {
                   </div>
                 ))}
                 <OrderDiscountLines discounts={order.discounts} />
+                {order.serviceFee > 0 && (
+                  <div className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                    <span>Service fee (paid on delivery)</span>
+                    <span>₦{order.serviceFee.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
               <div className="flex justify-between font-bold pt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
                 <span>Total</span>
-                <span>₦{order.total}</span>
+                <span>₦{(order.total + (order.serviceFee ?? 0)).toFixed(2)}</span>
               </div>
               {(order.fulfillments ?? []).map((f: any) => (
                 <FulfillmentStatus key={f.id} fulfillment={f} />
               ))}
             </div>
           ))}
+
+          {placedOrders.find((o) => o.onlineCharged) && (() => {
+            const card = placedOrders.find((o) => o.onlineCharged);
+            return (
+              <p className="text-sm text-left mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+                Card payment: ₦{card.onlineCharged.toFixed(2)}, including a ₦{card.onlineServiceFee.toFixed(2)} service fee.
+              </p>
+            );
+          })()}
 
           {!paymentFailed && !user && placedOrders.some((o) => o.items.some((i: any) => !isPhysical(i.productType))) && (
             <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
@@ -865,9 +906,9 @@ export function Checkout() {
                             wallet?.connected ? (
                               <div className="text-xs mt-1 space-y-0.5">
                                 {wallet.balanceNgn !== null && (
-                                  <p style={{ color: wallet.balanceNgn < onlineTotal ? 'var(--color-error)' : 'var(--color-text-secondary)' }}>
+                                  <p style={{ color: wallet.balanceNgn < onlineCharge ? 'var(--color-error)' : 'var(--color-text-secondary)' }}>
                                     Balance: ₦{wallet.balanceNgn.toLocaleString()}
-                                    {wallet.balanceNgn < onlineTotal && ` - not enough for ₦${onlineTotal.toLocaleString()}. Top up in Naylet first.`}
+                                    {wallet.balanceNgn < onlineCharge && ` - not enough for ₦${onlineCharge.toLocaleString()}. Top up in Naylet first.`}
                                   </p>
                                 )}
                                 {wallet.balanceError && <p style={{ color: 'var(--color-text-muted)' }}>{wallet.balanceError}</p>}
@@ -974,19 +1015,30 @@ export function Checkout() {
               )}
             </div>
 
-            {discount > 0 && (
+            {(discount > 0 || (quote?.serviceFee ?? 0) > 0) && (
               <div className="flex justify-between text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>
                 <span>Subtotal</span>
-                <span>₦{subtotal.toFixed(2)}</span>
+                <span>₦{(subtotal - discount).toFixed(2)}</span>
+              </div>
+            )}
+            {(quote?.serviceFee ?? 0) > 0 && (
+              <div className="flex justify-between text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>
+                <span title="Covers card processing and running Naychurrahl">Service fee</span>
+                <span>₦{quote!.serviceFee.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold pt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
               <span>Total</span>
-              <span>₦{(subtotal - discount).toFixed(2)}</span>
+              <span>₦{(quote?.total ?? subtotal - discount).toFixed(2)}</span>
             </div>
-            {paymentMethod === "split" && discount > 0 && (
+            {(quote?.serviceFee ?? 0) > 0 && (
               <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
-                Online now: ₦{onlineTotal.toFixed(2)} · on delivery: ₦{(subtotal - discount - onlineTotal).toFixed(2)}
+                The service fee covers card processing and running Naychurrahl.
+              </p>
+            )}
+            {paymentMethod === "split" && quote?.online && quote.onDelivery && (
+              <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
+                Online now: ₦{quote.online.total.toFixed(2)} · on delivery: ₦{quote.onDelivery.total.toFixed(2)}
               </p>
             )}
           </div>
