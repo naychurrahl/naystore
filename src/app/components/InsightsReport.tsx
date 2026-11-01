@@ -25,7 +25,7 @@ export const money = (n: number) => `₦${Number(n ?? 0).toLocaleString(undefine
 const num = (n: number) => Number(n ?? 0).toLocaleString();
 const SOURCES: Record<string, string> = {
   direct: "Direct (typed the address, an app or a chat)", store: "Browsing Naychurrahl", referral: "Invite links",
-  search: "Search engines", social: "Social media", link: "Other websites",
+  search: "Search engines", social: "Social media", link: "Other websites", app: "The Naychurrahl app",
 };
 const stateLabel = (s: string) => (s === "outside" ? "Outside Nigeria" : s === "unknown" ? "Unknown" : s);
 const shortDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });

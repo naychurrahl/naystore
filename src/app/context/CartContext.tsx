@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { trackInsight } from "../utils/insights";
 import { isPhysical } from "../utils/productTypes";
 
 export interface CartItem {
@@ -65,6 +66,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem: CartContextValue["addItem"] = (product, quantity = 1) => {
     const key = lineKey({ productId: product.id, tierId: product.tierId });
+    trackInsight("cart", product.id);
     setItems((prev) => {
       const existing = prev.find((item) => lineKey(item) === key);
       if (existing) {

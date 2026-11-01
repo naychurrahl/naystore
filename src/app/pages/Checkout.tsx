@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
+import { trackInsight } from "../utils/insights";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router";
 import { CheckCircle2, XCircle, ArrowLeft, CreditCard, Truck, Layers, Ticket, Wallet, Smartphone, TicketPercent, X, Gift } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +35,8 @@ const paystack = new PaystackPop();
 
 export function Checkout() {
   const { items, subtotal, clearCart } = useCart();
+  // Once per checkout opened, for what's in the cart then.
+  useEffect(() => trackInsight("checkout", items.map((item) => item.productId)), []); // eslint-disable-line react-hooks/exhaustive-deps
   const { user, authHeader } = useAuth();
   const [form, setForm] = useState({
     customerName: "", email: "", phone: "",

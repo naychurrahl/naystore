@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { setInsightToken } from "../utils/insights";
 import { toast } from "sonner";
 import { api, setUnauthorizedHandler } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
@@ -133,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  useEffect(() => setInsightToken(token), [token]);
 
   return (
     <AuthContext.Provider value={{ user, token, authHeader, login, register, becomeMerchant, logout, setUser }}>
