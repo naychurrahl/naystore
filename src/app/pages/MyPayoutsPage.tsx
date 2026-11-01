@@ -1,6 +1,6 @@
 import { Card, CardContent } from "../components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../components/ui/table";
-import { Wallet, CheckCircle2, CalendarClock, HandCoins, PauseCircle } from "lucide-react";
+import { Wallet, CheckCircle2, CalendarClock, HandCoins, PauseCircle, Zap, Check, X } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
@@ -47,6 +47,53 @@ function PayoutStat({ label, value, hint, icon: Icon, tone }: { label: string; v
   );
 }
 
+// Paid at checkout: whether this shop's card money goes straight to its bank
+// with the payment, and what it still needs if not.
+type Rule = { have: number | boolean | null; need: number | boolean; met: boolean };
+function PaidAtCheckoutCard({ status }: { status: { override: string; trusted: boolean; splitReady: boolean; blocker: string | null; rules: Record<string, Rule> } }) {
+  const r = status.rules;
+  const lines: [string, Rule][] = [
+    [r.rating.have === null ? "Buyer rating: no buyer reviews yet" : `Buyer rating ${r.rating.have} (needs ${r.rating.need}+)`, r.rating],
+    [`${r.buyerReviews.have} of ${r.buyerReviews.need} reviews from buyers`, r.buyerReviews],
+    [`${r.completedOrders.have} of ${r.completedOrders.need} completed orders`, r.completedOrders],
+    [`Open problem reports: ${r.openReports.have} (at most ${r.openReports.need})`, r.openReports],
+    ["A bank account for payouts", r.bankAccount],
+  ];
+  return (
+    <Card className="mb-6">
+      <CardContent className="p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Zap className="h-4 w-4" style={{ color: status.splitReady ? 'var(--color-success)' : 'var(--color-text-muted)' }} />
+          <h2 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+            Paid at checkout: {status.splitReady ? "on" : "off"}
+          </h2>
+        </div>
+        <p className="text-sm mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+          {status.splitReady
+            ? "Your share of each card payment goes straight to your bank when the buyer pays - no waiting for delivery."
+            : status.trusted && status.blocker
+              ? status.blocker
+              : status.override === "never"
+                ? "Paid at checkout is turned off for your shop. Contact support to ask why."
+                : "Trusted shops are paid the moment the buyer pays, instead of after delivery. You get there with:"}
+        </p>
+        {!status.splitReady && status.override === "auto" && !status.trusted && (
+          <ul className="space-y-1.5 text-sm">
+            {lines.map(([label, rule]) => (
+              <li key={label} className="flex items-center gap-2" style={{ color: rule.met ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                {rule.met
+                  ? <Check className="h-4 w-4 shrink-0" style={{ color: 'var(--color-success)' }} />
+                  : <X className="h-4 w-4 shrink-0" style={{ color: 'var(--color-text-muted)' }} />}
+                {label}
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function MyPayoutsPage() {
   const { authHeader } = useAuth();
   const { data } = useAPI(`${API_BASE}/my-commissions`, { headers: authHeader });
@@ -78,13 +125,15 @@ export function MyPayoutsPage() {
 
       <PayoutSettingsCard />
 
+      {data?.paidAtCheckout && <PaidAtCheckoutCard status={data.paidAtCheckout} />}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <PayoutStat label="Next payout" value={money(due)} icon={CalendarClock} tone="primary"
           hint={due > 0 ? "Goes out with the next automatic run" : nextRelease ? `More releases ${new Date(nextRelease.replace(" ", "T")).toLocaleDateString()}` : undefined} />
         <PayoutStat label="Still to come" value={money(totalPending)} icon={Wallet} tone="primary" hint="Waiting for delivery or the release window" />
         <PayoutStat label="Paid to date" value={money(totalPaid)} icon={CheckCircle2} tone="success" />
         {owed > 0 && (
-          <PayoutStat label="You owe" value={money(owed)} icon={HandCoins} tone="accent" hint="Commission on cash orders you delivered; taken from your next payout" />
+          <PayoutStat label="You owe" value={money(owed)} icon={HandCoins} tone="accent" hint="Commission and service fees on cash orders you delivered, and refunded orders you were already paid for; taken from your next payout" />
         )}
       </div>
 
