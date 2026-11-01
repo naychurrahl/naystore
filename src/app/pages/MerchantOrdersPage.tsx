@@ -176,6 +176,12 @@ export function MerchantOrdersPage() {
                               ))}
                             </div>
 
+                            {row.cashToCollect > 0 && (
+                              <p className="text-sm font-medium mb-4 px-3 py-2 rounded-lg" style={{ color: 'var(--color-text-primary)', backgroundColor: 'var(--color-accent-light)' }}>
+                                Cash on delivery: collect ₦{Number(row.cashToCollect).toLocaleString()} from the buyer.
+                              </p>
+                            )}
+
                             {row.delivery === "digital" ? (
                               <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
                                 Delivered digitally - the buyer got instant access in their Library when payment went through. Nothing to ship.

@@ -21,14 +21,20 @@ type PaymentChoice = "cod" | "card" | "split";
 type Provider = "paystack" | "naylet";
 type Attendee = { name: string; email: string };
 // What the API says the cart costs (POST checkout-quote): the items, and the
-// service fee on top - on the online payment, and on each cash-on-delivery order.
+// payment fee on top - Naychurrahl's on every payment (each cash-on-delivery
+// order too), and Paystack's on the card payment.
 type Quote = {
   online: { items: number; serviceFee: number; total: number } | null;
   onDelivery: { items: number; serviceFee: number; total: number } | null;
+  subtotal: number;
+  discount: number;
   itemsTotal: number;
+  platformFee: number;
+  gatewayFee: number;
   serviceFee: number;
   total: number;
 };
+const naira = (n: number) => `₦${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // What coupons/check says a code takes off, per cart line (index into items).
 type AppliedCoupon = { code: string; label: string; amount: number; lines: { index: number; amount: number }[] };
@@ -341,7 +347,7 @@ export function Checkout() {
                 <OrderDiscountLines discounts={order.discounts} />
                 {order.serviceFee > 0 && (
                   <div className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                    <span>Service fee (paid on delivery)</span>
+                    <span>Payment fee (paid on delivery)</span>
                     <span>₦{order.serviceFee.toFixed(2)}</span>
                   </div>
                 )}
@@ -360,7 +366,7 @@ export function Checkout() {
             const card = placedOrders.find((o) => o.onlineCharged);
             return (
               <p className="text-sm text-left mb-6" style={{ color: 'var(--color-text-secondary)' }}>
-                Card payment: ₦{card.onlineCharged.toFixed(2)}, including a ₦{card.onlineServiceFee.toFixed(2)} service fee.
+                Card payment: {naira(card.onlineCharged)}, including a {naira(card.onlineServiceFee)} payment fee.
               </p>
             );
           })()}
@@ -1015,31 +1021,36 @@ export function Checkout() {
               )}
             </div>
 
-            {(discount > 0 || (quote?.serviceFee ?? 0) > 0) && (
-              <div className="flex justify-between text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>
-                <span>Subtotal</span>
-                <span>₦{(subtotal - discount).toFixed(2)}</span>
+            {/* The whole bill, line by line. */}
+            <div className="space-y-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <div className="flex justify-between">
+                <span>Items</span>
+                <span>{naira(quote?.subtotal ?? subtotal)}</span>
               </div>
-            )}
-            {(quote?.serviceFee ?? 0) > 0 && (
-              <div className="flex justify-between text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>
-                <span title="Covers card processing and running Naychurrahl">Service fee</span>
-                <span>₦{quote!.serviceFee.toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between font-bold pt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
-              <span>Total</span>
-              <span>₦{(quote?.total ?? subtotal - discount).toFixed(2)}</span>
+              {(quote?.discount ?? discount) > 0 && (
+                <div className="flex justify-between" style={{ color: 'var(--color-success)' }}>
+                  <span>Discount</span>
+                  <span>−{naira(quote?.discount ?? discount)}</span>
+                </div>
+              )}
+              {(quote?.serviceFee ?? 0) > 0 && (
+                <div className="flex justify-between">
+                  <span>Payment fee</span>
+                  <span>{naira(quote!.serviceFee)}</span>
+                </div>
+              )}
             </div>
-            {(quote?.serviceFee ?? 0) > 0 && (
-              <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
-                The service fee covers card processing and running Naychurrahl.
-              </p>
-            )}
+            <div className="flex justify-between font-bold pt-2 mt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
+              <span>Total</span>
+              <span>{naira(quote?.total ?? subtotal - discount)}</span>
+            </div>
             {paymentMethod === "split" && quote?.online && quote.onDelivery && (
               <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
-                Online now: ₦{quote.online.total.toFixed(2)} · on delivery: ₦{quote.onDelivery.total.toFixed(2)}
+                Pay now: {naira(quote.online.total)} · pay on delivery: {naira(quote.onDelivery.total)}
               </p>
+            )}
+            {paymentMethod === "cod" && (quote?.serviceFee ?? 0) > 0 && (
+              <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>All of it is paid in cash on delivery.</p>
             )}
           </div>
         </div>

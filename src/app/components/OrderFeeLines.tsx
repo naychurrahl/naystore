@@ -1,11 +1,11 @@
-// The service fee the buyer paid with an order: a cash-on-delivery order's
-// own, or - for card orders - the checkout's one card payment's, which may
-// cover several orders.
+// The payment fee the buyer paid with an order: a cash-on-delivery order's
+// own (Naychurrahl's), or - for card orders - the checkout's one card
+// payment's (Paystack's and Naychurrahl's), which may cover several orders.
 export function OrderFeeLines({ order }: { order: any }) {
   if (order.serviceFee > 0) {
     return (
       <div className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        <span>Service fee (paid on delivery)</span>
+        <span>Payment fee (paid on delivery)</span>
         <span>₦{Number(order.serviceFee).toFixed(2)}</span>
       </div>
     );
@@ -13,7 +13,7 @@ export function OrderFeeLines({ order }: { order: any }) {
   if (order.onlineServiceFee > 0) {
     return (
       <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-        The card payment of ₦{Number(order.onlineCharged).toLocaleString()} included a ₦{Number(order.onlineServiceFee).toLocaleString()} service fee.
+        The card payment of ₦{Number(order.onlineCharged).toLocaleString()} included a ₦{Number(order.onlineServiceFee).toLocaleString()} payment fee.
       </p>
     );
   }
