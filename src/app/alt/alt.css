@@ -1,0 +1,192 @@
+/*
+  The /alt store's look (from the Storefront Field Notes research): a calm
+  neutral base with one accent, green only for savings and stock, red only
+  for errors and sold out. Everything is scoped to html.alt-theme, which
+  AltLayout sets while an /alt page is open, so the current store keeps its
+  own look. The store's --color-* tokens are remapped too, so shared pieces
+  (the login modal, chat, notifications, toasts) match in both themes.
+*/
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
+html.alt-theme {
+  --a-bg: #f5f6f8;
+  --a-surface: #ffffff;
+  --a-sunk: #eceef2;
+  --a-line: #e1e4ea;
+  --a-ink: #14171f;
+  --a-ink-2: #4a5160;
+  --a-ink-3: #7a8191;
+  --a-accent: #2563eb;
+  --a-accent-hover: #1d4fd7;
+  --a-accent-ink: #ffffff;
+  --a-accent-soft: #e6eeff;
+  --a-good: #0f7a45;
+  --a-good-soft: #e3f5ea;
+  --a-bad: #c4312b;
+  --a-bad-soft: #fdeceb;
+  --a-warn: #9a5b00;
+  --a-warn-soft: #fff3dc;
+  --a-star: #e59a00;
+  --a-deal: #c4312b;
+  --a-top: #14171f;
+  --a-top-ink: #f5f6f8;
+  --a-scrim: rgba(10, 14, 24, 0.55);
+  --a-shadow: 0 1px 2px rgba(20, 23, 31, 0.06), 0 4px 16px rgba(20, 23, 31, 0.06);
+  --a-font: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-primary: var(--a-accent);
+  --color-primary-hover: var(--a-accent-hover);
+  --color-primary-light: var(--a-accent-soft);
+  --color-secondary: var(--a-accent);
+  --color-accent: var(--a-star);
+  --color-success: var(--a-good);
+  --color-success-light: var(--a-good-soft);
+  --color-error: var(--a-bad);
+  --color-error-light: var(--a-bad-soft);
+  --color-background: var(--a-surface);
+  --color-surface: var(--a-bg);
+  --color-surface-alt: var(--a-sunk);
+  --color-border: var(--a-line);
+  --color-text-primary: var(--a-ink);
+  --color-text-secondary: var(--a-ink-2);
+  --color-text-muted: var(--a-ink-3);
+  --color-nav-bg: var(--a-surface);
+  --color-nav-text: var(--a-ink);
+  --color-nav-hover: var(--a-sunk);
+  --color-nav-active: var(--a-accent);
+  --color-product-card: var(--a-surface);
+  --color-product-badge: var(--a-bad);
+  --color-cart-button: var(--a-accent);
+  --color-cart-button-hover: var(--a-accent-hover);
+}
+
+html.alt-theme.dark {
+  --a-bg: #0f1218;
+  --a-surface: #171b23;
+  --a-sunk: #1f2430;
+  --a-line: #2b3140;
+  --a-ink: #eef0f4;
+  --a-ink-2: #b4bac6;
+  --a-ink-3: #868d9b;
+  --a-accent: #6d9bff;
+  --a-accent-hover: #8cb0ff;
+  --a-accent-ink: #0b1020;
+  --a-accent-soft: #1c2a4a;
+  --a-good: #4fcf8a;
+  --a-good-soft: #153325;
+  --a-bad: #ff7b72;
+  --a-bad-soft: #3a1c1b;
+  --a-warn: #f2b84b;
+  --a-warn-soft: #3a2d12;
+  --a-star: #f5b73b;
+  --a-deal: #c8403a;
+  --a-top: #07090d;
+  --a-top-ink: #d9dde5;
+  --a-scrim: rgba(0, 0, 0, 0.6);
+  --a-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+
+html.alt-theme body {
+  background: var(--a-bg);
+  color: var(--a-ink);
+  font-family: var(--a-font);
+}
+
+.alt {
+  font-family: var(--a-font);
+  color: var(--a-ink);
+  background: var(--a-bg);
+  -webkit-font-smoothing: antialiased;
+}
+.alt h1, .alt h2, .alt h3 { text-wrap: balance; letter-spacing: -0.01em; }
+
+.alt-wrap {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.alt-card {
+  background: var(--a-surface);
+  border: 1px solid var(--a-line);
+  border-radius: 12px;
+}
+
+.alt-price { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--a-ink); }
+.alt-was { font-variant-numeric: tabular-nums; color: var(--a-ink-3); text-decoration: line-through; }
+.alt-save { color: var(--a-good); font-weight: 700; }
+.alt-muted { color: var(--a-ink-3); }
+.alt-soft { color: var(--a-ink-2); }
+.alt-link { color: var(--a-accent); }
+.alt-link:hover { text-decoration: underline; }
+
+.alt-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 20px; border-radius: 10px;
+  font-weight: 700; font-size: 15px;
+  background: var(--a-accent); color: var(--a-accent-ink);
+  transition: background-color 0.15s;
+}
+.alt-btn:hover:not(:disabled) { background: var(--a-accent-hover); }
+.alt-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.alt-btn-sm { min-height: 40px; padding: 0 10px; font-size: 14px; }
+.alt-btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 16px; border-radius: 10px;
+  font-weight: 600; font-size: 15px;
+  border: 1px solid var(--a-line); background: var(--a-surface); color: var(--a-ink);
+}
+.alt-btn-ghost:hover { background: var(--a-sunk); }
+
+.alt-chip {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  height: 36px; padding: 0 14px; border-radius: 999px;
+  font-size: 14px; font-weight: 600; white-space: nowrap;
+  border: 1px solid var(--a-line); background: var(--a-surface); color: var(--a-ink);
+}
+.alt-chip[aria-pressed="true"] { background: var(--a-ink); border-color: var(--a-ink); color: var(--a-surface); }
+
+.alt-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700;
+}
+.alt-tag-good { background: var(--a-good-soft); color: var(--a-good); }
+.alt-tag-bad { background: var(--a-bad-soft); color: var(--a-bad); }
+.alt-tag-info { background: var(--a-accent-soft); color: var(--a-accent); }
+.alt-tag-plain { background: var(--a-sunk); color: var(--a-ink-2); }
+
+.alt-input {
+  width: 100%; min-height: 44px; padding: 0 14px; border-radius: 10px;
+  border: 1px solid var(--a-line); background: var(--a-surface); color: var(--a-ink);
+  font-size: 15px;
+}
+.alt-input:focus { outline: 2px solid var(--a-accent); outline-offset: 1px; }
+.alt :focus-visible { outline: 2px solid var(--a-accent); outline-offset: 2px; }
+
+.alt-scroll { scrollbar-width: none; }
+.alt-scroll::-webkit-scrollbar { display: none; }
+
+.alt-skel {
+  background: linear-gradient(90deg, var(--a-sunk) 0%, var(--a-line) 50%, var(--a-sunk) 100%);
+  background-size: 200% 100%;
+  animation: alt-shimmer 1.2s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes alt-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .alt-skel { animation: none; }
+  .alt * { transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* Rails: 2.5 cards on phones so it's clear they scroll. */
+.alt-rail {
+  display: grid; grid-auto-flow: column; gap: 12px;
+  grid-auto-columns: calc((100% - 24px) / 2.2);
+  overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px;
+}
+.alt-rail > * { scroll-snap-align: start; min-width: 0; }
+@media (min-width: 640px) { .alt-rail { grid-auto-columns: calc((100% - 36px) / 3.4); } }
+@media (min-width: 1024px) { .alt-rail { grid-auto-columns: calc((100% - 60px) / 6); gap: 12px; } }

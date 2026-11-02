@@ -102,6 +102,19 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  // The redesigned store from the Storefront Field Notes research, beside the
+  // current one for comparison. Lazy: none of it loads until /alt opens.
+  {
+    path: "/alt",
+    lazy: () => import("./alt").then((m) => ({ Component: m.AltLayout })),
+    children: [
+      { index: true, lazy: () => import("./alt").then((m) => ({ Component: m.AltHome })) },
+      { path: "search", lazy: () => import("./alt").then((m) => ({ Component: m.AltSearch })) },
+      { path: "shop/:id", lazy: () => import("./alt").then((m) => ({ Component: m.AltProductPage })) },
+      { path: "sellers/:slug", lazy: () => import("./alt").then((m) => ({ Component: m.AltSeller })) },
+      { path: "cart", lazy: () => import("./alt").then((m) => ({ Component: m.AltCart })) },
+    ],
+  },
   // Outside the shop layout, so it prints as just the certificate.
   { path: "/certificates/:code", Component: Certificate },
   // Full-screen door scanner for phones (lazy: keeps the camera/QR reader
