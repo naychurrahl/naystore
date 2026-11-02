@@ -115,6 +115,23 @@ export const router = createBrowserRouter([
       { path: "cart", lazy: () => import("./alt").then((m) => ({ Component: m.AltCart })) },
     ],
   },
+  // The multi-vendor marketplace build, beside /alt for comparison. Same API
+  // and the same checkout logic (checkout/useCheckout); lazy like /alt.
+  {
+    path: "/alt_2",
+    lazy: () => import("./alt2").then((m) => ({ Component: m.M2Layout })),
+    children: [
+      { index: true, lazy: () => import("./alt2").then((m) => ({ Component: m.Home })) },
+      { path: "search", lazy: () => import("./alt2").then((m) => ({ Component: m.SearchPage })) },
+      { path: "categories", lazy: () => import("./alt2").then((m) => ({ Component: m.CategoriesPage })) },
+      { path: "c/:name", lazy: () => import("./alt2").then((m) => ({ Component: m.CategoryPage })) },
+      { path: "p/:id", lazy: () => import("./alt2").then((m) => ({ Component: m.ProductPage })) },
+      { path: "s/:slug", lazy: () => import("./alt2").then((m) => ({ Component: m.StorePage })) },
+      { path: "wishlist", lazy: () => import("./alt2").then((m) => ({ Component: m.WishlistPage })) },
+      { path: "cart", lazy: () => import("./alt2").then((m) => ({ Component: m.CartPage })) },
+      { path: "checkout", lazy: () => import("./alt2").then((m) => ({ Component: m.CheckoutPage })) },
+    ],
+  },
   // Outside the shop layout, so it prints as just the certificate.
   { path: "/certificates/:code", Component: Certificate },
   // Full-screen door scanner for phones (lazy: keeps the camera/QR reader

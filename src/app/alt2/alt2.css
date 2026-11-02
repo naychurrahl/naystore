@@ -1,0 +1,198 @@
+/*
+  The /alt_2 marketplace look: warm paper neutrals, one deep-green accent
+  for actions, saffron reserved for savings and deals. Tight radii (6-8px),
+  hairline borders and soft shadows. Scoped to html.m2-theme, set by
+  M2Layout while an /alt_2 page is open; the store's --color-* tokens are
+  remapped too, so the login modal, chat, toasts and ticket picker match.
+*/
+@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap");
+
+html.m2-theme {
+  --m-bg: #f6f5f1;
+  --m-surface: #ffffff;
+  --m-sunk: #efede7;
+  --m-line: #e3e0d8;
+  --m-line-strong: #cfcbc0;
+  --m-ink: #161a17;
+  --m-ink-2: #4b524d;
+  --m-ink-3: #7c837e;
+  --m-accent: #0f6b4b;
+  --m-accent-hover: #0b5a3e;
+  --m-accent-ink: #ffffff;
+  --m-accent-soft: #e2f0e9;
+  --m-deal: #f4b000;
+  --m-deal-ink: #1d1600;
+  --m-deal-soft: #fff4d1;
+  --m-good: #127a45;
+  --m-bad: #c0352b;
+  --m-bad-soft: #fbe9e7;
+  --m-star: #e39b00;
+  --m-band: #10241b;
+  --m-band-ink: #e9f2ec;
+  --m-scrim: rgba(12, 16, 14, 0.55);
+  --m-shadow: 0 1px 2px rgba(22, 26, 23, 0.05), 0 6px 20px rgba(22, 26, 23, 0.07);
+  --m-font: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-primary: var(--m-accent);
+  --color-primary-hover: var(--m-accent-hover);
+  --color-primary-light: var(--m-accent-soft);
+  --color-secondary: var(--m-accent);
+  --color-accent: var(--m-star);
+  --color-success: var(--m-good);
+  --color-success-light: var(--m-accent-soft);
+  --color-error: var(--m-bad);
+  --color-error-light: var(--m-bad-soft);
+  --color-background: var(--m-surface);
+  --color-surface: var(--m-bg);
+  --color-surface-alt: var(--m-sunk);
+  --color-border: var(--m-line);
+  --color-text-primary: var(--m-ink);
+  --color-text-secondary: var(--m-ink-2);
+  --color-text-muted: var(--m-ink-3);
+  --color-nav-bg: var(--m-surface);
+  --color-nav-text: var(--m-ink);
+  --color-nav-hover: var(--m-sunk);
+  --color-nav-active: var(--m-accent);
+  --color-product-card: var(--m-surface);
+  --color-product-badge: var(--m-bad);
+  --color-cart-button: var(--m-accent);
+  --color-cart-button-hover: var(--m-accent-hover);
+}
+
+html.m2-theme.dark {
+  --m-bg: #0f1311;
+  --m-surface: #171c19;
+  --m-sunk: #1e2420;
+  --m-line: #2a312c;
+  --m-line-strong: #3a433d;
+  --m-ink: #eef1ee;
+  --m-ink-2: #b6beb8;
+  --m-ink-3: #889089;
+  --m-accent: #4cc38a;
+  --m-accent-hover: #6dd3a1;
+  --m-accent-ink: #06150e;
+  --m-accent-soft: #163327;
+  --m-deal: #f4b62a;
+  --m-deal-ink: #1d1600;
+  --m-deal-soft: #3a2f10;
+  --m-good: #5fd296;
+  --m-bad: #ff7d72;
+  --m-bad-soft: #3a1d1a;
+  --m-star: #f5bb3d;
+  --m-band: #08100c;
+  --m-band-ink: #cfe0d6;
+  --m-scrim: rgba(0, 0, 0, 0.62);
+  --m-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+html.m2-theme body { background: var(--m-bg); color: var(--m-ink); font-family: var(--m-font); }
+
+.m2 { font-family: var(--m-font); color: var(--m-ink); background: var(--m-bg); -webkit-font-smoothing: antialiased; }
+.m2 h1, .m2 h2, .m2 h3 { text-wrap: balance; letter-spacing: -0.015em; }
+.m2 :focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+
+/* Component classes sit in Tailwind's components layer so its utilities
+   (hidden, lg:inline-flex, padding...) can still override them. */
+@layer components {
+.m2-wrap {
+  width: 100%; max-width: 1280px; margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.m2-panel { background: var(--m-surface); border: 1px solid var(--m-line); border-radius: 8px; }
+.m2-lift { transition: box-shadow 0.18s, border-color 0.18s; }
+.m2-lift:hover { box-shadow: var(--m-shadow); border-color: var(--m-line-strong); }
+
+.m2-ink2 { color: var(--m-ink-2); }
+.m2-ink3 { color: var(--m-ink-3); }
+.m2-link { color: var(--m-accent); font-weight: 600; }
+.m2-link:hover { text-decoration: underline; }
+.m2-num { font-variant-numeric: tabular-nums; }
+.m2-price { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--m-ink); letter-spacing: -0.01em; }
+.m2-was { font-variant-numeric: tabular-nums; color: var(--m-ink-3); text-decoration: line-through; }
+.m2-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--m-ink-3); }
+
+.m2-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 18px; border-radius: 6px;
+  font-weight: 700; font-size: 15px; white-space: nowrap;
+  background: var(--m-accent); color: var(--m-accent-ink);
+  transition: background-color 0.15s, transform 0.1s;
+}
+.m2-btn:hover:not(:disabled) { background: var(--m-accent-hover); }
+.m2-btn:active:not(:disabled) { transform: translateY(1px); }
+.m2-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.m2-btn-line {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 16px; border-radius: 6px;
+  font-weight: 600; font-size: 15px; white-space: nowrap;
+  border: 1px solid var(--m-line-strong); background: var(--m-surface); color: var(--m-ink);
+  transition: background-color 0.15s;
+}
+.m2-btn-line:hover:not(:disabled) { background: var(--m-sunk); }
+.m2-btn-line:disabled { opacity: 0.45; cursor: not-allowed; }
+.m2-btn-sm { min-height: 38px; padding: 0 12px; font-size: 14px; }
+.m2-icon-btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  height: 44px; min-width: 44px; padding: 0 8px; border-radius: 6px; color: var(--m-ink);
+}
+.m2-icon-btn:hover { background: var(--m-sunk); }
+
+.m2-chip {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  height: 36px; padding: 0 12px; border-radius: 6px;
+  font-size: 14px; font-weight: 600; white-space: nowrap;
+  border: 1px solid var(--m-line); background: var(--m-surface); color: var(--m-ink);
+}
+.m2-chip:hover { border-color: var(--m-line-strong); }
+.m2-chip[aria-pressed="true"], .m2-chip[aria-current="page"] { background: var(--m-ink); border-color: var(--m-ink); color: var(--m-surface); }
+
+.m2-badge {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 4px;
+  font-size: 12px; font-weight: 800; line-height: 18px;
+}
+.m2-badge-deal { background: var(--m-deal); color: var(--m-deal-ink); }
+.m2-badge-plain { background: var(--m-sunk); color: var(--m-ink-2); }
+.m2-badge-accent { background: var(--m-accent-soft); color: var(--m-accent); }
+
+.m2-input {
+  width: 100%; min-height: 44px; padding: 0 12px; border-radius: 6px;
+  border: 1px solid var(--m-line-strong); background: var(--m-surface); color: var(--m-ink); font-size: 16px;
+}
+.m2-input::placeholder { color: var(--m-ink-3); }
+.m2-input:focus { outline: 2px solid var(--m-accent); outline-offset: -1px; border-color: transparent; }
+textarea.m2-input { padding: 10px 12px; }
+select.m2-input { padding-right: 32px; }
+.m2-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+
+.m2-scroll { scrollbar-width: none; }
+.m2-scroll::-webkit-scrollbar { display: none; }
+
+.m2-skel {
+  background: linear-gradient(90deg, var(--m-sunk) 0%, var(--m-line) 50%, var(--m-sunk) 100%);
+  background-size: 200% 100%; animation: m2-shimmer 1.2s ease-in-out infinite; border-radius: 6px;
+}
+@keyframes m2-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Rails: a peek of the next card on phones so it's clear they scroll. */
+.m2-rail {
+  display: grid; grid-auto-flow: column; gap: 12px;
+  grid-auto-columns: calc((100% - 12px) / 2.25);
+  overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 2px;
+}
+.m2-rail > * { scroll-snap-align: start; min-width: 0; }
+@media (min-width: 640px) { .m2-rail { grid-auto-columns: calc((100% - 36px) / 3.3); } }
+@media (min-width: 1024px) { .m2-rail { grid-auto-columns: calc((100% - 60px) / 6); } }
+
+.m2-pop { animation: m2-pop 0.18s ease-out; }
+@keyframes m2-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.m2-heart-on { animation: m2-heart 0.25s ease-out; }
+@keyframes m2-heart { 50% { transform: scale(1.25); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .m2-skel, .m2-pop, .m2-heart-on { animation: none; }
+  .m2 * { transition: none !important; scroll-behavior: auto !important; }
+}
+}
