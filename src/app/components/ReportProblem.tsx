@@ -106,7 +106,7 @@ export function ReportProblem({ orderId }: { orderId: string }) {
           {error && <p className="text-sm" style={{ color: 'var(--color-error)' }}>{error}</p>}
           <div className="flex gap-2">
             <button type="submit" disabled={sending} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-              style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
+              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}>
               {sending ? "Sending…" : "Send report"}
             </button>
             <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 rounded-lg text-sm"

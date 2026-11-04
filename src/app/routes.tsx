@@ -1,17 +1,11 @@
 import { createBrowserRouter } from "react-router";
-import { Layout } from "./components/Layout";
 import { MerchantLayout } from "./components/MerchantLayout";
 import { MerchantProtectedRoute } from "./components/MerchantProtectedRoute";
-import { Home } from "./pages/Home";
-import { ProductDetail } from "./pages/ProductDetail";
-import { SellerPage } from "./pages/SellerPage";
 import { Portfolio } from "./pages/Portfolio";
 import { PortfolioDetail } from "./pages/PortfolioDetail";
 import { Gallery } from "./pages/Gallery";
 import { Blog } from "./pages/Blog";
 import { BlogPost } from "./pages/BlogPost";
-import { Cart } from "./pages/Cart";
-import { Checkout } from "./pages/Checkout";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Profile } from "./pages/Profile";
@@ -38,29 +32,30 @@ import { MerchantEventBuilderPage } from "./pages/MerchantEventBuilderPage";
 import { MerchantCouponsPage } from "./pages/MerchantCouponsPage";
 import { InviteFriends } from "./pages/InviteFriends";
 import { MerchantDomainPage } from "./pages/MerchantDomainPage";
-import { useShopMode } from "./context/ShopModeContext";
-
-// On a merchant's own domain the home page is their shop.
-function IndexPage() {
-  const { shop } = useShopMode();
-  return shop ? <SellerPage slug={shop.slug} /> : <Home />;
-}
+import {
+  OldThemeAddress, ThemedCart, ThemedCategories, ThemedCategory, ThemedCheckout, ThemedHome, ThemedLayout,
+  ThemedProduct, ThemedSearch, ThemedSeller, ThemedWishlist,
+} from "./themes/themedRoutes";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    Component: Layout,
+    Component: ThemedLayout,
     children: [
-      { index: true, Component: IndexPage },
-      { path: "shop/:id", Component: ProductDetail },
-      { path: "sellers/:slug", Component: SellerPage },
+      { index: true, Component: ThemedHome },
+      { path: "shop/:id", Component: ThemedProduct },
+      { path: "sellers/:slug", Component: ThemedSeller },
+      { path: "search", Component: ThemedSearch },
+      { path: "categories", Component: ThemedCategories },
+      { path: "c/:name", Component: ThemedCategory },
+      { path: "wishlist", Component: ThemedWishlist },
       { path: "portfolio", Component: Portfolio },
       { path: "portfolio/:id", Component: PortfolioDetail },
       { path: "gallery", Component: Gallery },
       { path: "blog", Component: Blog },
       { path: "blog/:id", Component: BlogPost },
-      { path: "cart", Component: Cart },
-      { path: "checkout", Component: Checkout },
+      { path: "cart", Component: ThemedCart },
+      { path: "checkout", Component: ThemedCheckout },
       { path: "login", Component: Login },
       { path: "register", Component: Register },
       { path: "profile", Component: Profile },
@@ -102,36 +97,8 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // The redesigned store from the Storefront Field Notes research, beside the
-  // current one for comparison. Lazy: none of it loads until /alt opens.
-  {
-    path: "/alt",
-    lazy: () => import("./alt").then((m) => ({ Component: m.AltLayout })),
-    children: [
-      { index: true, lazy: () => import("./alt").then((m) => ({ Component: m.AltHome })) },
-      { path: "search", lazy: () => import("./alt").then((m) => ({ Component: m.AltSearch })) },
-      { path: "shop/:id", lazy: () => import("./alt").then((m) => ({ Component: m.AltProductPage })) },
-      { path: "sellers/:slug", lazy: () => import("./alt").then((m) => ({ Component: m.AltSeller })) },
-      { path: "cart", lazy: () => import("./alt").then((m) => ({ Component: m.AltCart })) },
-    ],
-  },
-  // The multi-vendor marketplace build, beside /alt for comparison. Same API
-  // and the same checkout logic (checkout/useCheckout); lazy like /alt.
-  {
-    path: "/alt_2",
-    lazy: () => import("./alt2").then((m) => ({ Component: m.M2Layout })),
-    children: [
-      { index: true, lazy: () => import("./alt2").then((m) => ({ Component: m.Home })) },
-      { path: "search", lazy: () => import("./alt2").then((m) => ({ Component: m.SearchPage })) },
-      { path: "categories", lazy: () => import("./alt2").then((m) => ({ Component: m.CategoriesPage })) },
-      { path: "c/:name", lazy: () => import("./alt2").then((m) => ({ Component: m.CategoryPage })) },
-      { path: "p/:id", lazy: () => import("./alt2").then((m) => ({ Component: m.ProductPage })) },
-      { path: "s/:slug", lazy: () => import("./alt2").then((m) => ({ Component: m.StorePage })) },
-      { path: "wishlist", lazy: () => import("./alt2").then((m) => ({ Component: m.WishlistPage })) },
-      { path: "cart", lazy: () => import("./alt2").then((m) => ({ Component: m.CartPage })) },
-      { path: "checkout", lazy: () => import("./alt2").then((m) => ({ Component: m.CheckoutPage })) },
-    ],
-  },
+  { path: "/alt/*", Component: OldThemeAddress },
+  { path: "/alt_2/*", Component: OldThemeAddress },
   // Outside the shop layout, so it prints as just the certificate.
   { path: "/certificates/:code", Component: Certificate },
   // Full-screen door scanner for phones (lazy: keeps the camera/QR reader

@@ -134,7 +134,7 @@ export function Library() {
                         <a
                           href={`${API_BASE}/library/download/${encodeURIComponent(file.id)}?token=${encodeURIComponent(item.token)}`}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium flex-shrink-0"
-                          style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
                         >
                           <Download className="h-4 w-4" /> Download
                         </a>
@@ -161,7 +161,7 @@ export function Library() {
                     <Link
                       to={`/learn/${encodeURIComponent(item.productId)}?token=${encodeURIComponent(item.token)}`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium flex-shrink-0"
-                      style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                      style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
                     >
                       <GraduationCap className="h-4 w-4" /> {item.completedCount > 0 ? "Continue course" : "Start course"}
                     </Link>
@@ -212,7 +212,7 @@ export function Library() {
                             <Link
                               to={`/tickets/${encodeURIComponent(ticket.code)}`}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium"
-                              style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
                             >
                               <QrCode className="h-4 w-4" /> Show ticket
                             </Link>

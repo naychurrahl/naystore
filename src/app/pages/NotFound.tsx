@@ -33,7 +33,7 @@ export function NotFound() {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors"
             style={{ 
               backgroundColor: 'var(--color-primary)',
-              color: 'white'
+              color: 'var(--color-primary-ink)'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)';
@@ -49,7 +49,7 @@ export function NotFound() {
             onClick={() => window.history.back()}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors"
             style={{ 
-              backgroundColor: 'white',
+              backgroundColor: 'var(--color-product-card)',
               color: 'var(--color-primary)',
               border: '2px solid var(--color-primary)'
             }}
@@ -57,7 +57,7 @@ export function NotFound() {
               e.currentTarget.style.backgroundColor = 'var(--color-primary-light)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'white';
+              e.currentTarget.style.backgroundColor = 'var(--color-product-card)';
             }}
           >
             <ArrowLeft className="h-5 w-5" />

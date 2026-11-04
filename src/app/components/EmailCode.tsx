@@ -139,7 +139,7 @@ export function ForgotPasswordForm({ initialIdentifier = "", onDone, onBack }: {
 
       <button type="submit" disabled={submitting || (!!sent && (code.length !== 6 || password.length < 8))}
         className="w-full px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-        style={{ backgroundColor: "var(--color-primary)", color: "white" }}>
+        style={{ backgroundColor: "var(--color-primary)", color: 'var(--color-primary-ink)' }}>
         {submitting ? "Please wait…" : sent ? "Reset password" : "Email me a code"}
       </button>
       <p className="text-sm text-center">

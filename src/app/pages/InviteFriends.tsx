@@ -97,7 +97,7 @@ export function InviteFriends() {
           <Gift className="h-10 w-10 mx-auto mb-4" style={{ color: "var(--color-primary)" }} />
           <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--color-text-primary)" }}>Invite friends</h1>
           <p className="mb-6" style={{ color: "var(--color-text-secondary)" }}>Log in to get your invite link.</p>
-          <button onClick={() => openLogin("/invite")} className="px-6 py-3 rounded-lg font-medium" style={{ backgroundColor: "var(--color-primary)", color: "white" }}>
+          <button onClick={() => openLogin("/invite")} className="px-6 py-3 rounded-lg font-medium" style={{ backgroundColor: "var(--color-primary)", color: 'var(--color-primary-ink)' }}>
             Log In
           </button>
         </div>
@@ -213,7 +213,7 @@ export function InviteFriends() {
                   <p className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>Application sent - we'll let you know.</p>
                 ) : affiliate.canApply ? (
                   <button onClick={apply} disabled={applying} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-                    style={{ backgroundColor: "var(--color-primary)", color: "white" }}>
+                    style={{ backgroundColor: "var(--color-primary)", color: 'var(--color-primary-ink)' }}>
                     {applying ? "Sending…" : "Apply to be an affiliate"}
                   </button>
                 ) : null}
@@ -227,7 +227,7 @@ export function InviteFriends() {
                   Rewards are paid in RT to your Naylet wallet. Connect it to get paid{invite.totals.ready > 0 ? ` - ${naira(invite.totals.ready)} is ready for you` : ""}.
                 </p>
                 <button onClick={connectWallet} disabled={connecting} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-                  style={{ backgroundColor: "var(--color-primary)", color: "white" }}>
+                  style={{ backgroundColor: "var(--color-primary)", color: 'var(--color-primary-ink)' }}>
                   {connecting ? "Opening Naylet…" : "Connect Naylet"}
                 </button>
               </div>

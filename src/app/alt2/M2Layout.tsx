@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
+import { Link, NavLink, Outlet, useLocation } from "react-router";
 import {
   ChevronDown, Heart, Home, LayoutDashboard, LayoutGrid, Library, LogIn, LogOut, MapPin, Menu, MessageCircle, Package, ShoppingCart, Store, User, X,
 } from "lucide-react";
@@ -9,12 +9,11 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
-import { useShopMode } from "../context/ShopModeContext";
 import { ChatLauncher } from "../components/ChatLauncher";
 import { ChatPanel } from "../components/ChatPanel";
 import { NotificationBell } from "../components/NotificationBell";
 import { NIGERIA_STATES } from "../data/nigeriaStates";
-import { rememberReferral } from "../utils/referral";
+import { ThemeSwitcher } from "../themes/ThemeSwitcher";
 import { contactsOf } from "../alt/shared";
 import { setShopState, useShopState, useWishlist } from "./local";
 import { SearchBox } from "./SearchBox";
@@ -111,6 +110,7 @@ function AccountMenu() {
             ? <Link role="menuitem" to="/merchant" className={item}><LayoutDashboard className="h-4 w-4" /> Seller dashboard</Link>
             : <Link role="menuitem" to="/become-merchant" className={item}><Store className="h-4 w-4" /> Sell on the marketplace</Link>}
           <button role="menuitem" type="button" onClick={() => logout()} className={`${item} w-full`}><LogOut className="h-4 w-4" /> Log out</button>
+          <div className="px-3 py-2 mt-1" style={{ borderTop: "1px solid var(--m-line)" }}><ThemeSwitcher /></div>
         </div>
       )}
     </div>
@@ -168,6 +168,7 @@ function Drawer({ open, onClose, categories, storeName, onChat }: { open: boolea
         <p className="m2-eyebrow px-4 pt-4 pb-1" style={{ borderTop: "1px solid var(--m-line)" }}>Help</p>
         <button type="button" className={`${row} w-full`} onClick={() => { onClose(); onChat(); }}><MessageCircle className="h-4 w-4 m2-ink3" /> Chat with support</button>
         <Link to="/become-merchant" className={row} onClick={onClose}><Store className="h-4 w-4 m2-ink3" /> Sell on {storeName || "the marketplace"}</Link>
+        <div className="px-4 py-3"><ThemeSwitcher /></div>
       </nav>
     </div>
   );
@@ -200,7 +201,6 @@ function BottomNav() {
 export function M2Layout() {
   useM2Theme();
   const location = useLocation();
-  const { shop } = useShopMode();
   const { data: settings } = useAPI(`${API_BASE}/settings`);
   const { data: catData } = useAPI(`${API_BASE}/categories?type=product`);
   const { itemCount } = useCart();
@@ -212,19 +212,16 @@ export function M2Layout() {
   const [notice, setNotice] = useState(0);
 
   useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); setDrawer(false); }, [location.pathname]);
-  useEffect(() => { rememberReferral(location.search); }, [location.search]);
   useEffect(() => {
     const t = setInterval(() => setNotice((n) => n + 1), 6000);
     return () => clearInterval(t);
   }, []);
 
-  if (shop) return <Navigate to="/" replace />;
-
   const storeName: string = settings?.companyName ?? "";
   const categories = ((catData ?? []) as any[]).map((c) => c.name as string);
   const { phone, whatsapp, socials, emails, addresses } = contactsOf(settings);
   const focused = location.pathname.startsWith(m2("/checkout"));
-  const hasOwnBar = location.pathname.startsWith(m2("/p/"));
+  const hasOwnBar = location.pathname.startsWith(m2("/shop/"));
 
   // The strip says what's true of every order: no promotions to invent.
   const notices = [
@@ -323,6 +320,7 @@ export function M2Layout() {
         </div>
         <div className="m2-wrap py-4 flex flex-wrap items-center justify-between gap-2 text-xs m2-ink3" style={{ borderTop: "1px solid var(--m-line)" }}>
           <span>© {new Date().getFullYear()} {storeName}. All rights reserved.</span>
+          <ThemeSwitcher />
           <span className="flex gap-2">
             {["Paystack", "Naylet", "Pay on delivery"].map((p) => <span key={p} className="m2-badge m2-badge-plain">{p}</span>)}
           </span>

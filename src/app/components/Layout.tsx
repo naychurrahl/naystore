@@ -10,7 +10,7 @@ import { useChat } from "../context/ChatContext";
 import { ChatLauncher } from "./ChatLauncher";
 import { ChatPanel } from "./ChatPanel";
 import { NotificationBell } from "./NotificationBell";
-import { rememberReferral } from "../utils/referral";
+import { ThemeSwitcher } from "../themes/ThemeSwitcher";
 import { useShopMode } from "../context/ShopModeContext";
 import { MAIN_STORE_URL } from "../utils/shopHost";
 
@@ -24,7 +24,7 @@ export function Layout() {
   const { data: navigationMenu } = useAPI(`${API_BASE}/nav`);
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
-  const { openLogin, openRegister } = useAuthModal();
+  const { openLogin } = useAuthModal();
   // On a merchant's own domain: their shop's name, none of the marketplace.
   const { shop } = useShopMode();
 
@@ -42,21 +42,6 @@ export function Layout() {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
-
-  // An invite link (?ref=CODE) on any page.
-  useEffect(() => {
-    rememberReferral(location.search);
-  }, [location.search]);
-
-  // "Set a password" link from the guest-account email (?signup=email), and
-  // a seller invite (?ref=CODE&join=seller) opening the shop sign-up.
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const signupEmail = params.get("signup");
-    if (signupEmail && !user) openRegister(undefined, "customer", signupEmail);
-    else if (params.get("join") === "seller" && !user) openRegister("/merchant", "merchant");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
 
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
@@ -81,7 +66,8 @@ export function Layout() {
   const storeName = settings?.companyName ?? "";
   const companyName = shop ? shop.name : storeName;
   const logoInitial = companyName ? companyName.charAt(0).toUpperCase() : "";
-  const navItems: any[] = shop ? [] : navigationMenu ?? [];
+  // The store header is for shopping: no links to the company pages.
+  const navItems: any[] = shop ? [] : ((navigationMenu ?? []) as any[]).filter((item) => !/^\/(gallery|portfolio|blog)\b/.test(item.path));
   const socialLinks = settings?.socialLinks ?? [];
   const emails = settings?.emails ?? [];
   const phones = settings?.phones ?? [];
@@ -313,7 +299,7 @@ export function Layout() {
             </div>
 
             {/* Nav Links */}
-            <div className={shop ? "hidden" : ""}>
+            <div className={shop || navItems.length === 0 ? "hidden" : ""}>
               <h4 className="font-bold text-white mb-4">Nav Links</h4>
               <ul className="space-y-2">
                 {navItems.map((item) => (
@@ -398,7 +384,7 @@ export function Layout() {
             </div>
 
             {/* Social Links */}
-            <div className={shop ? "hidden" : ""}>
+            <div className={shop || socialLinks.length === 0 ? "hidden" : ""}>
               <h4 className="font-bold text-white mb-4">Follow Us</h4>
               <div className="space-y-2">
                 {socialLinks.map((social: any) => (
@@ -419,6 +405,7 @@ export function Layout() {
             <p className="text-center text-sm">
               © {new Date().getFullYear()} {companyName}. All rights reserved.
             </p>
+            <div className="mt-3 text-center"><ThemeSwitcher /></div>
           </div>
         </div>
       </footer>
@@ -426,7 +413,7 @@ export function Layout() {
       <Link
         to={shop ? "/" : "/#shop"}
         className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-transform hover:scale-105"
-        style={{ backgroundColor: 'var(--color-primary)', color: 'white', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25)' }}
+        style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25)' }}
         aria-label="Back to Shop"
       >
         <ShoppingBag className="h-5 w-5" />

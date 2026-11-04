@@ -185,7 +185,7 @@ function QuizPanel({ quiz, canSubmit, blockedReason, onSubmit }: {
           disabled={!allAnswered || submitting || (!!result && !result.passed)}
           onClick={() => void submit()}
           className="px-4 py-2 rounded-lg font-medium disabled:opacity-50"
-          style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
         >
           {submitting ? "Checking…" : "Submit answers"}
         </button>
@@ -395,7 +395,7 @@ export function Learn() {
                   <Link
                     to={`/shop/${encodeURIComponent(productId)}`}
                     className="inline-flex px-5 py-2.5 rounded-lg font-medium"
-                    style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                    style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
                   >
                     Enrol to unlock
                   </Link>
@@ -461,7 +461,7 @@ export function Learn() {
                                   <a
                                     href={file.url}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium flex-shrink-0"
-                                    style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                                    style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
                                   >
                                     <Download className="h-4 w-4" /> Download
                                   </a>
@@ -512,7 +512,7 @@ export function Learn() {
                         disabled={saving}
                         onClick={() => void setCompleted(true, true)}
                         className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium disabled:opacity-50"
-                        style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                        style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
                       >
                         <CheckCircle2 className="h-4 w-4" /> {next ? "Mark complete & next" : "Mark complete"}
                       </button>

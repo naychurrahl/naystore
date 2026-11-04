@@ -8,6 +8,7 @@
   --color-primary: #2563eb;
   --color-primary-hover: #1d4ed8;
   --color-primary-light: #dbeafe;
+  --color-primary-ink: #ffffff; /* text on the brand colour */
   
   /* Secondary Colors */
   --color-secondary: #7c3aed;

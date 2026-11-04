@@ -22,7 +22,7 @@ export function Cart() {
           <Link
             to="/#shop"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors"
-            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
           >
             Go to Shop
             <ArrowRight className="h-5 w-5" />
@@ -119,7 +119,7 @@ export function Cart() {
           <Link
             to="/checkout"
             className="inline-flex items-center gap-2 px-8 py-3 rounded-lg font-medium transition-colors"
-            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
           >
             Proceed to Checkout
             <ArrowRight className="h-5 w-5" />

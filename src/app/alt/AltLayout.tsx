@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState, type FormEvent } from "react";
-import { Link, Navigate, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Link, Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import { LayoutDashboard, Library, LogIn, Phone, Search, ShoppingCart, Store, User, X } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
@@ -7,15 +7,14 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
-import { useShopMode } from "../context/ShopModeContext";
 import { ChatLauncher } from "../components/ChatLauncher";
 import { ChatPanel } from "../components/ChatPanel";
 import { NotificationBell } from "../components/NotificationBell";
-import { rememberReferral } from "../utils/referral";
+import { ThemeSwitcher } from "../themes/ThemeSwitcher";
 import { altPath, contactsOf } from "./shared";
 import "./alt.css";
 
-// Puts the /alt look on <html> while an /alt page is open (so the login
+// Puts this theme on <html> while it is the active one (so the login
 // modal, toasts and chat, which render outside the page, match it), and
 // follows the device's light/dark setting.
 function useAltTheme() {
@@ -93,7 +92,6 @@ function IconLink({ to, label, children, badge }: { to: string; label: string; c
 export function AltLayout() {
   useAltTheme();
   const location = useLocation();
-  const { shop } = useShopMode();
   const { data: settings } = useAPI(`${API_BASE}/settings`);
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
@@ -105,17 +103,10 @@ export function AltLayout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    rememberReferral(location.search);
-  }, [location.search]);
-
-  useEffect(() => {
     const before = document.title;
     if (settings?.companyName) document.title = settings.companyName;
     return () => { document.title = before; };
   }, [settings?.companyName]);
-
-  // A merchant's own domain shows only that shop; /alt is the marketplace.
-  if (shop) return <Navigate to="/" replace />;
 
   const storeName: string = settings?.companyName ?? "";
   const { phone, whatsapp, socials, emails, addresses } = contactsOf(settings);
@@ -184,7 +175,7 @@ export function AltLayout() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main className="flex-1 min-w-0">
         <Outlet />
       </main>
 
@@ -233,8 +224,9 @@ export function AltLayout() {
             </div>
           )}
         </div>
-        <div className="alt-wrap py-4 text-xs alt-muted" style={{ borderTop: "1px solid var(--a-line)" }}>
-          © {new Date().getFullYear()} {storeName}. All rights reserved.
+        <div className="alt-wrap py-4 flex flex-wrap items-center justify-between gap-3 text-xs alt-muted" style={{ borderTop: "1px solid var(--a-line)" }}>
+          <span>© {new Date().getFullYear()} {storeName}. All rights reserved.</span>
+          <ThemeSwitcher />
         </div>
       </footer>
 

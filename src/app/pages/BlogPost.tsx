@@ -32,7 +32,7 @@ export function BlogPost() {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors"
             style={{
               backgroundColor: 'var(--color-primary)',
-              color: 'white'
+              color: 'var(--color-primary-ink)'
             }}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -115,7 +115,7 @@ export function BlogPost() {
           <button
             className="ml-auto p-3 rounded-lg transition-colors"
             style={{ 
-              backgroundColor: 'white',
+              backgroundColor: 'var(--color-product-card)',
               border: '1px solid var(--color-border)',
               color: 'var(--color-text-primary)'
             }}
@@ -123,7 +123,7 @@ export function BlogPost() {
               e.currentTarget.style.backgroundColor = 'var(--color-surface)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'white';
+              e.currentTarget.style.backgroundColor = 'var(--color-product-card)';
             }}
           >
             <Share2 className="h-5 w-5" />

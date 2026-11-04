@@ -198,7 +198,7 @@ export function SellerPage({ slug: ownDomainSlug }: { slug?: string } = {}) {
                 type="submit"
                 disabled={submittingReview}
                 className="px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
-                style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
               >
                 {submittingReview ? "Submitting..." : "Submit Review"}
               </button>

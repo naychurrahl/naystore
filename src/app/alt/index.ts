@@ -1,4 +1,4 @@
-// The /alt store (one chunk, loaded only when an /alt page opens).
+// The Modern theme (one chunk, loaded only when it's the active theme).
 export { AltLayout } from "./AltLayout";
 export { AltHome } from "./AltHome";
 export { AltSearch } from "./AltSearch";

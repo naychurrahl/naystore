@@ -28,7 +28,7 @@ export function PortfolioDetail() {
           <Link
             to="/portfolio"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors"
-            style={{ backgroundColor: 'var(--color-secondary)', color: 'white' }}
+            style={{ backgroundColor: 'var(--color-secondary)', color: 'var(--color-primary-ink)' }}
           >
             <ArrowLeft className="h-5 w-5" />
             Back to Portfolio

@@ -75,7 +75,7 @@ export function ProductDetail() {
           <Link
             to="/#shop"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors"
-            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
           >
             <ArrowLeft className="h-5 w-5" />
             Back to Shop
@@ -150,7 +150,7 @@ export function ProductDetail() {
           <div>
             <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>
               {!physical && (
-                <span className="inline-block mr-2 px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
+                <span className="inline-block mr-2 px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}>
                   {productTypeLabel(product.productType)}
                 </span>
               )}
@@ -232,7 +232,7 @@ export function ProductDetail() {
                 <Link
                   to={`/learn/${id}?token=${encodeURIComponent(course.token)}`}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors"
-                  style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                  style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
                 >
                   <GraduationCap className="h-5 w-5" />
                   Go to course
@@ -242,7 +242,7 @@ export function ProductDetail() {
                 onClick={handleAddToCart}
                 disabled={!product.inStock || emptyCourse}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-                style={{ backgroundColor: 'var(--color-cart-button)', color: 'white' }}
+                style={{ backgroundColor: 'var(--color-cart-button)', color: 'var(--color-primary-ink)' }}
               >
                 <ShoppingCart className="h-5 w-5" />
                 {emptyCourse ? "Enrolment opens soon" : "Add to Cart"}
@@ -358,7 +358,7 @@ export function ProductDetail() {
                 type="submit"
                 disabled={submittingReview}
                 className="px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
-                style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
               >
                 {submittingReview ? "Submitting..." : "Submit Review"}
               </button>

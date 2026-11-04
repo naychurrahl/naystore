@@ -1,4 +1,4 @@
-// The /alt_2 marketplace (one chunk, loaded only when an /alt_2 page opens).
+// The Marketplace theme (one chunk, loaded only when it's the active theme).
 export { M2Layout } from "./M2Layout";
 export { Home } from "./Home";
 export { SearchPage, CategoryPage, CategoriesPage } from "./Browse";
