@@ -70,7 +70,7 @@ export function ShopSection() {
                       ? 'var(--color-primary)'
                       : 'var(--color-product-card)',
                     color: selectedCategory === category
-                      ? 'white'
+                      ? 'var(--color-primary-ink)'
                       : 'var(--color-text-primary)',
                     border: '1px solid var(--color-border)',
                   }}

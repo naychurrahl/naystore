@@ -1,8 +1,8 @@
 /*
-  The /alt_2 marketplace look: warm paper neutrals, one deep-green accent
+  The Marketplace theme's look: warm paper neutrals, one deep-green accent
   for actions, saffron reserved for savings and deals. Tight radii (6-8px),
   hairline borders and soft shadows. Scoped to html.m2-theme, set by
-  M2Layout while an /alt_2 page is open; the store's --color-* tokens are
+  M2Layout while this theme is active; the store's --color-* tokens are
   remapped too, so the login modal, chat, toasts and ticket picker match.
 */
 @import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap");
@@ -36,6 +36,7 @@ html.m2-theme {
   --color-primary: var(--m-accent);
   --color-primary-hover: var(--m-accent-hover);
   --color-primary-light: var(--m-accent-soft);
+  --color-primary-ink: var(--m-accent-ink);
   --color-secondary: var(--m-accent);
   --color-accent: var(--m-star);
   --color-success: var(--m-good);

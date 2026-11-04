@@ -77,7 +77,7 @@ export function ProductCard({ product, showMerchant = true }: { product: ShopPro
         ) : (
           <div
             className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-xs font-medium"
-            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
           >
             {productTypeLabel(product.productType)}
           </div>
@@ -143,7 +143,7 @@ export function ProductCard({ product, showMerchant = true }: { product: ShopPro
             <Link
               to={`/shop/${product.id}`}
               className="p-2 rounded-lg"
-              style={{ backgroundColor: 'var(--color-cart-button)', color: 'white' }}
+              style={{ backgroundColor: 'var(--color-cart-button)', color: 'var(--color-primary-ink)' }}
               aria-label={`Get tickets for ${product.name}`}
               title="Get tickets"
             >

@@ -63,7 +63,7 @@ export function TicketPage() {
   return (
     <div className="min-h-screen py-8 px-4" style={{ backgroundColor: 'var(--color-surface)' }}>
       <div className="max-w-md mx-auto rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
-        <div className="p-5 text-center" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
+        <div className="p-5 text-center" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}>
           <p className="text-xs uppercase tracking-wider opacity-80">{ticket.tierName} ticket</p>
           <h1 className="text-xl font-bold mt-1">{ticket.eventName}</h1>
           <p className="text-sm opacity-90 mt-1">by {ticket.organizer}</p>

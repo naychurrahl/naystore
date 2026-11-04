@@ -258,7 +258,7 @@ export function AuthModal() {
                 type="submit"
                 disabled={submitting}
                 className="w-full px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-                style={{ backgroundColor: "var(--color-primary)", color: "white" }}
+                style={{ backgroundColor: "var(--color-primary)", color: 'var(--color-primary-ink)' }}
               >
                 {submitting ? "Logging in..." : "Log In"}
               </button>
@@ -549,7 +549,7 @@ export function AuthModal() {
                 type="submit"
                 disabled={submitting || (!!codeSent && code.length !== 6)}
                 className="w-full px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-                style={{ backgroundColor: "var(--color-primary)", color: "white" }}
+                style={{ backgroundColor: "var(--color-primary)", color: 'var(--color-primary-ink)' }}
               >
                 {submitting ? (codeSent ? "Creating Account..." : "Sending code...") : codeSent ? "Create Account" : "Continue"}
               </button>

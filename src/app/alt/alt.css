@@ -1,8 +1,8 @@
 /*
-  The /alt store's look (from the Storefront Field Notes research): a calm
+  The Modern theme's look (from the Storefront Field Notes research): a calm
   neutral base with one accent, green only for savings and stock, red only
   for errors and sold out. Everything is scoped to html.alt-theme, which
-  AltLayout sets while an /alt page is open, so the current store keeps its
+  AltLayout sets while this theme is active, so the other themes keep their
   own look. The store's --color-* tokens are remapped too, so shared pieces
   (the login modal, chat, notifications, toasts) match in both themes.
 */
@@ -37,6 +37,7 @@ html.alt-theme {
   --color-primary: var(--a-accent);
   --color-primary-hover: var(--a-accent-hover);
   --color-primary-light: var(--a-accent-soft);
+  --color-primary-ink: var(--a-accent-ink);
   --color-secondary: var(--a-accent);
   --color-accent: var(--a-star);
   --color-success: var(--a-good);

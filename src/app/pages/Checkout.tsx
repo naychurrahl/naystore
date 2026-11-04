@@ -192,7 +192,7 @@ export function Checkout() {
             to="/orders"
             state={{ placedOrders, paymentFailed }}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors"
-            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
           >
             View Order History
           </Link>
@@ -222,7 +222,7 @@ export function Checkout() {
               <button
                 onClick={() => { setConfirmEmail(false); void placeOrder(); }}
                 className="px-4 py-2 rounded-lg font-medium transition-colors"
-                style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
               >
                 Yes, place order
               </button>
@@ -249,7 +249,7 @@ export function Checkout() {
               <button
                 onClick={handleConfirmSave}
                 className="px-4 py-2 rounded-lg font-medium transition-colors"
-                style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
               >
                 Save & Continue
               </button>
@@ -576,7 +576,7 @@ export function Checkout() {
                                 type="button"
                                 onClick={() => void connectNaylet()}
                                 className="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium"
-                                style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                                style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
                               >
                                 Connect your Naylet wallet
                               </button>
@@ -598,7 +598,7 @@ export function Checkout() {
               type="submit"
               disabled={submitting || (usingNaylet && !nayletUsable)}
               className="w-full px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-              style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
             >
               {submitting ? "Processing..." : paymentMethod === "cod" || nothingToPayOnline ? "Place Order" : usingNaylet ? "Pay with Naylet" : "Continue to Payment"}
             </button>

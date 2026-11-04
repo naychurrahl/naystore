@@ -11,9 +11,9 @@ import { toggleWishlist, useWishlist } from "./local";
 
 export { naira, saving, useCatalog, type AltProduct } from "../alt/shared";
 
-export const m2 = (path = "") => `/alt_2${path}`;
-export const productUrl = (id: string) => m2(`/p/${id}`);
-export const storeUrl = (slug: string) => m2(`/s/${slug}`);
+export const m2 = (path = "") => path || "/";
+export const productUrl = (id: string) => m2(`/shop/${id}`);
+export const storeUrl = (slug: string) => m2(`/sellers/${slug}`);
 export const categoryUrl = (name: string) => m2(`/c/${encodeURIComponent(name)}`);
 export const searchUrl = (q = "") => m2(`/search${q ? `?q=${encodeURIComponent(q)}` : ""}`);
 

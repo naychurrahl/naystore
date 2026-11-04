@@ -10,6 +10,7 @@ import { clearGuestId } from './utils/guestId.js';
 import { Toaster } from './components/ui/sonner';
 import { AuthModal } from './components/AuthModal';
 import { ShopModeGate } from './context/ShopModeContext';
+import { ThemeProvider } from './themes/ThemeContext';
 
 // Wipes cart + guest identity the instant a logged-in session ends, so nothing
 // carries over to whoever uses the browser next. Only fires on an actual
@@ -42,7 +43,9 @@ export default function App() {
           <NotificationsProvider>
             <ChatProvider>
               <SessionGuard />
-              <RouterProvider router={router} />
+              <ThemeProvider>
+                <RouterProvider router={router} />
+              </ThemeProvider>
               <Toaster />
               <AuthModal />
             </ChatProvider>

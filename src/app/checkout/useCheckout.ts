@@ -12,7 +12,7 @@ import { useAuth } from "../context/AuthContext";
 import { isPhysical } from "../utils/productTypes";
 
 // Everything checkout does - the form, coupons, the quote, placing the order
-// and paying for it - shared by the store's checkout page and /alt_2's, so
+// and paying for it - shared by the Classic and Marketplace checkout pages, so
 // both take orders exactly the same way and only their markup differs.
 
 export type PaymentChoice = "cod" | "card" | "split";

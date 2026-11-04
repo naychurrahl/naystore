@@ -75,7 +75,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                       <Link
                         to={slide.ctaLink}
                         className="inline-flex items-center px-6 py-3 rounded-lg font-medium transition-colors"
-                        style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+                        style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
                       >
                         {slide.ctaLabel}
                         <ArrowRight className="ml-2 h-5 w-5" />

@@ -15,7 +15,7 @@ export function ChatLauncher({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       aria-label="Open support chat"
       className="fixed bottom-24 right-6 z-30 w-14 h-14 rounded-full flex items-center justify-center transition-transform hover:scale-105"
-      style={{ backgroundColor: 'var(--color-secondary)', color: 'white', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25)' }}
+      style={{ backgroundColor: 'var(--color-secondary)', color: 'var(--color-primary-ink)', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25)' }}
     >
       <MessageCircle className="h-5 w-5" />
       {unreadCount > 0 && (

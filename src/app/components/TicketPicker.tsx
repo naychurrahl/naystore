@@ -138,7 +138,7 @@ export function TicketPicker({ product }: { product: { id: string; name: string;
             onClick={add}
             disabled={chosen.length === 0}
             className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-            style={{ backgroundColor: 'var(--color-cart-button)', color: 'white' }}
+            style={{ backgroundColor: 'var(--color-cart-button)', color: 'var(--color-primary-ink)' }}
           >
             <ShoppingCart className="h-5 w-5" />
             {chosen.length ? `Add to cart · ₦${total}` : "Choose your tickets"}

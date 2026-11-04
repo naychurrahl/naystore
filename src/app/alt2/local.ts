@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-// Things /alt_2 keeps in this browser only: the wishlist (there's no account
+// Things the Marketplace theme keeps in this browser only: the wishlist (there's no account
 // wishlist in the API yet), the state the buyer shops from, recent searches.
 // Every read and write survives storage being blocked (private windows).
 

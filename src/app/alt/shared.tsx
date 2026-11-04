@@ -24,11 +24,11 @@ export function saving(p: { price: number; originalPrice?: number | null }) {
   return { was, amount: was - p.price, percent: Math.round(((was - p.price) / was) * 100) };
 }
 
-export const altPath = (path = "") => `/alt${path}`;
+export const altPath = (path = "") => path || "/";
 export const productPath = (id: string) => altPath(`/shop/${id}`);
 export const sellerPath = (slug: string) => altPath(`/sellers/${slug}`);
 
-// The whole catalogue, fetched once per visit and shared by every /alt page
+// The whole catalogue, fetched once per visit and shared by every themed page
 // (the API returns every visible product in one list; search runs over it).
 type Catalog = { products: AltProduct[]; loading: boolean; error: boolean };
 let catalogPromise: Promise<AltProduct[]> | null = null;

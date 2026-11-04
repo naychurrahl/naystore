@@ -5,6 +5,8 @@ import { ChevronRight, Gift, Package } from "lucide-react";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../themes/ThemeContext";
+import { ThemeSwitcher } from "../themes/ThemeSwitcher";
 import { PasswordInput } from "../components/PasswordInput";
 import { PhoneInput } from "../components/PhoneInput";
 import { useAuthModal } from "../context/AuthModalContext";
@@ -23,7 +25,7 @@ function GuestProfile() {
           <button
             onClick={() => openLogin("/profile")}
             className="block w-full px-6 py-3 rounded-lg font-medium transition-colors"
-            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
           >
             Log In
           </button>
@@ -52,6 +54,7 @@ function GuestProfile() {
 }
 
 export function Profile() {
+  const { locked: themeLocked } = useTheme();
   const { user, token, authHeader, setUser, logout } = useAuth();
   const [details, setDetails] = useState({
     name: "", username: "", email: "", phone: "",
@@ -129,6 +132,16 @@ export function Profile() {
             Log Out
           </button>
         </div>
+
+        {!themeLocked && (
+          <div className="p-4 rounded-xl mb-6 flex flex-wrap items-center justify-between gap-3" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
+            <span>
+              <span className="block font-bold" style={{ color: 'var(--color-text-primary)' }}>Store look</span>
+              <span className="block text-sm" style={{ color: 'var(--color-text-secondary)' }}>Saved to your account, so it follows you to your other devices.</span>
+            </span>
+            <span style={{ color: 'var(--color-text-primary)' }}><ThemeSwitcher /></span>
+          </div>
+        )}
 
         <Link to="/invite" className="p-4 rounded-xl mb-6 flex items-center gap-3" style={{ backgroundColor: 'var(--color-product-card)', border: '1px solid var(--color-border)' }}>
           <Gift className="h-6 w-6 shrink-0" style={{ color: 'var(--color-primary)' }} />
@@ -271,7 +284,7 @@ export function Profile() {
               type="submit"
               disabled={savingDetails}
               className="px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-              style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
             >
               {savingDetails ? "Saving..." : "Save Changes"}
             </button>
@@ -309,7 +322,7 @@ export function Profile() {
               type="submit"
               disabled={savingPassword}
               className="px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-              style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
+              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
             >
               {savingPassword ? "Changing..." : "Change Password"}
             </button>
