@@ -248,18 +248,30 @@ export function useCheckout() {
   };
 
   // The service fee comes from the API's quote, priced as the order will be.
+  // Nothing can be paid without one: quote set = ready, quoteError set = it
+  // failed, neither = still loading. So the total shown is what's charged.
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [quoteAttempt, setQuoteAttempt] = useState(0);
+  const retryQuote = () => setQuoteAttempt((n) => n + 1);
   useEffect(() => {
     let live = true;
     if (items.length === 0) return;
+    setQuote(null);
+    setQuoteError(null);
     api.post(`${API_BASE}/checkout-quote`, {
       items: checkLines(), paymentMethod, paymentProvider: provider, couponCode: coupon?.code, email: form.email,
     }, { headers: authHeader })
       .then((q: Quote) => { if (live) setQuote(q); })
-      .catch(() => { if (live) setQuote(null); });
+      .catch((err: any) => {
+        if (!live) return;
+        // A refusal says why ("sold out"); anything else is the connection.
+        const refused = err.status >= 400 && err.status < 500 && err.status !== 408;
+        setQuoteError(refused && err.message ? err.message : "We couldn't load the payment fee. Check your connection and try again.");
+      });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartKey, paymentMethod, provider, coupon?.code, invite?.amount, user?.id]);
+  }, [cartKey, paymentMethod, provider, coupon?.code, invite?.amount, user?.id, quoteAttempt]);
 
   // What the online part costs (the whole order, or the card-only half of a split).
   const onlineTotal = paymentMethod === "card"
@@ -380,6 +392,7 @@ export function useCheckout() {
     e.preventDefault();
     setError(null);
 
+    if (!quote) return;
     if (!EMAIL_PATTERN.test(form.email.trim())) {
       setError("Enter a valid email address - your receipt and any downloads go there.");
       return;
@@ -469,6 +482,8 @@ export function useCheckout() {
     applyCoupon,
     removeCoupon,
     quote,
+    quoteError,
+    retryQuote,
     onlineTotal,
     onlineCharge,
     nothingToPayOnline,

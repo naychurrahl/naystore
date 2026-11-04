@@ -60,6 +60,8 @@ export function Checkout() {
     applyCoupon,
     removeCoupon,
     quote,
+    quoteError,
+    retryQuote,
     onlineTotal,
     onlineCharge,
     nothingToPayOnline,
@@ -593,14 +595,18 @@ export function Checkout() {
             {error && (
               <p className="text-sm" style={{ color: 'var(--color-error)' }}>{error}</p>
             )}
+            {quoteError && (
+              <p role="alert" className="text-sm" style={{ color: 'var(--color-error)' }}>{quoteError}</p>
+            )}
 
             <button
-              type="submit"
-              disabled={submitting || (usingNaylet && !nayletUsable)}
+              type={quoteError ? "button" : "submit"}
+              onClick={quoteError ? retryQuote : undefined}
+              disabled={submitting || (!quoteError && (!quote || (usingNaylet && !nayletUsable)))}
               className="w-full px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
               style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-ink)' }}
             >
-              {submitting ? "Processing..." : paymentMethod === "cod" || nothingToPayOnline ? "Place Order" : usingNaylet ? "Pay with Naylet" : "Continue to Payment"}
+              {quoteError ? "Try again" : !quote ? "Working out your total..." : submitting ? "Processing..." : paymentMethod === "cod" || nothingToPayOnline ? "Place Order" : usingNaylet ? "Pay with Naylet" : "Continue to Payment"}
             </button>
           </form>
 
@@ -682,16 +688,16 @@ export function Checkout() {
                   <span>−{naira(quote?.discount ?? discount)}</span>
                 </div>
               )}
-              {(quote?.serviceFee ?? 0) > 0 && (
+              {(!quote || quote.serviceFee > 0) && (
                 <div className="flex justify-between">
                   <span>Payment fee</span>
-                  <span>{naira(quote!.serviceFee)}</span>
+                  <span>{quote ? naira(quote.serviceFee) : quoteError ? "Couldn't load" : "…"}</span>
                 </div>
               )}
             </div>
             <div className="flex justify-between font-bold pt-2 mt-2" style={{ color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)' }}>
               <span>Total</span>
-              <span>{naira(quote?.total ?? subtotal - discount)}</span>
+              <span>{quote ? naira(quote.total) : quoteError ? "—" : "…"}</span>
             </div>
             {paymentMethod === "split" && quote?.online && quote.onDelivery && (
               <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
