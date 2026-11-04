@@ -124,12 +124,17 @@ export function CheckoutPage() {
   }
 
   let step = 0;
-  const total = c.quote?.total ?? c.items.reduce((s, i) => s + i.price * i.quantity, 0) - c.discount;
-  const actionLabel = c.submitting ? "Processing…" : c.paymentMethod === "cod" || c.nothingToPayOnline ? "Place order" : c.usingNaylet ? "Pay with Naylet" : "Continue to payment";
-  const blocked = c.submitting || (c.usingNaylet && !c.nayletUsable);
+  const totalLabel = c.quote ? naira(c.quote.total) : c.quoteError ? "—" : "…";
+  const actionLabel = c.quoteError ? "Try again" : !c.quote ? "Working out your total…" : c.submitting ? "Processing…" : c.paymentMethod === "cod" || c.nothingToPayOnline ? "Place order" : c.usingNaylet ? "Pay with Naylet" : "Continue to payment";
+  const blocked = c.submitting || (!c.quoteError && (!c.quote || (c.usingNaylet && !c.nayletUsable)));
+  // The price didn't load: the pay button asks for it again instead.
+  const action = c.quoteError
+    ? { type: "button" as const, onClick: c.retryQuote }
+    : { type: "submit" as const, form: "m2-checkout" };
+  const actionIcon = c.quoteError ? null : <Lock className="h-4 w-4" />;
 
   return (
-    <div className="m2-wrap py-5 pb-28 lg:pb-10">
+    <div className={`m2-wrap py-5 ${c.quoteError ? "pb-44" : "pb-28"} lg:pb-10`}>
       {c.confirmEmail && (
         <Dialog title="Is this your email?" actions={<>
           <button type="button" className="m2-btn-line m2-btn-sm" onClick={() => c.setConfirmEmail(false)}>Change it</button>
@@ -294,12 +299,13 @@ export function CheckoutPage() {
             <dl className="grid gap-1.5 text-sm pt-3" style={{ borderTop: "1px solid var(--m-line)" }}>
               <div className="flex justify-between"><dt className="m2-ink2">Items</dt><dd className="m2-num">{naira(c.quote?.subtotal ?? c.subtotal)}</dd></div>
               {(c.quote?.discount ?? c.discount) > 0 && <div className="flex justify-between" style={{ color: "var(--m-good)" }}><dt>Discount</dt><dd className="m2-num">−{naira(c.quote?.discount ?? c.discount)}</dd></div>}
-              {(c.quote?.serviceFee ?? 0) > 0 && <div className="flex justify-between"><dt className="m2-ink2">Payment fee</dt><dd className="m2-num">{naira(c.quote!.serviceFee)}</dd></div>}
-              <div className="flex justify-between pt-2 text-lg font-extrabold" style={{ borderTop: "1px solid var(--m-line)" }}><dt>Total</dt><dd className="m2-price">{naira(total)}</dd></div>
+              {(!c.quote || c.quote.serviceFee > 0) && <div className="flex justify-between"><dt className="m2-ink2">Payment fee</dt><dd className="m2-num">{c.quote ? naira(c.quote.serviceFee) : c.quoteError ? "Couldn't load" : "…"}</dd></div>}
+              <div className="flex justify-between pt-2 text-lg font-extrabold" style={{ borderTop: "1px solid var(--m-line)" }}><dt>Total</dt><dd className="m2-price">{totalLabel}</dd></div>
             </dl>
             {c.paymentMethod === "split" && c.quote?.online && c.quote.onDelivery && <p className="text-xs m2-ink3">Pay now: {naira(c.quote.online.total)} · on delivery: {naira(c.quote.onDelivery.total)}</p>}
             {c.paymentMethod === "cod" && <p className="text-xs m2-ink3">All of it is paid on delivery.</p>}
-            <button type="submit" form="m2-checkout" disabled={blocked} className="m2-btn w-full hidden lg:inline-flex"><Lock className="h-4 w-4" /> {actionLabel}</button>
+            {c.quoteError && <p role="alert" className="hidden lg:block text-sm font-semibold" style={{ color: "var(--m-bad)" }}>{c.quoteError}</p>}
+            <button {...action} disabled={blocked} className="m2-btn w-full hidden lg:inline-flex">{actionIcon} {actionLabel}</button>
             <p className="flex gap-2 text-xs m2-ink3"><ShieldCheck className="h-4 w-4 shrink-0" style={{ color: "var(--m-accent)" }} />{groups.length > 1 ? `This becomes ${groups.length} orders, one per shop, paid together.` : "Every charge is listed above before you pay."}</p>
           </div>
         </aside>
@@ -307,9 +313,10 @@ export function CheckoutPage() {
 
       {/* Phones: the total and the action stay in reach */}
       <div className="lg:hidden fixed inset-x-0 bottom-0 z-40" style={{ background: "var(--m-surface)", borderTop: "1px solid var(--m-line)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        {c.quoteError && <p role="alert" className="m2-wrap pt-2.5 text-sm font-semibold" style={{ color: "var(--m-bad)" }}>{c.quoteError}</p>}
         <div className="m2-wrap py-2.5 flex items-center gap-3">
-          <div><p className="text-xs m2-ink3">Total</p><p className="m2-price text-lg leading-tight">{naira(total)}</p></div>
-          <button type="submit" form="m2-checkout" disabled={blocked} className="m2-btn flex-1"><Lock className="h-4 w-4" /> {actionLabel}</button>
+          <div><p className="text-xs m2-ink3">Total</p><p className="m2-price text-lg leading-tight">{totalLabel}</p></div>
+          <button {...action} disabled={blocked} className="m2-btn flex-1">{actionIcon} {actionLabel}</button>
         </div>
       </div>
     </div>
