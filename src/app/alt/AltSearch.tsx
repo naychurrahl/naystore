@@ -4,6 +4,7 @@ import { SlidersHorizontal, X } from "lucide-react";
 import { productTypeLabel, PRODUCT_TYPE_LABELS } from "../utils/productTypes";
 import { AltProductCard } from "./AltProductCard";
 import { CardSkeleton, naira, saving, useCatalog, type AltProduct } from "./shared";
+import { sponsoredFor, storeFirst, useHomePromotions } from "../home/useStoreHome";
 
 const PAGE = 24;
 
@@ -30,7 +31,7 @@ function haystack(p: AltProduct) {
 }
 
 type Filters = {
-  q: string; category: string | null; type: string | null; cod: boolean; rating: boolean;
+  q: string; category: string | null; house: boolean; type: string | null; cod: boolean; rating: boolean;
   stock: boolean; deals: boolean; min: number | null; max: number | null; sort: string;
 };
 
@@ -39,6 +40,7 @@ function readFilters(params: URLSearchParams, hasQuery: boolean): Filters {
   return {
     q: params.get("q") ?? "",
     category: params.get("category"),
+    house: params.get("house") === "1",
     type: params.get("type"),
     cod: params.get("cod") === "1",
     rating: params.get("rating") === "4",
@@ -57,6 +59,7 @@ function matches(p: AltProduct, f: Filters, terms: string[], skip?: keyof Filter
     if (!terms.every((t) => h.includes(t))) return false;
   }
   if (f.category && skip !== "category" && !p.categories?.includes(f.category)) return false;
+  if (f.house && skip !== "house" && p.merchantId) return false;
   if (f.type && skip !== "type" && (p.productType || "physical") !== f.type) return false;
   if (f.cod && skip !== "cod" && !p.codEligible) return false;
   if (f.rating && skip !== "rating" && !((p.reviewCount ?? 0) > 0 && (p.avgRating ?? 0) >= 4)) return false;
@@ -98,7 +101,12 @@ export function Listing({ products, loading, title, showSeller = true }: {
     return () => { document.body.style.overflow = ""; };
   }, [sheetOpen]);
 
-  const order = useMemo(() => new Map(products.map((p, i) => [p.id, i])), [products]);
+  // Across shops, the default order is the store's own and what's promoted
+  // first; a chosen sort stays exactly as chosen, and only says "Sponsored"
+  // where being paid for moved something up. One shop's own page keeps its order.
+  const promos = useHomePromotions();
+  const order = useMemo(() => new Map((showSeller ? storeFirst(products, promos, f.category) : products).map((p, i) => [p.id, i])), [products, promos, showSeller, f.category]);
+  const sponsored = useMemo(() => (showSeller && (f.sort === "featured" || f.sort === "relevance") ? sponsoredFor(promos, f.category) : new Set<string>()), [promos, showSeller, f.sort, f.category]);
   const results = useMemo(
     () => sortProducts(products.filter((p) => matches(p, f, terms)), f.sort, terms, order),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,6 +135,7 @@ export function Listing({ products, loading, title, showSeller = true }: {
   const active: { label: string; clear: Record<string, null> }[] = [
     f.q && { label: `“${f.q}”`, clear: { q: null } },
     f.category && { label: f.category, clear: { category: null } },
+    f.house && { label: "Our store", clear: { house: null } },
     f.type && { label: productTypeLabel(f.type), clear: { type: null } },
     f.cod && { label: "Pay on delivery", clear: { cod: null } },
     f.rating && { label: "4★ & up", clear: { rating: null } },
@@ -261,7 +270,7 @@ export function Listing({ products, loading, title, showSeller = true }: {
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
           {loading
             ? Array.from({ length: 8 }, (_, i) => <CardSkeleton key={i} />)
-            : results.slice(0, shown).map((p) => <AltProductCard key={p.id} product={p} showSeller={showSeller} />)}
+            : results.slice(0, shown).map((p) => <AltProductCard key={p.id} product={p} showSeller={showSeller} sponsored={sponsored.has(p.id)} />)}
         </div>
 
         {!loading && results.length === 0 && (

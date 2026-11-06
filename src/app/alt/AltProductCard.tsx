@@ -9,7 +9,7 @@ import { altPath, naira, productPath, saving, sellerPath, Stars, type AltProduct
 
 // Square photo, two-line name, stars only when there are reviews, an old
 // price only when it really was higher, how it can be paid, who sells it.
-export function AltProductCard({ product, showSeller = true }: { product: AltProduct; showSeller?: boolean }) {
+export function AltProductCard({ product, showSeller = true, sponsored = false }: { product: AltProduct; showSeller?: boolean; sponsored?: boolean }) {
   const { addItem } = useCart();
   const navigate = useNavigate();
   const off = saving(product);
@@ -29,6 +29,7 @@ export function AltProductCard({ product, showSeller = true }: { product: AltPro
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
         <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
           {off && <span className="alt-tag" style={{ background: "var(--a-deal)", color: "#fff" }}>−{off.percent}%</span>}
+          {sponsored && <span className="alt-tag alt-tag-plain">Sponsored</span>}
           {product.badge && <span className="alt-tag alt-tag-plain">{product.badge}</span>}
         </div>
         {soldOut && (
