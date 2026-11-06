@@ -25,7 +25,7 @@ export interface ShopProduct {
   merchantSlug?: string | null;
 }
 
-export function ProductCard({ product, showMerchant = true }: { product: ShopProduct; showMerchant?: boolean }) {
+export function ProductCard({ product, showMerchant = true, sponsored = false }: { product: ShopProduct; showMerchant?: boolean; sponsored?: boolean }) {
   const { addItem } = useCart();
 
   return (
@@ -62,6 +62,14 @@ export function ProductCard({ product, showMerchant = true }: { product: ShopPro
             }}
           >
             {product.badge}
+          </div>
+        )}
+        {sponsored && (
+          <div
+            className="absolute top-2 left-2 px-2 py-0.5 rounded text-xs font-medium"
+            style={{ backgroundColor: 'var(--color-product-card)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+          >
+            Sponsored
           </div>
         )}
         {isPhysical(product.productType) ? (

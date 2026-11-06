@@ -5,6 +5,7 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useSellers } from "./sellers";
 import { productTypeLabel, PRODUCT_TYPE_LABELS } from "../utils/productTypes";
 import { useShopState } from "./local";
+import { sponsoredFor, storeFirst, useHomePromotions } from "../home/useStoreHome";
 import { CardSkeleton, categoryUrl, EmptyState, m2, naira, ProductCard, saving, useCatalog, type AltProduct } from "./ui";
 
 const PAGE = 24;
@@ -14,7 +15,7 @@ const SORTS: Record<string, string> = {
 };
 
 type F = {
-  q: string; category: string | null; store: string | null; type: string | null; cod: boolean; rating: boolean;
+  q: string; category: string | null; store: string | null; house: boolean; type: string | null; cod: boolean; rating: boolean;
   stock: boolean; deals: boolean; near: boolean; min: number | null; max: number | null; sort: string;
 };
 
@@ -23,7 +24,7 @@ function read(params: URLSearchParams, fixedCategory?: string): F {
   const q = params.get("q") ?? "";
   const sort = params.get("sort") ?? "";
   return {
-    q, category: fixedCategory ?? params.get("category"), store: params.get("store"), type: params.get("type"),
+    q, category: fixedCategory ?? params.get("category"), store: params.get("store"), house: params.get("house") === "1", type: params.get("type"),
     cod: params.get("cod") === "1", rating: params.get("rating") === "4", stock: params.get("stock") === "1",
     deals: params.get("deals") === "1", near: params.get("near") === "1", min: num("min"), max: num("max"),
     sort: SORTS[sort] ? sort : q ? "relevance" : "featured",
@@ -37,6 +38,7 @@ function keep(p: AltProduct, f: F, words: string[], storeStates: Map<string, str
   if (words.length && skip !== "q" && !words.every((w) => text(p).includes(w))) return false;
   if (f.category && skip !== "category" && !p.categories?.includes(f.category)) return false;
   if (f.store && skip !== "store" && p.merchantSlug !== f.store) return false;
+  if (f.house && skip !== "house" && p.merchantId) return false;
   if (f.type && skip !== "type" && (p.productType || "physical") !== f.type) return false;
   if (f.cod && skip !== "cod" && !p.codEligible) return false;
   if (f.rating && skip !== "rating" && !((p.reviewCount ?? 0) > 0 && (p.avgRating ?? 0) >= 4)) return false;
@@ -111,7 +113,12 @@ export function Listing({ products, loading, fixedCategory, showStore = true, st
     return () => { document.body.style.overflow = ""; };
   }, [sheet]);
 
-  const pos = useMemo(() => new Map(products.map((p, i) => [p.id, i])), [products]);
+  // Across shops, the default order is the store's own and what's promoted
+  // first; a chosen sort stays exactly as chosen, and only says "Sponsored"
+  // where being paid for moved something up. One shop's own page keeps its order.
+  const promos = useHomePromotions();
+  const pos = useMemo(() => new Map((showStore ? storeFirst(products, promos, f.category) : products).map((p, i) => [p.id, i])), [products, promos, showStore, f.category]);
+  const sponsored = useMemo(() => (showStore && (f.sort === "featured" || f.sort === "relevance") ? sponsoredFor(promos, f.category) : new Set<string>()), [promos, showStore, f.sort, f.category]);
   const results = useMemo(() => order(products.filter((p) => keep(p, f, words, states, myState)), f, words, pos),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [products, params, myState, states, pos, fixedCategory]);
@@ -137,6 +144,7 @@ export function Listing({ products, loading, fixedCategory, showStore = true, st
     f.q ? { label: `“${f.q}”`, clear: { q: null } } : null,
     f.category && !fixedCategory ? { label: f.category, clear: { category: null } } : null,
     f.store ? { label: storeName ?? "Shop", clear: { store: null } } : null,
+    f.house ? { label: "Our store", clear: { house: null } } : null,
     f.type ? { label: productTypeLabel(f.type), clear: { type: null } } : null,
     f.cod ? { label: "Pay on delivery", clear: { cod: null } } : null,
     f.rating ? { label: "4★ & up", clear: { rating: null } } : null,
@@ -253,7 +261,7 @@ export function Listing({ products, loading, fixedCategory, showStore = true, st
 
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
           {loading ? Array.from({ length: 8 }, (_, i) => <CardSkeleton key={i} />)
-            : results.slice(0, shown).map((p) => <ProductCard key={p.id} product={p} showStore={showStore} />)}
+            : results.slice(0, shown).map((p) => <ProductCard key={p.id} product={p} showStore={showStore} sponsored={sponsored.has(p.id)} />)}
         </div>
 
         {!loading && results.length === 0 && (
@@ -307,7 +315,7 @@ export function SearchPage() {
     <div className="m2-wrap py-5">
       {error && <p className="mb-3" style={{ color: "var(--m-bad)" }}>We couldn't load products just now. Please refresh the page.</p>}
       <Listing products={products} loading={loading} storeStates={states}
-        heading={<h1 className="text-2xl font-extrabold">{q ? <>Results for “{q}”</> : params.get("deals") ? "Today's deals" : "All products"}</h1>} />
+        heading={<h1 className="text-2xl font-extrabold">{q ? <>Results for “{q}”</> : params.get("deals") ? "Today's deals" : params.get("house") === "1" ? "Our store" : "All products"}</h1>} />
     </div>
   );
 }

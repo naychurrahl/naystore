@@ -98,7 +98,7 @@ export const toneColor = { good: "var(--m-good)", warn: "var(--m-bad)", bad: "va
 
 // One card everywhere: square photo, wishlist, discount, name, rating,
 // price, availability, shop, and the action.
-export function ProductCard({ product, showStore = true }: { product: AltProduct; showStore?: boolean }) {
+export function ProductCard({ product, showStore = true, sponsored = false }: { product: AltProduct; showStore?: boolean; sponsored?: boolean }) {
   const add = useAddToCart();
   const off = saving(product);
   const ticket = product.productType === "ticket";
@@ -112,7 +112,12 @@ export function ProductCard({ product, showStore = true }: { product: AltProduct
         <Link to={productUrl(product.id)} className="block aspect-square overflow-hidden" style={{ background: "var(--m-sunk)" }} tabIndex={-1} aria-hidden>
           <ImageWithFallback src={product.image} alt="" loading="lazy" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
         </Link>
-        {off && <span className="m2-badge m2-badge-deal absolute top-2 left-2">−{off.percent}%</span>}
+        {(off || sponsored) && (
+          <span className="absolute top-2 left-2 flex flex-col items-start gap-1">
+            {off && <span className="m2-badge m2-badge-deal">−{off.percent}%</span>}
+            {sponsored && <span className="m2-badge m2-badge-plain">Sponsored</span>}
+          </span>
+        )}
         <WishButton product={product} className="absolute top-1.5 right-1.5 h-9 w-9 shadow-sm bg-[var(--m-surface)] m2-ink2" size={17} />
       </div>
       <div className="p-3 flex flex-col gap-1 flex-1 min-w-0">

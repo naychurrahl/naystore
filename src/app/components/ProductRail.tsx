@@ -5,9 +5,10 @@ interface ProductRailProps {
   id?: string;
   title: string;
   products: ShopProduct[];
+  sponsoredIds?: Set<string>;
 }
 
-export function ProductRail({ id, title, products }: ProductRailProps) {
+export function ProductRail({ id, title, products, sponsoredIds }: ProductRailProps) {
   if (products.length === 0) return null;
 
   return (
@@ -20,7 +21,7 @@ export function ProductRail({ id, title, products }: ProductRailProps) {
         <CarouselContent>
           {products.map((product) => (
             <CarouselItem key={product.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
-              <ProductCard product={product} />
+              <ProductCard product={product} sponsored={sponsoredIds?.has(product.id)} />
             </CarouselItem>
           ))}
         </CarouselContent>

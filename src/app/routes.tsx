@@ -22,6 +22,7 @@ import { MyPayoutsPage } from "./pages/MyPayoutsPage";
 import { MerchantActivityPage } from "./pages/MerchantActivityPage";
 import { MerchantInsightsPage } from "./pages/MerchantInsightsPage";
 import { MerchantPromoLinksPage } from "./pages/MerchantPromoLinksPage";
+import { MerchantPromotionsPage } from "./pages/MerchantPromotionsPage";
 import { MerchantChatPage } from "./pages/MerchantChatPage";
 import { MerchantSupportPage } from "./pages/MerchantSupportPage";
 import { MerchantProfilePage } from "./pages/MerchantProfilePage";
@@ -90,6 +91,7 @@ export const router = createBrowserRouter([
           { path: "activity", Component: MerchantActivityPage },
           { path: "insights", Component: MerchantInsightsPage },
           { path: "promo-links", Component: MerchantPromoLinksPage },
+          { path: "promotions", Component: MerchantPromotionsPage },
           { path: "chat", Component: MerchantChatPage },
           { path: "support", Component: MerchantSupportPage },
           { path: "profile", Component: MerchantProfilePage },
