@@ -4,7 +4,8 @@ import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { MAIN_STORE_URL, shopHost } from "../utils/shopHost";
 
-export type ShopInfo = { domain: string; slug: string; name: string; bio: string | null; bannerImage: string | null };
+// hideBranding: a premium shop - no "Powered by" the store.
+export type ShopInfo = { domain: string; slug: string; name: string; bio: string | null; bannerImage: string | null; hideBranding?: boolean };
 
 // On a merchant's own domain the app runs in "shop mode": only that shop,
 // under its name (see Layout and the index route).

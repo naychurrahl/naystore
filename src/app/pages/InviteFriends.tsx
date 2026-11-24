@@ -34,8 +34,8 @@ type InviteData = {
     link: string;
     rate: number;
     months: number;
-    perkRate: number;
-    perkMonths: number;
+    promoDays: number;
+    promoMonths: number;
     shops: { name: string; joinedAt: string; earningUntil: string | null; bankAdded: boolean }[];
   };
   friends: { name: string; joinedAt: string; reward: Reward | null; affiliateUntil: string | null }[];
@@ -139,7 +139,7 @@ export function InviteFriends() {
   };
 
   const shareText = invite ? `Get ${invite.friendGets} your first order with my invite: ${invite.link}` : "";
-  const sellerText = invite ? `Open your shop on our store with my link and pay less commission at the start: ${invite.sellers.link}` : "";
+  const sellerText = invite ? `Open your shop on our store with my link${invite.sellers.promoDays > 0 ? ` and get ${invite.sellers.promoDays} free days on the home page after your first sale` : ""}: ${invite.sellers.link}` : "";
   const affiliate = invite?.affiliate;
   // Only once admin has set an affiliate rate.
   const showTier = !!invite && invite.enabled && affiliate!.rate > 0 && !affiliate!.isAffiliate;
@@ -256,7 +256,7 @@ export function InviteFriends() {
                 </div>
                 <p className="text-sm mb-4" style={{ color: "var(--color-text-secondary)" }}>
                   Know someone with a business? Shops that join with your link
-                  {invite.sellers.perkRate > 0 ? ` pay ${invite.sellers.perkRate}% less commission for their first ${invite.sellers.perkMonths} months, and` : ""}
+                  {invite.sellers.promoDays > 0 ? ` get ${invite.sellers.promoDays} free days in Featured shops on our home page once their first sale is delivered, and` : ""}
                   {" "}you earn {invite.sellers.rate}% of our commission on their sales for {invite.sellers.months} months - paid once the shop has added its bank account.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2">

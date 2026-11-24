@@ -6,6 +6,7 @@ import { useAuthModal } from "../context/AuthModalContext";
 import { Button } from "../components/ui/button";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 import { PhoneInput } from "../components/PhoneInput";
+import { commissionRateError, minCommissionNote, useMinCommission, useAbigailDelivers } from "../utils/minCommission";
 
 export function BecomeMerchant() {
   const { user, becomeMerchant } = useAuth();
@@ -13,7 +14,7 @@ export function BecomeMerchant() {
   const navigate = useNavigate();
   const [shopName, setShopName] = useState("");
   const [legalName, setLegalName] = useState(user?.name ?? "");
-  const [commissionType, setCommissionType] = useState<"percentage" | "flat">("percentage");
+  const [commissionType, setCommissionType] = useState<"category" | "percentage" | "flat">("category");
   const [commissionRate, setCommissionRate] = useState("");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"fbu" | "fbm">("fbm");
   const [location, setLocation] = useState("");
@@ -26,6 +27,8 @@ export function BecomeMerchant() {
   const [phoneValid, setPhoneValid] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const minCommission = useMinCommission();
+  const abigailDelivers = useAbigailDelivers();
 
   useEffect(() => {
     if (!user) openLogin("/become-merchant", "merchant");
@@ -49,9 +52,10 @@ export function BecomeMerchant() {
       setError("Enter your legal name");
       return;
     }
-    const rate = Number(commissionRate);
-    if (!commissionRate || Number.isNaN(rate) || rate < 0) {
-      setError("Enter a valid, non-negative commission rate");
+    const rate = commissionType === "category" ? 0 : Number(commissionRate);
+    const rateError = commissionType === "category" ? null : commissionRateError(commissionType, commissionRate, minCommission);
+    if (rateError) {
+      setError(rateError);
       return;
     }
     if (!location.trim()) {
@@ -151,19 +155,22 @@ export function BecomeMerchant() {
             <div className="flex gap-2">
               <select
                 value={commissionType}
-                onChange={(e) => setCommissionType(e.target.value as "percentage" | "flat")}
+                onChange={(e) => setCommissionType(e.target.value as "category" | "percentage" | "flat")}
                 className="px-3 py-3 rounded-lg border"
                 style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
               >
-                <option value="percentage">Percentage</option>
-                <option value="flat">Flat</option>
+                <option value="category">Our category rates</option>
+                <option value="percentage">Propose a percentage</option>
+                <option value="flat">Propose a flat fee</option>
               </select>
               <input
                 type="number"
                 step="any"
-                min="0"
+                min={commissionType === "percentage" ? minCommission : 0}
                 required
-                placeholder={commissionType === "flat" ? "e.g. 5.00" : "e.g. 15"}
+                hidden={commissionType === "category"}
+                disabled={commissionType === "category"}
+                placeholder={commissionType === "flat" ? "e.g. 500" : `${minCommission} or more`}
                 value={commissionRate}
                 onChange={(e) => setCommissionRate(e.target.value)}
                 className="flex-1 px-4 py-3 rounded-lg border"
@@ -171,7 +178,7 @@ export function BecomeMerchant() {
               />
             </div>
             <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-              What we take per sale - admins can revise this later.
+              {commissionType === "category" ? "What we take per sale is set for each category; it's shown on your products." : "What we take per sale - a proposal admins review."} {minCommissionNote(minCommission)}
             </p>
           </div>
 
@@ -251,7 +258,7 @@ export function BecomeMerchant() {
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             >
               <option value="fbm">Fulfilled by Merchant (FBM)</option>
-              <option value="fbu">Fulfilled by Us (FBU)</option>
+              {abigailDelivers && <option value="fbu">Fulfilled by Us (FBU)</option>}
             </select>
             <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
               Your default - can be overridden per product.

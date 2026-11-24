@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { commissionRateError, minCommissionNote, useMinCommission } from "../utils/minCommission";
 
 interface CommissionProduct {
   id: string;
@@ -49,6 +50,7 @@ export function CommissionNegotiation({ product, onUpdated }: { product: Commiss
       : ""
   );
   const [submitting, setSubmitting] = useState(false);
+  const minCommission = useMinCommission();
   // Toggles the Accept/Reject buttons over to a counter-offer form, only
   // meaningful while responding to someone else's proposal (canRespond).
   const [revising, setRevising] = useState(false);
@@ -66,8 +68,9 @@ export function CommissionNegotiation({ product, onUpdated }: { product: Commiss
 
   const propose = async () => {
     const rateNum = Number(rate);
-    if (!rate || Number.isNaN(rateNum) || rateNum < 0) {
-      toast.error("Enter a valid, non-negative rate");
+    const rateError = commissionRateError(type as "percentage" | "flat", rate, minCommission);
+    if (rateError) {
+      toast.error(rateError);
       return;
     }
     setSubmitting(true);
@@ -119,6 +122,7 @@ export function CommissionNegotiation({ product, onUpdated }: { product: Commiss
       <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
         Current: <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{currentLabel}</span>
       </p>
+      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{minCommissionNote(minCommission)}</p>
 
       {canRespond && (
         <div className="p-3 rounded-lg space-y-3" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)' }}>

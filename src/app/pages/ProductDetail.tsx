@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { ReviewReply } from "../components/ReviewReply";
 import { trackInsight } from "../utils/insights";
 import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
@@ -11,6 +12,8 @@ import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
+import { ServiceIncludes } from "../components/ServiceIncludes";
+import { DeliveryEstimate } from "../components/DeliveryEstimate";
 import { getGuestId } from "../utils/guestId.js";
 import { formatDuration } from "../utils/formatDuration";
 import { TicketPicker } from "../components/TicketPicker";
@@ -184,7 +187,9 @@ export function ProductDetail() {
               {product.description}
             </p>
 
-            {!physical && product.productType !== "ticket" && (
+            {product.productType === "service" && <ServiceIncludes spec={(product as any).service} className="mb-4" />}
+            {physical && <div className="mb-4"><DeliveryEstimate productId={product.id} productType={product.productType} /></div>}
+            {!physical && product.productType !== "ticket" && product.productType !== "service" && (
               <p className="mb-4 text-sm" style={{ color: 'var(--color-text-muted)' }}>
                 Instant access after payment &mdash; it appears in your Library and we email you a link.
               </p>
@@ -380,6 +385,7 @@ export function ProductDetail() {
                 </div>
                 <StarRating rating={review.rating} size={14} />
                 <p className="mt-2" style={{ color: 'var(--color-text-secondary)' }}>{review.comment}</p>
+                <ReviewReply review={review} ownerId={product.merchantId} />
               </div>
             ))}
             {reviews.length === 0 && (

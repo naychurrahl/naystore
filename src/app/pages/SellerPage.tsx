@@ -1,4 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { ReviewReply } from "../components/ReviewReply";
+import { FoundingBadge } from "../components/FoundingBadge";
+import { DeliveryZonesList } from "../components/DeliveryTableEditor";
 import { trackInsight } from "../utils/insights";
 import { useParams, useLocation, Link } from "react-router";
 import { toast } from "sonner";
@@ -104,6 +107,8 @@ export function SellerPage({ slug: ownDomainSlug }: { slug?: string } = {}) {
         <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>
           {profile.merchantName}
         </h1>
+        {profile.foundingShop && <div className="mb-3"><FoundingBadge show large /></div>}
+        {profile.deliveryZones?.length > 0 && <div className="mb-4"><DeliveryZonesList zones={profile.deliveryZones} /></div>}
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
           {(profile.area || profile.state) && (
@@ -220,6 +225,7 @@ export function SellerPage({ slug: ownDomainSlug }: { slug?: string } = {}) {
                 </div>
                 <StarRating rating={review.rating} size={14} />
                 <p className="mt-2" style={{ color: 'var(--color-text-secondary)' }}>{review.comment}</p>
+                <ReviewReply review={review} ownerId={profile?.merchantId} kind="seller" />
               </div>
             ))}
             {reviews.length === 0 && (

@@ -16,7 +16,7 @@ type Domain = {
   lastCheckedAt: string | null;
   isRoot: boolean;
 };
-type DomainData = { domain: Domain | null; enabled: boolean; managedAvailable: boolean; storeHost: string };
+type DomainData = { domain: Domain | null; enabled: boolean; managedAvailable: boolean; storeHost: string; premiumNeeded?: boolean };
 
 const STATUS: Record<Domain["status"], { label: string; color: string }> = {
   pending: { label: "Waiting for your DNS", color: "var(--color-accent)" },
@@ -76,7 +76,14 @@ export function MerchantDomainPage() {
         <div className="p-5 rounded-xl text-sm" style={{ ...card, color: "var(--color-text-secondary)" }}>Connecting domains is switched off right now.</div>
       )}
 
-      {!current && info.enabled && (
+      {!current && info.enabled && info.premiumNeeded && (
+        <div className="p-5 rounded-xl text-sm space-y-2" style={{ ...card, color: "var(--color-text-secondary)" }}>
+          <p><strong style={{ color: "var(--color-text-primary)" }}>Your own domain comes with the premium store.</strong> It also takes the store's branding off your shop.</p>
+          <p>Find it under "Grow your shop" on your <a href="/merchant" className="underline" style={{ color: "var(--color-primary)" }}>dashboard</a>.</p>
+        </div>
+      )}
+
+      {!current && info.enabled && !info.premiumNeeded && (
         <div className="p-5 rounded-xl space-y-4" style={card}>
           <label className="block">
             <span className="block text-sm font-medium mb-1" style={{ color: "var(--color-text-primary)" }}>Your domain</span>

@@ -7,6 +7,7 @@ import { DollarSign, Package, PackageX, PackageCheck, ShieldAlert, AlertTriangle
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { serviceLines } from "../components/ServiceIncludes";
 
 const money = (n: number) => `₦${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const trend = (current: number, prior: number): { pct: number; label: string } | null => {
@@ -113,6 +114,106 @@ function RankRow({ label, rank }: { label: string; rank: Rank | null }) {
   );
 }
 
+// The steps to a working shop, ticked from live data, and the founding or
+// early-shop offer it can join (or is in).
+function ShopChecklist() {
+  const { authHeader } = useAuth();
+  const { data } = useAPI(`${API_BASE}/my-shop/checklist`, { headers: authHeader });
+  if (!data) return null;
+  const steps = (data.steps ?? []) as { id: string; label: string; done: boolean; have?: number; need?: number; link: string }[];
+  const offer = data.offer as null | {
+    name: string; joined: boolean; deadline?: string; missed?: boolean; full?: boolean; perks: string[];
+    conditions?: { label: string; done: boolean; have?: number; need?: number }[];
+  };
+  const allDone = data.done === data.total;
+  if (allDone && !offer) return null;
+  const date = (s: string) => new Date(s.replace(" ", "T")).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const tick = (done: boolean) => <span aria-hidden className="inline-block w-5 text-center font-bold" style={{ color: done ? 'var(--color-success)' : 'var(--color-text-muted)' }}>{done ? "✓" : "○"}</span>;
+  return (
+    <div className="mb-6 grid gap-3 md:grid-cols-2">
+      {!allDone && (
+        <Card>
+          <CardContent className="pt-5 space-y-3">
+            <div>
+              <h2 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>Set up your shop: {data.done} of {data.total} done</h2>
+              <div className="mt-2 h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)' }} role="progressbar" aria-valuenow={data.done} aria-valuemin={0} aria-valuemax={data.total}>
+                <div className="h-full" style={{ width: `${(data.done / data.total) * 100}%`, backgroundColor: 'var(--color-primary)' }} />
+              </div>
+            </div>
+            <ul className="space-y-1.5 text-sm">
+              {steps.map((s) => (
+                <li key={s.id} style={{ color: 'var(--color-text-secondary)' }}>
+                  {tick(s.done)}{" "}
+                  {s.done ? s.label : <Link to={s.link} className="underline" style={{ color: 'var(--color-text-primary)' }}>{s.label}</Link>}
+                  {s.need !== undefined && !s.done && <span> ({s.have} so far)</span>}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+      {offer && (
+        <Card>
+          <CardContent className="pt-5 space-y-2">
+            <h2 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              {offer.joined ? `You're a ${offer.name}` : offer.missed ? `${offer.name}: missed` : offer.full ? `${offer.name}: places taken` : `Become a ${offer.name}`}
+            </h2>
+            {!offer.joined && !offer.missed && !offer.full && offer.deadline && (
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Do these by {date(offer.deadline)}, while places last:</p>
+            )}
+            {offer.missed && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>The conditions weren't met by {offer.deadline ? date(offer.deadline) : "the deadline"}.</p>}
+            {offer.full && !offer.missed && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>All the places in this offer have gone.</p>}
+            {!offer.joined && !offer.missed && !offer.full && (
+              <ul className="space-y-1.5 text-sm">
+                {(offer.conditions ?? []).map((c) => (
+                  <li key={c.label} style={{ color: 'var(--color-text-secondary)' }}>{tick(c.done)} {c.label}{c.need !== undefined && !c.done ? ` (${c.have} so far)` : ""}</li>
+                ))}
+              </ul>
+            )}
+            {!offer.missed && !offer.full && offer.perks.length > 0 && (
+              <>
+                <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{offer.joined ? "You get:" : "You'll get:"}</p>
+                <ul className="list-disc pl-5 text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
+                  {offer.perks.map((p) => <li key={p}>{p}</li>)}
+                </ul>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// What the store sells to shops (store setup, promotion bundles): bought at
+// checkout like any product.
+function GrowYourShop() {
+  const { data } = useAPI(`${API_BASE}/products?type=service`);
+  const services = ((data ?? []) as any[]).filter((p) => p.visible !== false);
+  if (services.length === 0) return null;
+  return (
+    <div className="mb-6">
+      <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>Grow your shop</h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((p) => (
+          <Card key={p.id}>
+            <CardContent className="pt-5 space-y-2">
+              <div className="flex items-baseline justify-between gap-2">
+                <strong style={{ color: 'var(--color-text-primary)' }}>{p.name}</strong>
+                <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{money(p.price)}</span>
+              </div>
+              <ul className="list-disc pl-5 text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
+                {serviceLines(p.service).map((l) => <li key={l}>{l}</li>)}
+              </ul>
+              <Link to={`/shop/${p.id}`} className="inline-block text-sm font-medium" style={{ color: 'var(--color-primary)' }}>See it and buy</Link>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function MerchantDashboard() {
   const { user, authHeader } = useAuth();
   const [window_, setWindow] = useState("week");
@@ -120,7 +221,7 @@ export function MerchantDashboard() {
   const { data: commissions } = useAPI(`${API_BASE}/my-commissions`, { headers: authHeader });
   // Shops from before phones were required may not have one yet.
   const { data: profile } = useAPI(`${API_BASE}/profile`, { headers: authHeader });
-  // Joined with a referral code: a lower commission for the first months.
+  // Joined with a referral code: free featured days after the first sale.
   const { data: referral } = useAPI(`${API_BASE}/referrals/me`, { headers: authHeader });
 
   const sales = data?.sales ?? { revenue: 0, units: 0, priorRevenue: 0, priorUnits: 0 };
@@ -132,12 +233,21 @@ export function MerchantDashboard() {
 
   return (
     <div>
-      {referral?.shopPerk && (
-        <div className="mb-4 p-4 rounded-lg text-sm" style={{ border: '1px solid var(--color-primary)', color: 'var(--color-text-secondary)' }}>
-          <strong style={{ color: 'var(--color-text-primary)' }}>Reduced commission.</strong> You joined with a referral code, so you pay {referral.shopPerk.rate}% less commission
-          until {new Date(referral.shopPerk.until.replace(" ", "T")).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}.
+      {(referral?.shopPromo?.state === "ready" || referral?.shopPromo?.state === "locked") && (
+        <div className="mb-4 p-4 rounded-lg text-sm flex flex-col sm:flex-row sm:items-center gap-2" style={{ border: '1px solid var(--color-primary)', color: 'var(--color-text-secondary)' }}>
+          <span className="flex-1">
+            <strong style={{ color: 'var(--color-text-primary)' }}>{referral.shopPromo.days} free days on the home page.</strong>{" "}
+            {referral.shopPromo.state === "ready"
+              ? "You joined with a referral code and your first sale is delivered, so your shop can be a Featured shop for free."
+              : "You joined with a referral code: once your first sale is delivered, your shop can be a Featured shop for free."}{" "}
+            Book them by {new Date(referral.shopPromo.bookBy.replace(" ", "T")).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}.
+          </span>
+          {referral.shopPromo.state === "ready" && (
+            <Link to="/merchant/promotions" className="font-medium" style={{ color: 'var(--color-primary)' }}>Choose your dates</Link>
+          )}
         </div>
       )}
+      <ShopChecklist />
       {profile && !profile.phone && (
         <div className="mb-4 p-4 rounded-lg text-sm flex flex-col sm:flex-row sm:items-center gap-2" style={{ border: '1px solid var(--color-accent)', color: 'var(--color-text-secondary)' }}>
           <span className="flex-1">
@@ -250,6 +360,7 @@ export function MerchantDashboard() {
           </Table>
         </div>
       ))}
+      <GrowYourShop />
     </div>
   );
 }

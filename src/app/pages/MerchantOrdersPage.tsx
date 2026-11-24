@@ -50,6 +50,9 @@ interface FulfillmentForm {
   contactEmail: string;
   trackingId: string;
   trackingLink: string;
+  // Marking it delivered: the buyer's 4-digit code, or proof instead.
+  deliveryCode: string;
+  proof: string;
 }
 
 function toForm(row: any): FulfillmentForm {
@@ -62,6 +65,8 @@ function toForm(row: any): FulfillmentForm {
     contactEmail: row.contactEmail ?? "",
     trackingId: row.meta?.trackingId ?? "",
     trackingLink: row.meta?.trackingLink ?? "",
+    deliveryCode: "",
+    proof: "",
   };
 }
 
@@ -96,6 +101,8 @@ export function MerchantOrdersPage() {
         contactPhone: form.contactPhone,
         contactEmail: form.contactEmail,
         meta: { trackingId: form.trackingId, trackingLink: form.trackingLink },
+        ...(form.status === "delivered" && row.status !== "delivered"
+          ? { deliveryCode: form.deliveryCode, proof: form.proof || form.trackingId || form.trackingLink } : {}),
       }, { headers: authHeader });
       toast.success("Fulfillment updated");
       refetch();
@@ -257,6 +264,29 @@ export function MerchantOrdersPage() {
                                   <Label className="mb-1 block text-xs">Tracking Link (optional)</Label>
                                   <Input value={form.trackingLink} onChange={(e) => setField(row.id, row, "trackingLink", e.target.value)} />
                                 </div>
+                                {form.status === "delivered" && row.status !== "delivered" && (
+                                  <div className="sm:col-span-2 grid gap-2 p-3 rounded-lg" style={{ border: '1px solid var(--color-border)' }}>
+                                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                                      Ask the buyer for their 4-digit delivery code when you hand the order over. With the code you're paid after the usual wait;
+                                      without it, add a photo link or tracking number and the payout waits longer. If the buyer taps "Yes, I got it", you're paid at once.
+                                    </p>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                      <div>
+                                        <Label className="mb-1 block text-xs">Buyer's delivery code</Label>
+                                        <Input inputMode="numeric" maxLength={4} value={form.deliveryCode} onChange={(e) => setField(row.id, row, "deliveryCode", e.target.value)} />
+                                      </div>
+                                      <div>
+                                        <Label className="mb-1 block text-xs">Or proof: photo link or tracking number</Label>
+                                        <Input value={form.proof} onChange={(e) => setField(row.id, row, "proof", e.target.value)} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                                {row.status === "delivered" && row.confirmed === false && (
+                                  <p className="sm:col-span-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                                    Delivered without the buyer's code{row.proof ? ` (proof: ${row.proof})` : ""}, so the payout waits longer{row.receivedAt ? ", but the buyer confirmed they got it" : ""}.
+                                  </p>
+                                )}
                                 <div className="sm:col-span-2">
                                   <Button size="sm" disabled={saving === row.id} onClick={() => handleSave(row)}>
                                     {saving === row.id ? "Saving..." : "Save"}

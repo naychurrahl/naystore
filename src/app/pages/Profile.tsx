@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { PhoneConfirm } from "../components/PhoneConfirm";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { ChevronRight, Gift, Package } from "lucide-react";
@@ -198,6 +199,7 @@ export function Profile() {
                 }}
                 style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
               />
+              <PhoneConfirm phone={user?.phone ?? ""} />
             </div>
             <div className="p-4 rounded-lg border space-y-4" style={{ borderColor: 'var(--color-border)' }}>
               <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Delivery Address</h3>

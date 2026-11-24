@@ -1,3 +1,4 @@
+import { PaidHereNotice } from "../components/OrderFeeLines";
 import { Link, Navigate, useLocation } from "react-router";
 import { CheckCircle2, XCircle, ArrowLeft, CreditCard, Ticket, Wallet, Smartphone, TicketPercent, X, Gift } from "lucide-react";
 import { lineKey } from "../context/CartContext";
@@ -20,6 +21,7 @@ export function Checkout() {
     form,
     setForm,
     needsAddress,
+    onlyServices,
     deliversByEmail,
     phoneValid,
     setPhoneValid,
@@ -146,6 +148,12 @@ export function Checkout() {
                   </div>
                 ))}
                 <OrderDiscountLines discounts={order.discounts} />
+                {order.deliveryFee > 0 && (
+                  <div className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                    <span>{order.deliveryName ?? "Delivery"}</span>
+                    <span>₦{order.deliveryFee.toFixed(2)}</span>
+                  </div>
+                )}
                 {order.serviceFee > 0 && (
                   <div className="flex justify-between text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                     <span>Payment fee (paid on delivery)</span>
@@ -181,7 +189,16 @@ export function Checkout() {
               to keep it in your account.
             </p>
           )}
-          {!paymentFailed && placedOrders.some((o) => o.items.some((i: any) => !isPhysical(i.productType))) && (
+          {!paymentFailed && placedOrders.some((o) => o.items.some((i: any) => i.productType === "service")) && (
+            <Link
+              to="/merchant/promotions"
+              className="inline-flex items-center gap-2 px-6 py-3 mb-3 mr-2 rounded-lg font-medium transition-colors"
+              style={{ border: '1px solid var(--color-primary)', color: 'var(--color-primary)' }}
+            >
+              Book my promotion days
+            </Link>
+          )}
+          {!paymentFailed && placedOrders.some((o) => o.items.some((i: any) => !isPhysical(i.productType) && i.productType !== "service")) && (
             <Link
               to="/library"
               className="inline-flex items-center gap-2 px-6 py-3 mb-3 mr-2 rounded-lg font-medium transition-colors"
@@ -364,7 +381,7 @@ export function Checkout() {
 
             {!needsAddress && (
               <p className="p-4 rounded-lg border text-sm" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                Nothing to ship &mdash; your purchase is delivered to your email and your Library right after payment.
+                Nothing to ship &mdash; {onlyServices ? "your shop gets what you bought right after payment, and we email you the details." : "your purchase is delivered to your email and your Library right after payment."}
               </p>
             )}
 
@@ -688,6 +705,18 @@ export function Checkout() {
                   <span>−{naira(quote?.discount ?? discount)}</span>
                 </div>
               )}
+              {quote && (quote.delivery ?? 0) > 0 && (
+                <div className="flex justify-between">
+                  <span>Delivery</span>
+                  <span>{naira(quote.delivery ?? 0)}</span>
+                </div>
+              )}
+              {quote?.deliveryPending && (
+                <div className="flex justify-between">
+                  <span>Delivery</span>
+                  <span>Add your address</span>
+                </div>
+              )}
               {(!quote || quote.serviceFee > 0) && (
                 <div className="flex justify-between">
                   <span>Payment fee</span>
@@ -707,6 +736,7 @@ export function Checkout() {
             {paymentMethod === "cod" && (quote?.serviceFee ?? 0) > 0 && (
               <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>All of it is paid in cash on delivery.</p>
             )}
+            <PaidHereNotice />
           </div>
         </div>
       </div>

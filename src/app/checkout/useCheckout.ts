@@ -26,6 +26,10 @@ export type Quote = {
   onDelivery: { items: number; serviceFee: number; total: number } | null;
   subtotal: number;
   discount: number;
+  // Each seller's delivery fee, all added up; pending until there's an address.
+  delivery?: number;
+  deliveryPending?: boolean;
+  orders?: { sellerId: string | null; delivery: { fee: number; zone: string; daysMin: number; daysMax: number } | null }[];
   itemsTotal: number;
   platformFee: number;
   gatewayFee: number;
@@ -81,6 +85,8 @@ export function useCheckout() {
   // Downloads, courses and tickets are sent to the email, so a guest is asked
   // to check it before paying - a typo means the purchase never arrives.
   const deliversByEmail = items.some((item) => !isPhysical(item.productType));
+  // Only services for shops (store setup, promotion days): nothing for the Library.
+  const onlyServices = items.length > 0 && items.every((item) => item.productType === "service");
   // Only a delivery needs a phone (the rider calls); a filled-in one must be real.
   const [phoneValid, setPhoneValid] = useState(true);
 
@@ -261,6 +267,8 @@ export function useCheckout() {
     setQuoteError(null);
     api.post(`${API_BASE}/checkout-quote`, {
       items: checkLines(), paymentMethod, paymentProvider: provider, couponCode: coupon?.code, email: form.email,
+      // Delivery is priced on the address (state and LGA).
+      ...(needsAddress && form.state ? { state: form.state, lga: form.lga } : {}),
     }, { headers: authHeader })
       .then((q: Quote) => { if (live) setQuote(q); })
       .catch((err: any) => {
@@ -271,7 +279,7 @@ export function useCheckout() {
       });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartKey, paymentMethod, provider, coupon?.code, invite?.amount, user?.id, quoteAttempt]);
+  }, [cartKey, paymentMethod, provider, coupon?.code, invite?.amount, user?.id, quoteAttempt, form.state, form.lga]);
 
   // What the online part costs (the whole order, or the card-only half of a split).
   const onlineTotal = paymentMethod === "card"
@@ -442,6 +450,7 @@ export function useCheckout() {
     form,
     setForm,
     needsAddress,
+    onlyServices,
     deliversByEmail,
     phoneValid,
     setPhoneValid,

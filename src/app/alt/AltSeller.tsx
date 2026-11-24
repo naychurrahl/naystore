@@ -1,4 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { ReviewReply } from "../components/ReviewReply";
+import { FoundingBadge } from "../components/FoundingBadge";
+import { DeliveryZonesList } from "../components/DeliveryTableEditor";
 import { Link, useLocation, useParams } from "react-router";
 import { toast } from "sonner";
 import { MapPin, MessageCircle, Store } from "lucide-react";
@@ -54,6 +57,7 @@ function SellerReviews({ merchantId }: { merchantId: string }) {
             </div>
             <Stars rating={r.rating} size={13} />
             <p className="text-sm alt-soft whitespace-pre-line">{r.comment}</p>
+            <ReviewReply review={r} ownerId={merchantId} kind="seller" />
           </div>
         ))}
       </div>
@@ -124,6 +128,8 @@ export function AltSeller() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="grid gap-1.5 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-extrabold">{profile.merchantName}</h1>
+            {profile.foundingShop && <div><FoundingBadge show large /></div>}
+            {profile.deliveryZones?.length > 0 && <DeliveryZonesList zones={profile.deliveryZones} />}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm alt-soft">
               {where && <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" aria-hidden /> {where}</span>}
               {profile.sellerReviewCount > 0 && (

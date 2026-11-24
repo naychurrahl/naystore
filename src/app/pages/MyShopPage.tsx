@@ -12,6 +12,7 @@ import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
+import { commissionRateError, minCommissionNote, useMinCommission, useAbigailDelivers } from "../utils/minCommission";
 
 const formatRate = (type?: string | null, rate?: number | null) =>
   type === "flat" ? `₦${Number(rate).toFixed(2)} flat` : `${Number(rate).toFixed(2)}%`;
@@ -34,6 +35,7 @@ function CommissionSection({ state, onProposed }: { state: CommissionState; onPr
   const [rate, setRate] = useState<string>(state.commissionRate != null ? String(state.commissionRate) : "");
   const [submitting, setSubmitting] = useState(false);
   const [revising, setRevising] = useState(false);
+  const minCommission = useMinCommission();
 
   const proposedBy = state.pendingCommissionProposedBy;
   const hasPending = !!proposedBy;
@@ -42,12 +44,13 @@ function CommissionSection({ state, onProposed }: { state: CommissionState; onPr
 
   const currentLabel = state.commissionType != null
     ? formatRate(state.commissionType, state.commissionRate)
-    : "Not set";
+    : `Not set (${minCommission}% is charged)`;
 
   const propose = async () => {
     const rateNum = Number(rate);
-    if (!rate || Number.isNaN(rateNum) || rateNum < 0) {
-      toast.error("Enter a valid, non-negative rate");
+    const rateError = commissionRateError(type as "percentage" | "flat", rate, minCommission);
+    if (rateError) {
+      toast.error(rateError);
       return;
     }
     setSubmitting(true);
@@ -95,6 +98,7 @@ function CommissionSection({ state, onProposed }: { state: CommissionState; onPr
       <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
         Your default rate: <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{currentLabel}</span>
       </p>
+      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{minCommissionNote(minCommission)}</p>
 
       {canRespond && (
         <div className="p-3 rounded-lg space-y-3" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
@@ -149,6 +153,7 @@ function CommissionSection({ state, onProposed }: { state: CommissionState; onPr
 }
 
 function FulfillmentSection({ method, onChange }: { method: string | null; onChange: (method: string) => void }) {
+  const abigailDelivers = useAbigailDelivers();
   const { authHeader } = useAuth();
   const [saving, setSaving] = useState(false);
 
@@ -176,7 +181,7 @@ function FulfillmentSection({ method, onChange }: { method: string | null; onCha
         <Select value={method} onValueChange={handleChange} disabled={saving}>
           <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="fbu">FBU - Fulfilled by Us</SelectItem>
+            {(abigailDelivers || method === "fbu") && <SelectItem value="fbu">FBU - Fulfilled by Us</SelectItem>}
             <SelectItem value="fbm">FBM - Fulfilled by Merchant</SelectItem>
           </SelectContent>
         </Select>

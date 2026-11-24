@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
+import { ReviewReply } from "../components/ReviewReply";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import {
@@ -11,6 +12,8 @@ import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
+import { ServiceIncludes } from "../components/ServiceIncludes";
+import { DeliveryEstimate } from "../components/DeliveryEstimate";
 import { getGuestId } from "../utils/guestId.js";
 import { formatDuration } from "../utils/formatDuration";
 import { formatEventTime } from "../utils/eventTime";
@@ -135,7 +138,7 @@ function Gallery({ media, fallback, alt }: { media?: Media[]; fallback: string; 
   );
 }
 
-function Reviews({ productId, count }: { productId: string; count: number }) {
+function Reviews({ productId, count, ownerId }: { productId: string; count: number; ownerId?: string | null }) {
   const { user, authHeader } = useAuth();
   const { openLogin } = useAuthModal();
   const location = useLocation();
@@ -208,6 +211,7 @@ function Reviews({ productId, count }: { productId: string; count: number }) {
             <div className="flex items-center gap-2"><Stars rating={r.rating} size={13} /><span className="font-semibold text-sm">{r.customerName}</span></div>
             <p className="text-xs m2-ink3">{new Date(r.createdAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}</p>
             <p className="text-[15px] m2-ink2 whitespace-pre-line">{r.comment}</p>
+            <ReviewReply review={r} ownerId={ownerId} />
           </article>
         ))}
       </div>
@@ -404,6 +408,7 @@ export function ProductPage() {
                 <p className="flex gap-2 text-sm"><MapPin className="h-4 w-4 shrink-0 mt-0.5 m2-ink3" aria-hidden />
                   <span>Ships from <b>{where}</b>{sameState && <span className="block text-xs" style={{ color: "var(--m-good)" }}>Same state as you</span>}</span></p>
               )}
+              {physical && <DeliveryEstimate productId={product.id} productType={product.productType} />}
               {physical && (
                 <p className="flex gap-2 text-sm"><Truck className="h-4 w-4 shrink-0 mt-0.5 m2-ink3" aria-hidden />
                   <span>{product.codEligible ? <><b>Pay on delivery</b> available from this seller.</> : <>This seller takes <b>online payment</b> for this item.</>}</span></p>
@@ -419,7 +424,7 @@ export function ProductPage() {
             <p className="flex gap-2"><ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--m-accent)" }} aria-hidden />
               <span>Online payments go through <b>Paystack</b> or <b>Naylet</b>. Every charge shows before you pay.</span></p>
             {!physical && <p className="flex gap-2"><Zap className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--m-accent)" }} aria-hidden />
-              <span>{ticket ? "Tickets arrive by email and in your Library." : "Access arrives in your Library right after payment, with an email link."}</span></p>}
+              <span>{ticket ? "Tickets arrive by email and in your Library." : product.productType === "service" ? "Ready right after payment: book the promotion days in your shop's dashboard, and we contact you about a setup." : "Access arrives in your Library right after payment, with an email link."}</span></p>}
             <p className="flex gap-2"><CreditCard className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--m-accent)" }} aria-hidden />
               <span>One checkout for everything in your cart, from any shop.</span></p>
             <p className="flex gap-2"><Headphones className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--m-accent)" }} aria-hidden />
@@ -439,10 +444,11 @@ export function ProductPage() {
         </div>
         {tab === "about" ? (
           <div className="grid gap-6 max-w-3xl">
+            {product.productType === "service" && <ServiceIncludes spec={(product as any).service} />}
             {product.description ? <p className="text-[15px] leading-relaxed m2-ink2 whitespace-pre-line">{product.description}</p> : <p className="m2-ink3">The seller hasn't added a description.</p>}
             {course && course.lessonCount > 0 && <Course course={course} id={id} />}
           </div>
-        ) : <Reviews productId={id} count={reviewCount} />}
+        ) : <Reviews productId={id} count={reviewCount} ownerId={product.merchantId} />}
       </div>
 
       {fromShop.length > 0 && (

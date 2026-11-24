@@ -49,7 +49,7 @@ interface AuthContextValue {
   // Resolves to a note to show, if the server sent one (e.g. an invite code
   // that wasn't applied).
   register: (data: RegisterInput) => Promise<string | undefined>;
-  becomeMerchant: (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string, shopName: string, legalName: string, phone: string) => Promise<void>;
+  becomeMerchant: (commissionType: "category" | "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string, shopName: string, legalName: string, phone: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
 }
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Upgrades the current customer's own account to a merchant in place -
   // same login/email going forward, no new account.
-  const becomeMerchant = async (commissionType: "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string, shopName: string, legalName: string, phone: string) => {
+  const becomeMerchant = async (commissionType: "category" | "percentage" | "flat", commissionRate: number, fulfillmentMethod: "fbu" | "fbm", location: string, state: string, lga: string, area: string, landmark: string, shopName: string, legalName: string, phone: string) => {
     const result = await api.put(`${API_BASE}/become-merchant`, { commissionType, commissionRate, fulfillmentMethod, location, state, lga, area, landmark, shopName, legalName, phone }, { headers: authHeader });
     persist({ user: result.user, token: result.token });
   };

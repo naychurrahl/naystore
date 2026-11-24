@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FoundingBadge } from "../components/FoundingBadge";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Heart, ShoppingCart, Star } from "lucide-react";
@@ -135,7 +136,10 @@ export function ProductCard({ product, showStore = true, sponsored = false }: { 
           {stock.text}{isPhysical(product.productType) && product.inStock && product.codEligible ? <span className="m2-ink3 font-medium"> · Pay on delivery</span> : null}
         </span>
         {showStore && product.merchantSlug && (
-          <Link to={storeUrl(product.merchantSlug)} className="text-xs m2-ink3 hover:underline truncate">{product.merchantName}</Link>
+          <span className="flex items-center gap-1.5 min-w-0">
+            <Link to={storeUrl(product.merchantSlug)} className="text-xs m2-ink3 hover:underline truncate">{product.merchantName}</Link>
+            <FoundingBadge show={(product as any).foundingShop} />
+          </span>
         )}
         {ticket ? (
           <Link to={productUrl(product.id)} className="m2-btn-line m2-btn-sm mt-1.5">Choose tickets</Link>
