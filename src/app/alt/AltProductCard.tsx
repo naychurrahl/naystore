@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router";
+import { FoundingBadge } from "../components/FoundingBadge";
 import { toast } from "sonner";
 import { CalendarDays } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -62,9 +63,12 @@ export function AltProductCard({ product, showSeller = true, sponsored = false }
           <span className="text-xs font-semibold" style={{ color: "var(--a-good)" }}>Pay on delivery</span>
         )}
         {showSeller && product.merchantSlug && (
-          <Link to={sellerPath(product.merchantSlug)} className="text-xs alt-muted hover:underline truncate">
-            {product.merchantName}
-          </Link>
+          <span className="flex items-center gap-1.5 min-w-0">
+            <Link to={sellerPath(product.merchantSlug)} className="text-xs alt-muted hover:underline truncate">
+              {product.merchantName}
+            </Link>
+            <FoundingBadge show={(product as any).foundingShop} />
+          </span>
         )}
         {ticket ? (
           <Link to={productPath(product.id)} className="alt-btn-ghost alt-btn-sm mt-1">Get tickets</Link>

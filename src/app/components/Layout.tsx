@@ -280,9 +280,11 @@ export function Layout() {
               <h3 className="font-bold text-lg mb-4 text-white">{companyName}</h3>
               <p className="mb-4">{shop ? shop.bio : settings?.description}</p>
               {shop ? (
-                <p className="text-sm">
-                  Powered by <a href={MAIN_STORE_URL} style={{ color: 'var(--color-footer-link)' }} className="hover:underline">{storeName}</a>
-                </p>
+                !shop.hideBranding && (
+                  <p className="text-sm">
+                    Powered by <a href={MAIN_STORE_URL} style={{ color: 'var(--color-footer-link)' }} className="hover:underline">{storeName}</a>
+                  </p>
+                )
               ) : (
               <div className="space-y-2 text-sm">
                 {emails.map((entry: any) => (

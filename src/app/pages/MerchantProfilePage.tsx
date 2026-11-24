@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { PhoneConfirm } from "../components/PhoneConfirm";
 import { toast } from "sonner";
 import { Lock } from "lucide-react";
 import { Input } from "../components/ui/input";
@@ -115,6 +116,7 @@ export function MerchantProfilePage() {
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
             <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>So buyers and our team can reach your shop.</p>
+            <PhoneConfirm phone={details.phone} />
           </div>
           <Button type="submit" disabled={savingDetails}>{savingDetails ? "Saving..." : "Save Changes"}</Button>
         </form>

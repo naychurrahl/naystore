@@ -3,6 +3,11 @@
 // VITE_STORE_HOSTS (comma-separated).
 const STORE_HOSTS = [
   "store.naychurrahl.com.ng",
+  // Abigail's own domains (the store is moving to abigail.ng).
+  "abigail.ng",
+  "www.abigail.ng",
+  "abigail.com.ng",
+  "www.abigail.com.ng",
   "localhost",
   "127.0.0.1",
   ...String(import.meta.env.VITE_STORE_HOSTS ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean),

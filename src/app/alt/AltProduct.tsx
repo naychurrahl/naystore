@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ReviewReply } from "../components/ReviewReply";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import {
@@ -12,6 +13,8 @@ import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { useChat } from "../context/ChatContext";
 import { isPhysical, productTypeLabel } from "../utils/productTypes";
+import { ServiceIncludes } from "../components/ServiceIncludes";
+import { DeliveryEstimate } from "../components/DeliveryEstimate";
 import { getGuestId } from "../utils/guestId.js";
 import { formatDuration } from "../utils/formatDuration";
 import { formatEventTime } from "../utils/eventTime";
@@ -88,7 +91,7 @@ function Share({ name }: { name: string }) {
   );
 }
 
-function Reviews({ productId }: { productId: string }) {
+function Reviews({ productId, ownerId }: { productId: string; ownerId?: string | null }) {
   const { user, authHeader } = useAuth();
   const { openLogin } = useAuthModal();
   const location = useLocation();
@@ -127,6 +130,7 @@ function Reviews({ productId }: { productId: string }) {
             </div>
             <Stars rating={r.rating} size={13} />
             <p className="text-sm alt-soft whitespace-pre-line">{r.comment}</p>
+            <ReviewReply review={r} ownerId={ownerId} />
           </div>
         ))}
       </div>
@@ -387,6 +391,8 @@ export function AltProductPage() {
             )
           )}
 
+          {product.productType === "service" && <ServiceIncludes spec={(product as any).service} />}
+          {physical && <DeliveryEstimate productId={product.id} productType={product.productType} />}
           <div ref={buyRef}>{buyBox}</div>
 
           {product.description && (
@@ -413,8 +419,8 @@ export function AltProductPage() {
               </>
             ) : (
               <p className="flex gap-2.5"><Zap className="h-5 w-5 shrink-0" style={{ color: "var(--a-accent)" }} aria-hidden />
-                <span><b>{ticket ? "Tickets by email." : "Instant access."}</b>{" "}
-                  <span className="alt-soft">{ticket ? "Your tickets arrive by email and in your Library." : "It appears in your Library after payment, and we email you a link."}</span></span></p>
+                <span><b>{ticket ? "Tickets by email." : product.productType === "service" ? "Ready after payment." : "Instant access."}</b>{" "}
+                  <span className="alt-soft">{ticket ? "Your tickets arrive by email and in your Library." : product.productType === "service" ? "Book your promotion days under Promotions in your shop's dashboard; we contact you about a setup." : "It appears in your Library after payment, and we email you a link."}</span></span></p>
             )}
             <p className="flex gap-2.5"><BadgeCheck className="h-5 w-5 shrink-0 alt-muted" aria-hidden />
               <span className="alt-soft">Every charge is shown before you pay, with nothing added after.</span></p>
@@ -426,7 +432,7 @@ export function AltProductPage() {
 
       <div className="alt-wrap pt-8"><div className="grid gap-8 max-w-3xl">
         {course && course.lessonCount > 0 && <CourseContents course={course} productId={id} />}
-        <Reviews productId={id} />
+        <Reviews productId={id} ownerId={product.merchantId} />
       </div></div>
 
       {fromShop.length > 0 && (

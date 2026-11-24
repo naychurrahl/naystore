@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { OrderFeeLines } from "../components/OrderFeeLines";
+import { OrderFeeLines, PaidHereNotice } from "../components/OrderFeeLines";
 import { useLocation, useNavigate, useParams, Link } from "react-router";
 import { toast } from "sonner";
 import { ArrowLeft, Truck, ExternalLink, Package } from "lucide-react";
@@ -13,6 +13,7 @@ import { isPhysical, productTypeLabel } from "../utils/productTypes";
 import { OrderDiscountLines } from "../components/OrderDiscountLines";
 import { formatPhone } from "../utils/phone";
 import { ReportProblem } from "../components/ReportProblem";
+import { DeliveryHandover } from "../components/DeliveryHandover";
 import { paymentLine as paymentLineFor } from "../utils/paymentLabel";
 
 function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
@@ -48,6 +49,7 @@ function FulfillmentCard({ fulfillment }: { fulfillment: any }) {
             Track shipment <ExternalLink className="h-3.5 w-3.5" />
           </a>
         )}
+        <DeliveryHandover fulfillment={fulfillment} />
       </div>
     </div>
   );
@@ -193,6 +195,7 @@ export function OrderDetail() {
               <span>Total</span>
               <span>₦{(Number(order.total) + Number(order.serviceFee ?? 0)).toFixed(2)}</span>
             </div>
+            <PaidHereNotice />
           </div>
         </div>
 

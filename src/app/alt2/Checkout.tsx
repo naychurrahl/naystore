@@ -78,7 +78,8 @@ export function CheckoutPage() {
 
   if (c.placedOrders) {
     const orders = c.placedOrders;
-    const digital = orders.some((o) => o.items.some((i: any) => !isPhysical(i.productType)));
+    const digital = orders.some((o) => o.items.some((i: any) => !isPhysical(i.productType) && i.productType !== "service"));
+    const services = orders.some((o) => o.items.some((i: any) => i.productType === "service"));
     const card = orders.find((o) => o.onlineCharged);
     return (
       <div className="m2-wrap py-8 flex justify-center">
@@ -102,6 +103,7 @@ export function CheckoutPage() {
               <div className="grid gap-1 text-sm">
                 {o.items.map((it: any, n: number) => <div key={n} className="flex justify-between gap-3 m2-ink2"><span>{it.quantity} × {it.name}</span><span className="m2-num">{naira(it.price * it.quantity)}</span></div>)}
                 <OrderDiscountLines discounts={o.discounts} />
+                {o.deliveryFee > 0 && <div className="flex justify-between m2-ink2"><span>{o.deliveryName ?? "Delivery"}</span><span className="m2-num">{naira(o.deliveryFee)}</span></div>}
                 {o.serviceFee > 0 && <div className="flex justify-between m2-ink2"><span>Payment fee (paid on delivery)</span><span className="m2-num">{naira(o.serviceFee)}</span></div>}
               </div>
               <div className="flex justify-between font-extrabold pt-2" style={{ borderTop: "1px solid var(--m-line)" }}><span>Total</span><span className="m2-num">{naira(o.total + (o.serviceFee ?? 0))}</span></div>
@@ -114,6 +116,7 @@ export function CheckoutPage() {
               <button type="button" className="m2-link" onClick={() => openRegister("/library", "customer", orders[0]?.email || form.email)}>Set a password</button> to keep it in your account.</p>
           )}
           <div className="flex flex-wrap justify-center gap-2">
+            {!c.paymentFailed && services && <Link to="/merchant/promotions" className="m2-btn-line">Book my promotion days</Link>}
             {!c.paymentFailed && digital && <Link to="/library" className="m2-btn-line">Open my library</Link>}
             <Link to="/orders" state={{ placedOrders: orders, paymentFailed: c.paymentFailed }} className="m2-btn">Track my orders</Link>
             <Link to={m2()} className="m2-btn-line">Keep shopping</Link>
@@ -194,7 +197,7 @@ export function CheckoutPage() {
               )}
             </Step>
           ) : (
-            <p className="m2-panel p-4 text-sm m2-ink2">Nothing to ship: your purchase is delivered to your email and your Library right after payment.</p>
+            <p className="m2-panel p-4 text-sm m2-ink2">Nothing to ship: {c.onlyServices ? "your shop gets what you bought right after payment, and we email you the details." : "your purchase is delivered to your email and your Library right after payment."}</p>
           )}
 
           {c.ticketLines.length > 0 && (
@@ -299,10 +302,13 @@ export function CheckoutPage() {
             <dl className="grid gap-1.5 text-sm pt-3" style={{ borderTop: "1px solid var(--m-line)" }}>
               <div className="flex justify-between"><dt className="m2-ink2">Items</dt><dd className="m2-num">{naira(c.quote?.subtotal ?? c.subtotal)}</dd></div>
               {(c.quote?.discount ?? c.discount) > 0 && <div className="flex justify-between" style={{ color: "var(--m-good)" }}><dt>Discount</dt><dd className="m2-num">−{naira(c.quote?.discount ?? c.discount)}</dd></div>}
+              {c.quote && (c.quote.delivery ?? 0) > 0 && <div className="flex justify-between"><dt className="m2-ink2">Delivery</dt><dd className="m2-num">{naira(c.quote.delivery ?? 0)}</dd></div>}
+              {c.quote?.deliveryPending && <div className="flex justify-between"><dt className="m2-ink2">Delivery</dt><dd className="m2-ink3">Add your address</dd></div>}
               {(!c.quote || c.quote.serviceFee > 0) && <div className="flex justify-between"><dt className="m2-ink2">Payment fee</dt><dd className="m2-num">{c.quote ? naira(c.quote.serviceFee) : c.quoteError ? "Couldn't load" : "…"}</dd></div>}
               <div className="flex justify-between pt-2 text-lg font-extrabold" style={{ borderTop: "1px solid var(--m-line)" }}><dt>Total</dt><dd className="m2-price">{totalLabel}</dd></div>
             </dl>
             {c.paymentMethod === "split" && c.quote?.online && c.quote.onDelivery && <p className="text-xs m2-ink3">Pay now: {naira(c.quote.online.total)} · on delivery: {naira(c.quote.onDelivery.total)}</p>}
+            <p className="text-xs m2-ink3">Buyer protection, refunds and reviews apply only to orders paid for here, on the store. Never pay a seller outside it.</p>
             {c.paymentMethod === "cod" && <p className="text-xs m2-ink3">All of it is paid on delivery.</p>}
             {c.quoteError && <p role="alert" className="hidden lg:block text-sm font-semibold" style={{ color: "var(--m-bad)" }}>{c.quoteError}</p>}
             <button {...action} disabled={blocked} className="m2-btn w-full hidden lg:inline-flex">{actionIcon} {actionLabel}</button>

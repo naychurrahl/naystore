@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { FoundingBadge } from "./FoundingBadge";
 import { toast } from "sonner";
 import { CalendarDays, ShoppingCart, Star, Ticket } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
@@ -22,6 +23,7 @@ export interface ShopProduct {
   avgRating?: number;
   reviewCount?: number;
   merchantName?: string | null;
+  foundingShop?: boolean;
   merchantSlug?: string | null;
 }
 
@@ -123,7 +125,8 @@ export function ProductCard({ product, showMerchant = true, sponsored = false }:
                 style={{ color: 'var(--color-primary)' }}
               >
                 by {product.merchantName}
-              </Link>
+              </Link>{" "}
+              <FoundingBadge show={product.foundingShop} />
             </>
           )}
         </div>

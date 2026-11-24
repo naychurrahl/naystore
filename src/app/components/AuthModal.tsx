@@ -11,6 +11,7 @@ import { API_BASE } from "../utils/apiBase.js";
 import { forgetReferral, savedReferral } from "../utils/referral";
 import { toast } from "sonner";
 import { PhoneInput } from "./PhoneInput";
+import { commissionRateError, minCommissionNote, useMinCommission, useAbigailDelivers } from "../utils/minCommission";
 
 const inputStyle = { borderColor: "var(--color-border)", color: "var(--color-text-primary)" };
 const labelStyle = { color: "var(--color-text-primary)" };
@@ -35,8 +36,10 @@ export function AuthModal() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [commissionType, setCommissionType] = useState<"percentage" | "flat">("percentage");
+  const [commissionType, setCommissionType] = useState<"category" | "percentage" | "flat">("category");
   const [commissionRate, setCommissionRate] = useState("");
+  const minCommission = useMinCommission();
+  const abigailDelivers = useAbigailDelivers();
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"fbu" | "fbm">("fbm");
   const [location, setLocation] = useState("");
   const [state, setState] = useState("");
@@ -130,9 +133,9 @@ export function AuthModal() {
     setAccountExists(false);
 
     if (usertype === "merchant") {
-      const rate = Number(commissionRate);
-      if (!commissionRate || Number.isNaN(rate) || rate < 0) {
-        setError("Enter a valid, non-negative commission rate");
+      const rateError = commissionType === "category" ? null : commissionRateError(commissionType, commissionRate, minCommission);
+      if (rateError) {
+        setError(rateError);
         return;
       }
       if (!location.trim()) {
@@ -172,7 +175,7 @@ export function AuthModal() {
         username: username || undefined,
         referralCode: referralCode.trim() || undefined,
         ...(usertype === "merchant"
-          ? { legalName: legalName.trim(), phone, commissionType, commissionRate: Number(commissionRate), fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim() }
+          ? { legalName: legalName.trim(), phone, commissionType, commissionRate: commissionType === "category" ? 0 : Number(commissionRate), fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim() }
           : {}),
       });
       forgetReferral();
@@ -382,7 +385,7 @@ export function AuthModal() {
                 />
                 <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
                   {usertype === "merchant"
-                    ? "From whoever told you about us - shops that join with one can pay less commission at the start."
+                    ? "From whoever told you about us - shops that join with one get free days on our home page after their first sale."
                     : "From a friend's invite link - it takes money off your first order."}
                 </p>
               </div>
@@ -420,19 +423,22 @@ export function AuthModal() {
                     <div className="flex gap-2">
                       <select
                         value={commissionType}
-                        onChange={(e) => setCommissionType(e.target.value as "percentage" | "flat")}
+                        onChange={(e) => setCommissionType(e.target.value as "category" | "percentage" | "flat")}
                         className="px-3 py-3 rounded-lg border"
                         style={inputStyle}
                       >
-                        <option value="percentage">Percentage</option>
-                        <option value="flat">Flat</option>
+                        <option value="category">Our category rates</option>
+                        <option value="percentage">Propose a percentage</option>
+                        <option value="flat">Propose a flat fee</option>
                       </select>
                       <input
                         type="number"
                         step="any"
-                        min="0"
+                        min={commissionType === "percentage" ? minCommission : 0}
                         required
-                        placeholder={commissionType === "flat" ? "e.g. 5.00" : "e.g. 15"}
+                        hidden={commissionType === "category"}
+                        disabled={commissionType === "category"}
+                        placeholder={commissionType === "flat" ? "e.g. 500" : `${minCommission} or more`}
                         value={commissionRate}
                         onChange={(e) => setCommissionRate(e.target.value)}
                         className="flex-1 px-4 py-3 rounded-lg border"
@@ -440,7 +446,7 @@ export function AuthModal() {
                       />
                     </div>
                     <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-                      What we take per sale - admins can revise this later.
+                      {commissionType === "category" ? "What we take per sale is set for each category; it's shown on your products." : "What we take per sale - a proposal admins review."} {minCommissionNote(minCommission)}
                     </p>
                   </div>
 
@@ -520,7 +526,7 @@ export function AuthModal() {
                       style={inputStyle}
                     >
                       <option value="fbm">Fulfilled by Merchant (FBM)</option>
-                      <option value="fbu">Fulfilled by Us (FBU)</option>
+                      {abigailDelivers && <option value="fbu">Fulfilled by Us (FBU)</option>}
                     </select>
                     <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
                       Your default - can be overridden per product.

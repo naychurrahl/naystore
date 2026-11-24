@@ -8,16 +8,22 @@ import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
 
 type Placement = { id: string; label: string; slots: number; dayPrice: number; forSale: boolean; auctionSlots: number; minBid: number };
-type Package = { id: string; name: string; placement: string; days: number; price: number };
+// A bundle bought at checkout (a service): promotion days to book here.
+type Bundle = {
+  id: string; name: string; summary: string; boughtAt: string; days: Record<string, number>; daysLeft: Record<string, number>;
+  bookFrom: string | null; bookUntil: string | null; setup: boolean; setupStatus: string;
+};
 type Bid = {
   id: string; title: string; amount: number; state: string; payBy: string | null; weekStart: string; weekEnd: string; closesAt: string;
   fees: { paystack: number; naylet: number };
 };
 type Round = { weekStart: string; weekEnd: string; closesAt: string };
 type Promotion = {
-  id: string; placement: string; title: string; state: string; startsOn: string; endsOn: string; days: number;
+  id: string; placement: string; title: string; state: string; startsOn: string; endsOn: string; days: number; source: string;
   amount: number; fee: number; paymentProvider: string; refunded: number | null; refundStatus: string | null;
 };
+// A shop that joined with a referral code: free days in Featured shops.
+type FreeDays = { days: number; bookBy: string; state: "locked" | "ready" | "used" | "expired"; offer?: string | null };
 type Product = { id: string; name: string; categories?: string[]; visible?: boolean; inStock?: boolean };
 type Quote = { days: number; amount: number; fee: number; total: number; fullDays: string[]; clash: boolean };
 
@@ -58,12 +64,170 @@ const STATE_LABEL: Record<string, [string, string]> = {
   stopped: ["Stopped", "var(--color-error)"],
 };
 
+// Free days in Featured shops: a referred shop's (source referral), or a
+// founding or early shop's (source offer). Unlocked by the first delivered
+// sale, booked once.
+function FreeDaysBox({ free, source, today, lastStart, onBooked }: {
+  free: FreeDays; source: "referral" | "offer"; today: string; lastStart: string; onBooked: () => void;
+}) {
+  const { authHeader } = useAuth();
+  const [start, setStart] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  if (free.state !== "ready" && free.state !== "locked") return null;
+  const why = source === "offer" ? `You're a ${free.offer ?? "founding shop"}` : "You joined with a referral code";
+  const book = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await api.post(`${API_BASE}/my-promotions/free`, { startsOn: start, source }, { headers: authHeader });
+      toast.success("Your free days are booked");
+      setStart("");
+      onBooked();
+    } catch (e: any) {
+      setErr(e.message || "Your free days couldn't be booked");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <form className="p-5 rounded-xl grid gap-3" style={{ ...card, borderColor: "var(--color-primary)" }} onSubmit={(e) => { e.preventDefault(); void book(); }}>
+      <div>
+        <h2 className="font-semibold" style={ink.primary}>{free.days} free days in Featured shops</h2>
+        <p className="text-sm mt-1" style={ink.secondary}>
+          {free.state === "ready"
+            ? `${why}, so your shop's card can show in Featured shops on the home page for ${free.days} days, free.`
+            : `${why}. Once your first sale is delivered, your shop's card can show in Featured shops on the home page for free.`}{" "}
+          Book them by {longDate(free.bookBy.slice(0, 10))}, on dates that still have a place.
+        </p>
+      </div>
+      {free.state === "ready" && (
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-sm space-y-1 block">
+            <span style={ink.secondary}>First day</span>
+            <input type="date" value={start} min={today} max={lastStart} onChange={(e) => setStart(e.target.value)}
+              className="h-10 px-3 rounded-lg border bg-transparent" style={input} />
+          </label>
+          <button type="submit" disabled={!start || busy} className="h-10 px-5 rounded-lg font-medium disabled:opacity-50"
+            style={{ backgroundColor: "var(--color-primary)", color: "var(--color-text-on-primary, var(--color-primary-ink, #fff))" }}>
+            {busy ? "Booking…" : "Book my free days"}
+          </button>
+        </div>
+      )}
+      {err && <p role="alert" className="text-sm" style={{ color: "var(--color-error)" }}>{err}</p>}
+    </form>
+  );
+}
+
+// A bought bundle's days: pick a place, how many days, a product (and
+// category) where needed, and the first day. Nothing to pay: it was paid at
+// checkout. Days can be split over several bookings.
+const BUNDLE_PLACE: Record<string, string> = { featured_shop: "Featured shop", product: "Home page product", category: "Category placement" };
+
+function BundleDays({ bundle, products, allCategories, today, lastStart, onBooked }: {
+  bundle: Bundle; products: Product[]; allCategories: { id: string; name: string }[]; today: string; lastStart: string; onBooked: () => void;
+}) {
+  const { authHeader } = useAuth();
+  const places = (["featured_shop", "product", "category"] as const).filter((p) => (bundle.daysLeft[p] ?? 0) > 0);
+  const [place, setPlace] = useState<string>(places[0] ?? "");
+  const [days, setDays] = useState(String(bundle.daysLeft[places[0]] ?? 1));
+  const [productId, setProductId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [startsOn, setStartsOn] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const left = bundle.daysLeft[place] ?? 0;
+  const needsProduct = place === "product" || place === "category";
+  const product = products.find((p) => p.id === productId);
+  const categories = allCategories.filter((c) => product?.categories?.includes(c.name));
+  const min = bundle.bookFrom && bundle.bookFrom > today ? bundle.bookFrom : today;
+  const max = bundle.bookUntil && bundle.bookUntil < lastStart ? bundle.bookUntil : lastStart;
+  const ready = place && startsOn && Number(days) >= 1 && Number(days) <= left && (!needsProduct || productId) && (place !== "category" || categoryId);
+
+  const book = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await api.post(`${API_BASE}/my-promotions/from-grant`, {
+        grantId: bundle.id, placement: place, days: Number(days), startsOn,
+        ...(needsProduct ? { productId } : {}), ...(place === "category" ? { categoryId } : {}),
+      }, { headers: authHeader });
+      toast.success("Your days are booked");
+      setStartsOn("");
+      onBooked();
+    } catch (e: any) {
+      setErr(e.message || "Those days couldn't be booked");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const windowText = bundle.bookFrom || bundle.bookUntil
+    ? ` They can run ${bundle.bookFrom ? `from ${longDate(bundle.bookFrom)} ` : ""}${bundle.bookUntil ? `until ${longDate(bundle.bookUntil)}` : ""}.`
+    : "";
+
+  return (
+    <form className="p-5 rounded-xl grid gap-3" style={{ ...card, borderColor: "var(--color-primary)" }} onSubmit={(e) => { e.preventDefault(); if (ready) void book(); }}>
+      <div>
+        <h2 className="font-semibold" style={ink.primary}>Your {bundle.name}: days to book</h2>
+        <p className="text-sm mt-1" style={ink.secondary}>
+          {places.map((p) => `${bundle.daysLeft[p]} ${BUNDLE_PLACE[p]} ${bundle.daysLeft[p] === 1 ? "day" : "days"}`).join(", ")} left.{windowText}
+          {" "}Already paid for. Choose dates that still have a place.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="text-sm space-y-1 block">
+          <span style={ink.secondary}>Where</span>
+          <select value={place} onChange={(e) => { setPlace(e.target.value); setDays(String(bundle.daysLeft[e.target.value] ?? 1)); setCategoryId(""); }}
+            className="w-full h-10 px-3 rounded-lg border bg-transparent" style={input}>
+            {places.map((p) => <option key={p} value={p}>{BUNDLE_PLACE[p]}</option>)}
+          </select>
+        </label>
+        <label className="text-sm space-y-1 block">
+          <span style={ink.secondary}>How many days (up to {left})</span>
+          <input type="number" min={1} max={left} value={days} onChange={(e) => setDays(e.target.value)}
+            className="w-full h-10 px-3 rounded-lg border bg-transparent" style={input} />
+        </label>
+        {needsProduct && (
+          <label className="text-sm space-y-1 block">
+            <span style={ink.secondary}>Which product?</span>
+            <select value={productId} onChange={(e) => { setProductId(e.target.value); setCategoryId(""); }} className="w-full h-10 px-3 rounded-lg border bg-transparent" style={input}>
+              <option value="">Choose a product</option>
+              {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </label>
+        )}
+        {place === "category" && productId && (
+          <label className="text-sm space-y-1 block">
+            <span style={ink.secondary}>Which category?</span>
+            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full h-10 px-3 rounded-lg border bg-transparent" style={input}>
+              <option value="">Choose a category</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </label>
+        )}
+        <label className="text-sm space-y-1 block">
+          <span style={ink.secondary}>First day</span>
+          <input type="date" value={startsOn} min={min} max={max} onChange={(e) => setStartsOn(e.target.value)}
+            className="w-full h-10 px-3 rounded-lg border bg-transparent" style={input} />
+        </label>
+      </div>
+      <div>
+        <button type="submit" disabled={!ready || busy} className="h-10 px-5 rounded-lg font-medium disabled:opacity-50"
+          style={{ backgroundColor: "var(--color-primary)", color: "var(--color-text-on-primary, var(--color-primary-ink, #fff))" }}>
+          {busy ? "Booking…" : "Book these days"}
+        </button>
+      </div>
+      {err && <p role="alert" className="text-sm" style={{ color: "var(--color-error)" }}>{err}</p>}
+    </form>
+  );
+}
+
 // A shop buys a place on the home page: where, what, which dates, then pays.
 export function MerchantPromotionsPage() {
   const { authHeader } = useAuth();
   const [placements, setPlacements] = useState<Placement[]>([]);
-  const [packages, setPackages] = useState<Package[]>([]);
-  const [packageId, setPackageId] = useState("");
+  const [bundles, setBundles] = useState<Bundle[]>([]);
   const [bids, setBids] = useState<Bid[]>([]);
   const [round, setRound] = useState<Round | null>(null);
   const [bidBlocked, setBidBlocked] = useState(false);
@@ -73,6 +237,8 @@ export function MerchantPromotionsPage() {
   const [bidAmount, setBidAmount] = useState("");
   const [bidding, setBidding] = useState(false);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [freeDays, setFreeDays] = useState<FreeDays | null>(null);
+  const [offerDays, setOfferDays] = useState<FreeDays | null>(null);
   const [limits, setLimits] = useState({ today: "", maxDays: 31, bookAheadDays: 90 });
   const [products, setProducts] = useState<Product[]>([]);
   const [allCategories, setAllCategories] = useState<{ id: string; name: string }[]>([]);
@@ -102,7 +268,9 @@ export function MerchantPromotionsPage() {
     api.get(`${API_BASE}/my-promotions`, { headers: authHeader }).then((res: any) => {
       setPromotions(res.promotions);
       setPlacements(res.placements);
-      setPackages(res.packages ?? []);
+      setBundles(res.bundles ?? []);
+      setFreeDays(res.freeDays ?? null);
+      setOfferDays(res.offerDays ?? null);
       setLimits({ today: res.today, maxDays: res.maxDays, bookAheadDays: res.bookAheadDays });
     }),
     api.get(`${API_BASE}/my-promotions/bids`, { headers: authHeader }).then(applyBids),
@@ -117,10 +285,8 @@ export function MerchantPromotionsPage() {
     return () => { stopWaiting.current = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const forSale = placements.filter((p) => p.forSale || packages.some((o) => o.placement === p.id));
+  const forSale = placements.filter((p) => p.forSale);
   const chosen = placements.find((p) => p.id === placement);
-  const offers = packages.filter((o) => o.placement === placement);
-  const offer = offers.find((o) => o.id === packageId);
   const biddable = placements.filter((p) => p.auctionSlots > 0);
   const bidPlace = biddable.find((p) => p.id === bidPlacement);
   const bidNeedsProduct = bidPlacement === "product" || bidPlacement === "category";
@@ -153,10 +319,9 @@ export function MerchantPromotionsPage() {
 
   const body = () => ({
     placement, startsOn, endsOn, paymentProvider: provider,
-    ...(packageId ? { packageId } : {}),
     ...(needsProduct ? { productId } : {}), ...(placement === "category" ? { categoryId } : {}),
   });
-  const complete = placement && startsOn && (offer || endsOn) && (!needsProduct || productId) && (placement !== "category" || categoryId);
+  const complete = placement && startsOn && endsOn && (!needsProduct || productId) && (placement !== "category" || categoryId);
 
   // The price, from the API, priced as the booking will be. Nothing can be paid without it.
   useEffect(() => {
@@ -168,7 +333,7 @@ export function MerchantPromotionsPage() {
       .then((q: Quote) => { if (live) setQuote(q); })
       .catch((err: any) => { if (live) setQuoteError(err.message || "We couldn't work out the price. Try again."); });
     return () => { live = false; };
-  }, [placement, packageId, productId, categoryId, startsOn, endsOn, provider, promotions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [placement, productId, categoryId, startsOn, endsOn, provider, promotions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const blocked = !quote || quote.fullDays.length > 0 || quote.clash || paying;
 
@@ -261,6 +426,14 @@ export function MerchantPromotionsPage() {
         </p>
       </div>
 
+      {freeDays && <FreeDaysBox free={freeDays} source="referral" today={limits.today} lastStart={lastStart} onBooked={() => load().catch(() => {})} />}
+      {offerDays && <FreeDaysBox free={offerDays} source="offer" today={limits.today} lastStart={lastStart} onBooked={() => load().catch(() => {})} />}
+
+      {bundles.filter((b) => Object.values(b.daysLeft).some((n) => n > 0)).map((b) => (
+        <BundleDays key={b.id} bundle={b} products={sellable} allCategories={allCategories} today={limits.today} lastStart={lastStart}
+          onBooked={() => load().catch(() => {})} />
+      ))}
+
       {!loading && forSale.length === 0 && biddable.length === 0 ? (
         <div className="p-5 rounded-xl text-sm flex items-center gap-3" style={{ ...card, ...ink.secondary }}>
           <Megaphone className="h-5 w-5 shrink-0" aria-hidden /> Promotions aren't on sale right now. Please check back soon.
@@ -273,31 +446,13 @@ export function MerchantPromotionsPage() {
               <label key={p.id} className="p-3 rounded-lg border text-sm cursor-pointer grid gap-1"
                 style={{ borderColor: placement === p.id ? "var(--color-primary)" : "var(--color-border)", ...ink.primary }}>
                 <span className="flex items-center gap-2 font-semibold">
-                  <input type="radio" name="placement" checked={placement === p.id} onChange={() => { setPlacement(p.id); setCategoryId(""); setPackageId(p.forSale ? "" : packages.find((o) => o.placement === p.id)?.id ?? ""); }} /> {p.label}
+                  <input type="radio" name="placement" checked={placement === p.id} onChange={() => { setPlacement(p.id); setCategoryId(""); }} /> {p.label}
                 </span>
                 <span className="text-xs" style={ink.secondary}>{WHAT_YOU_GET[p.id]}</span>
-                <span className="text-xs font-semibold">{p.forSale ? `${naira(p.dayPrice)} a day` : "Packages"}</span>
+                <span className="text-xs font-semibold">{naira(p.dayPrice)} a day</span>
               </label>
             ))}
           </fieldset>
-
-          {offers.length > 0 && (
-            <fieldset className="grid gap-2 sm:grid-cols-2">
-              <legend className="text-sm mb-2" style={ink.secondary}>How long for?</legend>
-              {chosen?.forSale && (
-                <label className="p-3 rounded-lg border text-sm cursor-pointer" style={{ borderColor: !packageId ? "var(--color-primary)" : "var(--color-border)", ...ink.primary }}>
-                  <span className="flex items-center gap-2 font-semibold"><input type="radio" name="package" checked={!packageId} onChange={() => setPackageId("")} /> My own dates</span>
-                  <span className="block text-xs mt-1" style={ink.secondary}>{naira(chosen.dayPrice)} a day</span>
-                </label>
-              )}
-              {offers.map((o) => (
-                <label key={o.id} className="p-3 rounded-lg border text-sm cursor-pointer" style={{ borderColor: packageId === o.id ? "var(--color-primary)" : "var(--color-border)", ...ink.primary }}>
-                  <span className="flex items-center gap-2 font-semibold"><input type="radio" name="package" checked={packageId === o.id} onChange={() => setPackageId(o.id)} /> {o.name}</span>
-                  <span className="block text-xs mt-1" style={ink.secondary}>{o.days} day{o.days === 1 ? "" : "s"} for {naira(o.price)}</span>
-                </label>
-              ))}
-            </fieldset>
-          )}
 
           {needsProduct && (
             <label className="text-sm space-y-1 block">
@@ -326,15 +481,11 @@ export function MerchantPromotionsPage() {
                 <input type="date" value={startsOn} min={limits.today} max={lastStart} onChange={(e) => { setStartsOn(e.target.value); if (!endsOn || endsOn < e.target.value) setEndsOn(e.target.value); }}
                   className="w-full h-10 px-3 rounded-lg border bg-transparent" style={input} />
               </label>
-              {offer ? (
-                <p className="text-sm self-end pb-2" style={ink.secondary}>Runs for {offer.days} day{offer.days === 1 ? "" : "s"} from your first day.</p>
-              ) : (
-                <label className="text-sm space-y-1 block">
-                  <span style={ink.secondary}>Last day (up to {limits.maxDays} days)</span>
-                  <input type="date" value={endsOn} min={startsOn || limits.today} onChange={(e) => setEndsOn(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border bg-transparent" style={input} />
-                </label>
-              )}
+              <label className="text-sm space-y-1 block">
+                <span style={ink.secondary}>Last day (up to {limits.maxDays} days)</span>
+                <input type="date" value={endsOn} min={startsOn || limits.today} onChange={(e) => setEndsOn(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border bg-transparent" style={input} />
+              </label>
             </div>
           )}
 
@@ -362,7 +513,7 @@ export function MerchantPromotionsPage() {
 
           {complete && (
             <dl className="grid gap-1.5 text-sm pt-3" style={{ borderTop: "1px solid var(--color-border)" }}>
-              <div className="flex justify-between gap-3"><dt style={ink.secondary}>{offer ? offer.name : quote ? `${quote.days} day${quote.days === 1 ? "" : "s"} × ${naira(chosen?.dayPrice ?? 0)}` : "Promotion"}</dt><dd style={ink.primary}>{quote ? naira(quote.amount) : quoteError ? "—" : "…"}</dd></div>
+              <div className="flex justify-between gap-3"><dt style={ink.secondary}>{quote ? `${quote.days} day${quote.days === 1 ? "" : "s"} × ${naira(chosen?.dayPrice ?? 0)}` : "Promotion"}</dt><dd style={ink.primary}>{quote ? naira(quote.amount) : quoteError ? "—" : "…"}</dd></div>
               <div className="flex justify-between gap-3"><dt style={ink.secondary}>Payment fee</dt><dd style={ink.primary}>{quote ? naira(quote.fee) : quoteError ? "—" : "…"}</dd></div>
               <div className="flex justify-between gap-3 font-bold" style={ink.primary}><dt>Total</dt><dd>{quote ? naira(quote.total) : quoteError ? "—" : "…"}</dd></div>
             </dl>
@@ -497,7 +648,7 @@ export function MerchantPromotionsPage() {
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold" style={{ color }}>{label}</p>
-                <p className="text-sm" style={ink.secondary}>{naira(p.amount + p.fee)}</p>
+                <p className="text-sm" style={ink.secondary}>{p.source === "referral" || p.source === "offer" ? "Free" : p.source === "package" ? "From your bundle" : naira(p.amount + p.fee)}</p>
               </div>
             </div>
           );

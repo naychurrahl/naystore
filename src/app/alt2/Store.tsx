@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { FoundingBadge } from "../components/FoundingBadge";
+import { DeliveryZonesList } from "../components/DeliveryTableEditor";
 import { Link, useLocation, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { MapPin, MessageCircle, Store as StoreIcon } from "lucide-react";
@@ -117,6 +119,8 @@ export function StorePage() {
           <span className="rounded-lg" style={{ border: "3px solid var(--m-surface)", background: "var(--m-surface)" }}><Monogram name={profile.merchantName} size={76} /></span>
           <div className="flex-1 min-w-[200px] pt-10 sm:pt-12 grid gap-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">{profile.merchantName}</h1>
+            {profile.foundingShop && <div><FoundingBadge show large /></div>}
+            {profile.deliveryZones?.length > 0 && <DeliveryZonesList zones={profile.deliveryZones} />}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm m2-ink2">
               {profile.sellerReviewCount > 0 && <span className="flex items-center gap-1.5"><Stars rating={profile.sellerAvgRating} size={13} /> <b className="m2-num">{profile.sellerAvgRating}</b> seller rating ({profile.sellerReviewCount})</span>}
               {profile.productReviewCount > 0 && <span className="flex items-center gap-1.5"><Stars rating={profile.productAvgRating} size={13} /> <b className="m2-num">{profile.productAvgRating}</b> on products ({profile.productReviewCount})</span>}
