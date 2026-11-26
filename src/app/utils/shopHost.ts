@@ -15,6 +15,14 @@ const STORE_HOSTS = [
 
 export const MAIN_STORE_URL: string = import.meta.env.VITE_STORE_URL || "https://store.naychurrahl.com.ng";
 
+// The address a shop name gives (abigail.ng/<slug>), made the way the
+// backend makes it (Functions.php slugify). Empty when the name has no
+// letters or numbers.
+export function storeAddress(shopName: string): string {
+  const slug = shopName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return slug ? `${MAIN_STORE_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")}/${slug}` : "";
+}
+
 // The merchant domain this page is on, or null on the store itself. In
 // development, ?shop-host=www.example.com pretends to be on that domain
 // (?shop-host= with nothing clears it).

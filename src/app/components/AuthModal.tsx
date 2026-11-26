@@ -8,6 +8,7 @@ import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 import { CodeField, ForgotPasswordForm } from "./EmailCode";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
+import { storeAddress } from "../utils/shopHost";
 import { forgetReferral, savedReferral } from "../utils/referral";
 import { toast } from "sonner";
 import { PhoneInput } from "./PhoneInput";
@@ -324,6 +325,11 @@ export function AuthModal() {
                   className="w-full px-4 py-3 rounded-lg border"
                   style={inputStyle}
                 />
+                {usertype === "merchant" && storeAddress(name) && (
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                    Your shop's address: <span className="font-medium">{storeAddress(name)}</span>
+                  </p>
+                )}
               </div>
 
               {usertype === "merchant" && (
