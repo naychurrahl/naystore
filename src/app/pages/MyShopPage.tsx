@@ -203,7 +203,7 @@ function WalletSection({ connected, onChange }: { connected: boolean | null; onC
   const connect = async () => {
     setBusy(true);
     try {
-      const { url } = await api.get(`${API_BASE}/wallet-connect`, { headers: authHeader });
+      const { url } = await api.get(`${API_BASE}/wallet-connect?for=store`, { headers: authHeader });
       window.location.href = url;
     } catch (err: any) {
       toast.error(err.message || "Could not start wallet connection");
@@ -214,7 +214,7 @@ function WalletSection({ connected, onChange }: { connected: boolean | null; onC
   const disconnect = async () => {
     setBusy(true);
     try {
-      await api.delete(`${API_BASE}/wallet-connect`, { headers: authHeader });
+      await api.delete(`${API_BASE}/wallet-connect?for=store`, { headers: authHeader });
       onChange(false);
       toast.success("Wallet disconnected");
     } catch (err: any) {
@@ -245,7 +245,8 @@ function WalletSection({ connected, onChange }: { connected: boolean | null; onC
 }
 
 export function MyShopPage() {
-  const { authHeader } = useAuth();
+  const { authHeader, can } = useAuth();
+  const owner = can("money");
   const [form, setForm] = useState({
     slug: "", bio: "",
     state: "", lga: "", area: "", landmark: "", location: "",
@@ -284,10 +285,11 @@ export function MyShopPage() {
   }, []);
 
   useEffect(() => {
-    api.get(`${API_BASE}/wallet-status`, { headers: authHeader })
+    if (!owner) return;
+    api.get(`${API_BASE}/wallet-status?for=store`, { headers: authHeader })
       .then((r) => setWalletConnected(r.connected))
       .catch(() => setWalletConnected(false));
-  }, []);
+  }, [owner]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     api.get(`${API_BASE}/my-shop`, { headers: authHeader })
@@ -430,11 +432,12 @@ export function MyShopPage() {
             )}
           </div>
 
-          <CommissionSection state={commission} onProposed={setCommission} />
+          {/* Commission and the wallet are the owner's. */}
+          {owner && <CommissionSection state={commission} onProposed={setCommission} />}
 
           <FulfillmentSection method={fulfillmentMethod} onChange={setFulfillmentMethod} />
 
-          <WalletSection connected={walletConnected} onChange={setWalletConnected} />
+          {owner && <WalletSection connected={walletConnected} onChange={setWalletConnected} />}
 
           <div>
             <Label className="mb-1.5 block">Bio</Label>

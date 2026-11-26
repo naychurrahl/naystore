@@ -13,7 +13,8 @@ import { OrderHistory } from "./pages/OrderHistory";
 import { Library } from "./pages/Library";
 import { OrderDetail } from "./pages/OrderDetail";
 import { NotFound } from "./pages/NotFound";
-import { BecomeMerchant } from "./pages/BecomeMerchant";
+import { BecomeMerchant, OpenAnotherStore } from "./pages/BecomeMerchant";
+import { MerchantTeamPage } from "./pages/MerchantTeamPage";
 import { MerchantDashboard } from "./pages/MerchantDashboard";
 import { MerchantProductsPage } from "./pages/MerchantProductsPage";
 import { MerchantOrdersPage } from "./pages/MerchantOrdersPage";
@@ -98,6 +99,8 @@ export const router = createBrowserRouter([
           { path: "chat", Component: MerchantChatPage },
           { path: "support", Component: MerchantSupportPage },
           { path: "profile", Component: MerchantProfilePage },
+          { path: "team", Component: MerchantTeamPage },
+          { path: "stores/new", Component: OpenAnotherStore },
         ],
       },
     ],

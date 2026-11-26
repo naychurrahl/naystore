@@ -4,8 +4,10 @@ import { ResourceTable } from "../components/ResourceTable";
 import { CommissionNegotiation } from "../components/CommissionNegotiation";
 import { ProductFilesPanel } from "../components/ProductFilesPanel";
 import { merchantProductsConfig } from "../types/resources";
+import { useAuth } from "../context/AuthContext";
 
 export function MerchantProductsPage() {
+  const canMoney = useAuth().can("money");
   return (
     <ResourceTable
       config={merchantProductsConfig}
@@ -53,10 +55,11 @@ export function MerchantProductsPage() {
               ),
             }]
           : []),
-        {
+        // A product's own commission is the store owner's to agree.
+        ...(canMoney ? [{
           label: "Commission",
           content: <CommissionNegotiation product={row} onUpdated={refetch} />,
-        },
+        }] : []),
       ]}
     />
   );

@@ -215,7 +215,9 @@ function GrowYourShop() {
 }
 
 export function MerchantDashboard() {
-  const { user, authHeader } = useAuth();
+  const { user, authHeader, can, store } = useAuth();
+  // Setting up the store and reaching it are its owner's (and managers') to do.
+  const runsStore = can("shop");
   const [window_, setWindow] = useState("week");
   const { data } = useAPI(`${API_BASE}/merchant-dashboard?window=${window_}`, { headers: authHeader });
   const { data: commissions } = useAPI(`${API_BASE}/my-commissions`, { headers: authHeader });
@@ -247,8 +249,8 @@ export function MerchantDashboard() {
           )}
         </div>
       )}
-      <ShopChecklist />
-      {profile && !profile.phone && (
+      {runsStore && <ShopChecklist />}
+      {store?.role === "owner" && profile && !profile.phone && (
         <div className="mb-4 p-4 rounded-lg text-sm flex flex-col sm:flex-row sm:items-center gap-2" style={{ border: '1px solid var(--color-accent)', color: 'var(--color-text-secondary)' }}>
           <span className="flex-1">
             <strong style={{ color: 'var(--color-text-primary)' }}>Add a phone number.</strong> Buyers and our team need a way to reach your shop.
@@ -360,7 +362,7 @@ export function MerchantDashboard() {
           </Table>
         </div>
       ))}
-      <GrowYourShop />
+      {can("services") && <GrowYourShop />}
     </div>
   );
 }

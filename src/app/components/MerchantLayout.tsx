@@ -1,43 +1,70 @@
 import { useEffect, useState } from "react";
-import { LayoutDashboard, ShoppingBag, MessageCircle, LogOut, Menu, X, UserCircle, Headset, Store, Wallet, Package, ArrowUpRight, TicketPercent, Globe, History, BarChart3, Link2, Megaphone, Truck } from "lucide-react";
-import { Outlet, Link, useLocation } from "react-router";
+import { LayoutDashboard, ShoppingBag, MessageCircle, LogOut, Menu, X, UserCircle, Headset, Store, Wallet, Package, ArrowUpRight, TicketPercent, Globe, History, BarChart3, Link2, Megaphone, Truck, Users, Plus } from "lucide-react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
 import { ChatLauncher } from "./ChatLauncher";
 import { ChatPanel } from "./ChatPanel";
 import { NotificationBell } from "./NotificationBell";
 
-const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: typeof ShoppingBag }[] }[] = [
-  { label: "Overview", items: [{ to: "/merchant", label: "Dashboard", icon: LayoutDashboard }, { to: "/merchant/insights", label: "Insights", icon: BarChart3 }] },
+// Each item names what the seller's role in the store must allow (data/Stores.php).
+const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: typeof ShoppingBag; need: string }[] }[] = [
+  { label: "Overview", items: [
+    { to: "/merchant", label: "Dashboard", icon: LayoutDashboard, need: "view" },
+    { to: "/merchant/insights", label: "Insights", icon: BarChart3, need: "insights" },
+  ] },
   {
     label: "Selling",
     items: [
-      { to: "/merchant/products", label: "My Products", icon: ShoppingBag },
-      { to: "/merchant/orders", label: "Orders", icon: Package },
-      { to: "/merchant/shop", label: "My Shop", icon: Store },
-      { to: "/merchant/delivery", label: "Delivery fees", icon: Truck },
-      { to: "/merchant/domain", label: "Domain", icon: Globe },
-      { to: "/merchant/coupons", label: "Coupons", icon: TicketPercent },
-      { to: "/merchant/promo-links", label: "Promo links", icon: Link2 },
-      { to: "/merchant/promotions", label: "Promotions", icon: Megaphone },
+      { to: "/merchant/products", label: "Products", icon: ShoppingBag, need: "products" },
+      { to: "/merchant/orders", label: "Orders", icon: Package, need: "orders" },
+      { to: "/merchant/shop", label: "Store page", icon: Store, need: "shop" },
+      { to: "/merchant/delivery", label: "Delivery fees", icon: Truck, need: "delivery" },
+      { to: "/merchant/domain", label: "Domain", icon: Globe, need: "money" },
+      { to: "/merchant/coupons", label: "Coupons", icon: TicketPercent, need: "coupons" },
+      { to: "/merchant/promo-links", label: "Promo links", icon: Link2, need: "promotions" },
+      { to: "/merchant/promotions", label: "Promotions", icon: Megaphone, need: "promotions" },
     ],
   },
-  { label: "Money", items: [{ to: "/merchant/payouts", label: "My Payouts", icon: Wallet }] },
+  { label: "Money", items: [{ to: "/merchant/payouts", label: "Payouts", icon: Wallet, need: "money" }] },
   {
     label: "Messages",
     items: [
-      { to: "/merchant/chat", label: "My Chats", icon: MessageCircle },
-      { to: "/merchant/support", label: "Contact Support", icon: Headset },
+      { to: "/merchant/chat", label: "Chats", icon: MessageCircle, need: "chat" },
+      { to: "/merchant/support", label: "Contact Support", icon: Headset, need: "view" },
     ],
   },
   {
-    label: "Account",
+    label: "Store",
     items: [
-      { to: "/merchant/profile", label: "My Profile", icon: UserCircle },
-      { to: "/merchant/activity", label: "Activity", icon: History },
+      { to: "/merchant/team", label: "Team", icon: Users, need: "view" },
+      { to: "/merchant/activity", label: "Activity", icon: History, need: "insights" },
     ],
   },
+  { label: "You", items: [{ to: "/merchant/profile", label: "My Profile", icon: UserCircle, need: "view" }] },
 ];
+
+const ROLE_LABEL: Record<string, string> = { owner: "Owner", manager: "Manager", staff: "Staff" };
+
+// Which store the console is working in: switch, or open another.
+function StoreSwitcher({ onNavigate }: { onNavigate: () => void }) {
+  const { store, stores, setStoreId } = useAuth();
+  const navigate = useNavigate();
+  if (!store) return null;
+  return (
+    <div className="px-4 pt-4 grid gap-1.5">
+      <label className="text-[10px] font-semibold uppercase tracking-wider px-2" style={{ color: 'var(--color-nav-text)', opacity: 0.5 }} htmlFor="store-switch">Store</label>
+      <select id="store-switch" value={store.id}
+        onChange={(e) => { if (e.target.value === "__new") { navigate("/merchant/stores/new"); onNavigate(); return; } setStoreId(e.target.value); navigate("/merchant"); onNavigate(); }}
+        className="w-full px-3 py-2 rounded-lg text-sm font-medium"
+        style={{ backgroundColor: 'var(--color-nav-hover)', color: '#ffffff', border: '1px solid transparent' }}>
+        {stores.map((s) => <option key={s.id} value={s.id}>{s.name}{s.active ? "" : " (closed)"} · {ROLE_LABEL[s.role]}</option>)}
+        <option value="__new">+ Open another store</option>
+      </select>
+      {!store.active && <p className="text-xs px-2" style={{ color: 'var(--color-error)' }}>This store is closed. Contact us to reopen it.</p>}
+    </div>
+  );
+}
 
 function NavLink({ to, label, icon: Icon, onNavigate }: { to: string; label: string; icon: typeof ShoppingBag; onNavigate: () => void }) {
   const location = useLocation();
@@ -68,7 +95,7 @@ function initials(name: string | null | undefined, email: string | undefined) {
 }
 
 export function MerchantLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, store, can } = useAuth();
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { isOpen: chatOpen, open: openChat, close: closeChat } = useChat();
@@ -108,8 +135,10 @@ export function MerchantLayout() {
           </button>
         </div>
 
+        <StoreSwitcher onNavigate={closeNav} />
+
         <nav className="flex-1 overflow-y-auto py-4 space-y-5">
-          {NAV_GROUPS.map((group) => (
+          {NAV_GROUPS.map((group) => ({ ...group, items: group.items.filter((item) => can(item.need)) })).filter((group) => group.items.length > 0).map((group) => (
             <div key={group.label}>
               <p
                 className="px-6 mb-1.5 text-[10px] font-semibold uppercase tracking-wider"
@@ -118,7 +147,7 @@ export function MerchantLayout() {
                 {group.label}
               </p>
               <div className="space-y-0.5">
-                {group.items.map((item) => (
+                {group.items.map(({ need: _need, ...item }) => (
                   <NavLink key={item.to} {...item} onNavigate={closeNav} />
                 ))}
               </div>
@@ -128,7 +157,7 @@ export function MerchantLayout() {
 
         <div className="px-6 py-3" style={{ borderTop: '1px solid var(--color-nav-hover)' }}>
           <a
-            href="/#shop"
+            href={store?.slug ? `/sellers/${store.slug}` : "/shop"}
             className="inline-flex items-center gap-1 text-xs font-medium transition-colors"
             style={{ color: 'var(--color-nav-text)', opacity: 0.75 }}
           >
@@ -146,7 +175,7 @@ export function MerchantLayout() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium truncate" style={{ color: '#ffffff' }}>{user?.name || user?.email}</p>
-            <p className="text-xs" style={{ color: 'var(--color-nav-text)', opacity: 0.6 }}>Merchant</p>
+            <p className="text-xs" style={{ color: 'var(--color-nav-text)', opacity: 0.6 }}>{store ? ROLE_LABEL[store.role] : "Seller"}</p>
           </div>
           <NotificationBell />
           <button
@@ -175,7 +204,7 @@ export function MerchantLayout() {
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          <Outlet />
+          <Outlet key={store?.id ?? "none"} />
         </main>
       </div>
 
