@@ -11,6 +11,7 @@ import { Toaster } from './components/ui/sonner';
 import { AuthModal } from './components/AuthModal';
 import { ShopModeGate } from './context/ShopModeContext';
 import { ThemeProvider } from './themes/ThemeContext';
+import { ColorModeProvider } from './themes/ColorMode';
 
 // Wipes cart + guest identity the instant a logged-in session ends, so nothing
 // carries over to whoever uses the browser next. Only fires on an actual
@@ -43,9 +44,11 @@ export default function App() {
           <NotificationsProvider>
             <ChatProvider>
               <SessionGuard />
-              <ThemeProvider>
-                <RouterProvider router={router} />
-              </ThemeProvider>
+              <ColorModeProvider>
+                <ThemeProvider>
+                  <RouterProvider router={router} />
+                </ThemeProvider>
+              </ColorModeProvider>
               <Toaster />
               <AuthModal />
             </ChatProvider>

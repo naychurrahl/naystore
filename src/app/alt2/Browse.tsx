@@ -5,7 +5,7 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useSellers } from "./sellers";
 import { productTypeLabel, PRODUCT_TYPE_LABELS } from "../utils/productTypes";
 import { useShopState } from "./local";
-import { sponsoredFor, storeFirst, useHomePromotions } from "../home/useStoreHome";
+import { categoryShelf, isHouse, sponsoredFor, storeFirst, useHomePromotions } from "../home/useStoreHome";
 import { CardSkeleton, categoryUrl, EmptyState, m2, naira, ProductCard, saving, useCatalog, type AltProduct } from "./ui";
 
 const PAGE = 24;
@@ -315,7 +315,7 @@ export function SearchPage() {
     <div className="m2-wrap py-5">
       {error && <p className="mb-3" style={{ color: "var(--m-bad)" }}>We couldn't load products just now. Please refresh the page.</p>}
       <Listing products={products} loading={loading} storeStates={states}
-        heading={<h1 className="text-2xl font-extrabold">{q ? <>Results for “{q}”</> : params.get("deals") ? "Today's deals" : params.get("house") === "1" ? "Our store" : "All products"}</h1>} />
+        heading={<h1 className="text-2xl font-extrabold">{q ? <>Results for “{q}”</> : params.get("deals") ? "Today's deals" : params.get("house") === "1" ? "Our store" : "Shop all"}</h1>} />
     </div>
   );
 }
@@ -326,12 +326,19 @@ function categoryStats(products: AltProduct[]) {
   return m;
 }
 
+// The store's own categories: the ones its products are in.
+function houseCategoryStats(products: AltProduct[]) {
+  return categoryStats(products.filter(isHouse));
+}
+
+// A category: the store's own products in it, after what shops placed there today.
 export function CategoryPage() {
   const { name = "" } = useParams();
   const { products, loading } = useCatalog();
+  const promos = useHomePromotions();
   const states = useStoreStates(products);
-  const stats = useMemo(() => categoryStats(products), [products]);
-  const here = stats.get(name) ?? [];
+  const stats = useMemo(() => houseCategoryStats(products), [products]);
+  const here = useMemo(() => categoryShelf(products, promos, name), [products, promos, name]);
   const others = [...stats.keys()].filter((c) => c !== name).sort();
 
   return (
@@ -349,13 +356,14 @@ export function CategoryPage() {
       )}
       <Listing products={here} loading={loading} fixedCategory={name} storeStates={states} searchLabel={`Search in ${name}`}
         heading={<h1 className="text-2xl sm:text-3xl font-extrabold">{name}</h1>} />
+      <p className="text-sm m2-ink2">Looking for more? <Link to={`/shop?category=${encodeURIComponent(name)}`} className="m2-link">See {name} from every shop</Link></p>
     </div>
   );
 }
 
 export function CategoriesPage() {
   const { products, loading } = useCatalog();
-  const stats = useMemo(() => [...categoryStats(products)].sort((a, b) => b[1].length - a[1].length), [products]);
+  const stats = useMemo(() => [...houseCategoryStats(products)].sort((a, b) => b[1].length - a[1].length), [products]);
   return (
     <div className="m2-wrap py-5 grid grid-cols-[minmax(0,1fr)] gap-4">
       <h1 className="text-2xl sm:text-3xl font-extrabold">All categories</h1>

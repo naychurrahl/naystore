@@ -1,19 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { ArrowRight, BadgeCheck, ChevronLeft, ChevronRight, MapPin, Truck } from "lucide-react";
+import { ArrowRight, BadgeCheck, ChevronLeft, ChevronRight, MapPin, Store } from "lucide-react";
 import { useAPI } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import type { HeroSlide } from "../components/HeroCarousel";
-import { recentlyViewed } from "../alt/recent";
-import { sponsoredAbove, useStoreHome, type HomeShop } from "../home/useStoreHome";
+import { LoopRail } from "../components/LoopRail";
+import { Testimonials } from "../components/Testimonials";
+import { sponsoredAbove, type HomeShop } from "../home/useStoreHome";
+import { SHOP_ALL, shopAllWith, useHomeRows, type HomeRow, type HouseCard } from "../home/useHomeRows";
 import { useSellers } from "./sellers";
 import {
   CardSkeleton, categoryUrl, m2, Monogram, naira, ProductCard, productUrl, saving, SectionHead, Stars, storeUrl, type AltProduct,
 } from "./ui";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
-const searchWith = (q: string) => `${m2("/search")}?${q}`;
 
 // Campaign slides from the CMS; ones pointing at the company site (gallery,
 // portfolio, blog) aren't shop campaigns and are left out.
@@ -58,12 +59,15 @@ function Banner({ slides, fallbackTitle, fallbackNote }: { slides: HeroSlide[]; 
     : <a href={slide.ctaLink} target="_blank" rel="noopener noreferrer" className="block h-full">{inner}</a>;
 }
 
-function Rail({ products, loading, sponsoredIds }: { products: AltProduct[]; loading?: boolean; sponsoredIds: Set<string> }) {
-  return (
-    <div className="m2-rail m2-scroll">
-      {loading ? Array.from({ length: 6 }, (_, i) => <CardSkeleton key={i} />) : products.map((p) => <ProductCard key={p.id} product={p} sponsored={sponsoredIds.has(p.id)} />)}
-    </div>
-  );
+const productSlides = "basis-[46%] sm:basis-[31%] md:basis-1/4 lg:basis-1/5 xl:basis-1/6";
+const arrow = { background: "var(--m-surface)", color: "var(--m-ink)", border: "1px solid var(--m-line)" };
+
+function Rail({ products, loading, sponsoredIds, label }: { products: AltProduct[]; loading?: boolean; sponsoredIds: Set<string>; label: string }) {
+  if (loading && products.length === 0) {
+    return <div className="m2-rail m2-scroll">{Array.from({ length: 6 }, (_, i) => <CardSkeleton key={i} />)}</div>;
+  }
+  return <LoopRail label={label} items={products} keyOf={(p) => p.id} slideClass={productSlides} arrowStyle={arrow}
+    render={(p) => <ProductCard product={p} sponsored={sponsoredIds.has(p.id)} />} />;
 }
 
 // A row of a ranked list; `rank` is left out for what was paid for, not earned.
@@ -102,37 +106,21 @@ function Ranked({ products, sponsored, spots }: { products: AltProduct[]; sponso
 }
 
 export function Home() {
-  const {
-    products, loading, error, settings, storeName, house, sponsored, sponsoredIds, shelf, deals, allDeals, topRated, categories, paidShops, firstShops, laterShops, featured, spots, best, bestLoading,
-  } = useStoreHome();
+  const { rows, loading, error, settings, storeName, allDeals, deals } = useHomeRows();
   const { data: slideData } = useAPI(`${API_BASE}/hero-slides`);
   const slides = ((slideData ?? []) as HeroSlide[]).filter((s) => !/^\/(gallery|portfolio|blog)\b/.test(s.ctaLink ?? ""));
-  const profiles = useSellers(paidShops.map((s) => s.slug));
+  const profiles = useSellers(rows.flatMap((r) => (r.kind === "shops" ? r.shops.map((s) => s.slug) : [])));
 
-  const recent = recentlyViewed(products);
-  // "Picked for you": the categories of what this browser looked at lately.
-  const recommended = useMemo(() => {
-    const seen = new Set(recent.map((p) => p.id));
-    const cats = new Set(recent.flatMap((p) => p.categories ?? []));
-    return shelf.filter((p) => !seen.has(p.id) && p.categories?.some((c) => cats.has(c))).slice(0, 8);
-  }, [shelf, recent]);
-
-  const collections = [
-    { title: `Under ${naira(10000)}`, note: "Small prices, same quality", q: "max=10000&sort=price-low", items: shelf.filter((p) => p.price < 10000) },
-    { title: "Pay on delivery", note: "Pay when it arrives", q: "cod=1", items: shelf.filter((p) => p.codEligible && p.inStock) },
-    { title: "Rated 4★ and up", note: "Loved by buyers", q: "rating=4&sort=rating", items: shelf.filter((p) => (p.reviewCount ?? 0) > 0 && (p.avgRating ?? 0) >= 4) },
-  ].filter((c) => c.items.length >= 2);
-
-  const shopCard = (s: HomeShop) => {
+  const shopCard = (s: HomeShop, sponsored: boolean) => {
     const pr = profiles.get(s.slug);
     const where = [pr?.area, pr?.state].filter(Boolean).join(", ");
     return (
-      <Link key={s.slug} to={storeUrl(s.slug)} className="m2-panel m2-lift overflow-hidden grid">
+      <Link to={storeUrl(s.slug)} className="m2-panel m2-lift overflow-hidden grid h-full">
         <span className="relative h-20 block" style={{ background: "var(--m-sunk)" }}>
           {pr?.bannerImage
             ? <ImageWithFallback src={pr.bannerImage} alt="" className="w-full h-full object-cover" />
             : <span className="grid grid-cols-3 h-full">{s.items.slice(0, 3).map((p) => <ImageWithFallback key={p.id} src={p.image} alt="" loading="lazy" className="w-full h-full object-cover" />)}</span>}
-          <span className="m2-badge m2-badge-plain absolute top-2 left-2">Sponsored</span>
+          {sponsored && <span className="m2-badge m2-badge-plain absolute top-2 left-2">Sponsored</span>}
           <span className="absolute -bottom-5 left-3 rounded-md" style={{ border: "2px solid var(--m-surface)" }}><Monogram name={s.name} size={44} /></span>
         </span>
         <span className="px-3 pt-7 pb-3 grid gap-1">
@@ -146,121 +134,98 @@ export function Home() {
       </Link>
     );
   };
+  const houseCard = (h: HouseCard) => (
+    <Link to={h.to} className="m2-panel m2-lift overflow-hidden grid h-full">
+      <span className="relative h-20 block" style={{ background: "var(--m-sunk)" }}>
+        <span className="grid grid-cols-3 h-full">{h.items.slice(0, 3).map((p) => <ImageWithFallback key={p.id} src={p.image} alt="" loading="lazy" className="w-full h-full object-cover" />)}</span>
+        <span className="absolute -bottom-5 left-3 rounded-md" style={{ border: "2px solid var(--m-surface)" }}><Monogram name={h.name} size={44} /></span>
+      </span>
+      <span className="px-3 pt-7 pb-3 grid gap-1">
+        <span className="font-extrabold truncate">{h.name}</span>
+        <span className="text-xs m2-ink3">Our own store</span>
+        <span className="text-xs m2-ink2">{plural(h.items.length, "product")}</span>
+      </span>
+    </Link>
+  );
 
-  return (
-    <div className="pb-10 grid grid-cols-[minmax(0,1fr)] gap-9 sm:gap-11">
-      {/* Featured banner, with two shortcuts beside it */}
-      <section className="m2-wrap pt-4 grid gap-3 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
-        <Banner slides={slides} fallbackTitle={storeName} fallbackNote={settings?.tagline} />
-        <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
-          <Link to={searchWith("deals=1&sort=discount")} className="rounded-lg p-4 grid content-between gap-3 m2-lift" style={{ background: "var(--m-deal-soft)", border: "1px solid var(--m-line)" }}>
-            <span>
-              <span className="m2-badge m2-badge-deal">Today's deals</span>
-              <span className="block mt-2 font-extrabold text-lg leading-tight">{allDeals.length ? `Up to ${saving(allDeals[0])!.percent}% off` : "Deals"}</span>
-              <span className="block text-xs m2-ink2 mt-0.5">{loading ? "…" : plural(allDeals.length, "item")} on sale now</span>
-            </span>
-            <span className="flex -space-x-3">{(deals.length ? deals : allDeals).slice(0, 3).map((p) => <ImageWithFallback key={p.id} src={p.image} alt="" className="h-12 w-12 rounded-full object-cover" style={{ border: "2px solid var(--m-surface)" }} />)}</span>
-          </Link>
-          <Link to={searchWith("cod=1")} className="rounded-lg p-4 grid content-between gap-3 m2-lift" style={{ background: "var(--m-accent-soft)", border: "1px solid var(--m-line)" }}>
-            <span>
-              <Truck className="h-6 w-6" style={{ color: "var(--m-accent)" }} aria-hidden />
-              <span className="block mt-2 font-extrabold text-lg leading-tight">Pay on delivery</span>
-              <span className="block text-xs m2-ink2 mt-0.5">On items marked for it</span>
-            </span>
-            <span className="text-sm font-bold" style={{ color: "var(--m-accent)" }}>Browse →</span>
-          </Link>
-        </div>
-      </section>
-
-      {error && <p className="m2-wrap" style={{ color: "var(--m-bad)" }}>We couldn't load products just now. Please refresh the page.</p>}
-
-      {/* Shop by category */}
-      {(loading || categories.length > 0) && (
-        <section className="m2-wrap">
-          <SectionHead title="Shop by category" action={{ to: m2("/categories"), label: "All categories" }} />
-          <div className="grid grid-flow-col auto-cols-[42%] sm:auto-cols-[24%] lg:auto-cols-fr gap-3 overflow-x-auto m2-scroll">
-            {loading ? Array.from({ length: 5 }, (_, i) => <div key={i} className="m2-skel aspect-square" />) : categories.map((c) => (
-              <Link key={c.name} to={categoryUrl(c.name)} className="group grid gap-2">
-                <span className="relative aspect-square rounded-lg overflow-hidden" style={{ background: "var(--m-sunk)" }}>
-                  <ImageWithFallback src={c.image} alt="" loading="lazy" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" />
-                  {c.sponsored && <span className="m2-badge m2-badge-plain absolute top-2 left-2">Sponsored</span>}
+  const draw = (row: HomeRow) => {
+    switch (row.kind) {
+      case "banner":
+        return (
+          <section className="m2-wrap pt-4 grid gap-3 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
+            <Banner slides={slides} fallbackTitle={storeName} fallbackNote={settings?.tagline} />
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+              <Link to={shopAllWith("deals=1&sort=discount")} className="rounded-lg p-4 grid content-between gap-3 m2-lift" style={{ background: "var(--m-deal-soft)", border: "1px solid var(--m-line)" }}>
+                <span>
+                  <span className="m2-badge m2-badge-deal">Today's deals</span>
+                  <span className="block mt-2 font-extrabold text-lg leading-tight">{allDeals.length ? `Up to ${saving(allDeals[0])!.percent}% off` : "Deals"}</span>
+                  <span className="block text-xs m2-ink2 mt-0.5">{loading ? "…" : plural(allDeals.length, "item")} on sale now</span>
                 </span>
-                <span className="flex items-baseline justify-between gap-2">
-                  <span className="font-bold text-[15px] truncate group-hover:underline">{c.name}</span>
-                  <span className="text-xs m2-ink3 m2-num">{c.count}</span>
-                </span>
+                <span className="flex -space-x-3">{(deals.length ? deals : allDeals).slice(0, 3).map((p) => <ImageWithFallback key={p.id} src={p.image} alt="" className="h-12 w-12 rounded-full object-cover" style={{ border: "2px solid var(--m-surface)" }} />)}</span>
               </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Featured shops: the sponsored spots, then the store's own, then any more that paid */}
-      {(house.length > 0 || paidShops.length > 0) && (
-        <section className="m2-wrap">
-          <SectionHead title="Featured shops" />
-          <div className="grid grid-flow-col auto-cols-[78%] sm:auto-cols-[44%] lg:auto-cols-[calc((100%-36px)/4)] gap-3 overflow-x-auto m2-scroll">
-            {firstShops.map(shopCard)}
-            {house.length > 0 && (
-              <Link to={searchWith("house=1")} className="m2-panel m2-lift overflow-hidden grid">
-                <span className="relative h-20 block" style={{ background: "var(--m-sunk)" }}>
-                  <span className="grid grid-cols-3 h-full">{house.slice(0, 3).map((p) => <ImageWithFallback key={p.id} src={p.image} alt="" loading="lazy" className="w-full h-full object-cover" />)}</span>
-                  <span className="absolute -bottom-5 left-3 rounded-md" style={{ border: "2px solid var(--m-surface)" }}><Monogram name={storeName || "Store"} size={44} /></span>
+              <Link to={SHOP_ALL} className="rounded-lg p-4 grid content-between gap-3 m2-lift" style={{ background: "var(--m-accent-soft)", border: "1px solid var(--m-line)" }}>
+                <span>
+                  <Store className="h-6 w-6" style={{ color: "var(--m-accent)" }} aria-hidden />
+                  <span className="block mt-2 font-extrabold text-lg leading-tight">Shop all</span>
+                  <span className="block text-xs m2-ink2 mt-0.5">Every shop, one checkout</span>
                 </span>
-                <span className="px-3 pt-7 pb-3 grid gap-1">
-                  <span className="font-extrabold truncate">{storeName || "Our store"}</span>
-                  <span className="text-xs m2-ink3">Our own store</span>
-                  <span className="text-xs m2-ink2">{plural(house.length, "product")}</span>
-                </span>
+                <span className="text-sm font-bold" style={{ color: "var(--m-accent)" }}>Browse →</span>
               </Link>
-            )}
-            {laterShops.map(shopCard)}
-          </div>
-        </section>
-      )}
-
-      {/* The store's best sellers (from real orders), or its top rated while there
-          are too few; sponsored products take the first spots, unnumbered */}
-      {(bestLoading || best.length >= 3) ? (
-        <section className="m2-wrap">
-          <SectionHead title="Best sellers" note="What buyers are ordering most" />
-          {bestLoading ? <div className="m2-skel h-48" /> : <Ranked products={best} sponsored={sponsored} spots={spots} />}
-        </section>
-      ) : (topRated.length > 0 || sponsored.length > 0) && (
-        <section className="m2-wrap">
-          <SectionHead title="Top rated" note="Highest scores from buyers' reviews" action={{ to: searchWith("sort=rating"), label: "See all" }} />
-          <Ranked products={topRated} sponsored={sponsored} spots={spots} />
-        </section>
-      )}
-
-      {/* Today's deals, on their own band */}
-      {(loading || deals.length > 0) && (
-        <section style={{ background: "var(--m-deal-soft)" }} className="py-6">
+            </div>
+          </section>
+        );
+      case "categories":
+        return (
+          <section className="m2-wrap">
+            <SectionHead title={row.title} action={{ to: m2(row.seeAll), label: "All categories" }} />
+            {loading && row.items.length === 0
+              ? <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">{Array.from({ length: 6 }, (_, i) => <div key={i} className="m2-skel aspect-square" />)}</div>
+              : <LoopRail label="categories" items={row.items} keyOf={(c) => c.name} slideClass="basis-[38%] sm:basis-[24%] lg:basis-1/6" arrowStyle={arrow} render={(c) => (
+                <Link to={categoryUrl(c.name)} className="group grid gap-2">
+                  <span className="relative aspect-square rounded-lg overflow-hidden" style={{ background: "var(--m-sunk)" }}>
+                    <ImageWithFallback src={c.image} alt="" loading="lazy" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" />
+                    {c.sponsored && <span className="m2-badge m2-badge-plain absolute top-2 left-2">Sponsored</span>}
+                  </span>
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="font-bold text-[15px] truncate group-hover:underline">{c.name}</span>
+                    <span className="text-xs m2-ink3 m2-num">{c.count}</span>
+                  </span>
+                </Link>
+              )} />}
+          </section>
+        );
+      case "shops": {
+        const cards: ({ house: HouseCard } | { shop: HomeShop })[] = [...(row.house ? [{ house: row.house }] : []), ...row.shops.map((shop) => ({ shop }))];
+        return (
+          <section className="m2-wrap">
+            <SectionHead title={row.title} note={row.note} />
+            <LoopRail label={row.title.toLowerCase()} items={cards} keyOf={(c) => ("house" in c ? "house" : c.shop.slug)} arrowStyle={arrow}
+              slideClass="basis-[78%] sm:basis-[44%] lg:basis-1/4" render={(c) => ("house" in c ? houseCard(c.house) : shopCard(c.shop, row.sponsored))} />
+          </section>
+        );
+      }
+      case "products": {
+        const body = (
           <div className="m2-wrap">
-            <SectionHead title="Today's deals" note="Marked down from the seller's earlier price" action={{ to: searchWith("deals=1&sort=discount"), label: "See all deals" }} />
-            <Rail products={deals.slice(0, 12)} loading={loading} sponsoredIds={sponsoredIds} />
+            <SectionHead title={row.title} note={row.note} action={row.seeAll ? { to: row.seeAll, label: "See all" } : undefined} />
+            <Rail label={row.title.toLowerCase()} products={row.products} loading={row.loading} sponsoredIds={row.sponsoredIds} />
           </div>
-        </section>
-      )}
-
-      {/* Picked for you, or the store's featured picks for a first visit */}
-      <section className="m2-wrap">
-        {recommended.length >= 2
-          ? <SectionHead title="Picked for you" note="Based on what you've looked at" />
-          : <SectionHead title="Featured products" action={{ to: m2("/search"), label: "Browse all" }} />}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {loading ? Array.from({ length: 8 }, (_, i) => <CardSkeleton key={i} />)
-            : (recommended.length >= 2 ? recommended : featured).map((p) => <ProductCard key={p.id} product={p} sponsored={sponsoredIds.has(p.id)} />)}
-        </div>
-      </section>
-
-      {/* Collections: a short story, a few pictures, a way in */}
-      {collections.length > 0 && (
-        <section className="m2-wrap">
-          <SectionHead title="Collections" />
-          <div className="grid gap-3 md:grid-cols-3">
-            {collections.map((c) => (
-              <Link key={c.title} to={searchWith(c.q)} className="m2-panel m2-lift p-4 grid gap-3 group">
+        );
+        return row.band ? <section style={{ background: "var(--m-deal-soft)" }} className="py-6">{body}</section> : <section>{body}</section>;
+      }
+      case "ranked":
+        return (
+          <section className="m2-wrap">
+            <SectionHead title={row.title} note={row.note} action={row.seeAll ? { to: row.seeAll, label: "See all" } : undefined} />
+            {row.loading ? <div className="m2-skel h-48" /> : <Ranked products={row.products} sponsored={row.sponsored} spots={row.spots} />}
+          </section>
+        );
+      case "collections":
+        return (
+          <section className="m2-wrap">
+            <SectionHead title={row.title} />
+            <LoopRail label="collections" items={row.items} keyOf={(c) => c.title} slideClass="basis-[85%] sm:basis-1/2 md:basis-1/3" arrowStyle={arrow} render={(c) => (
+              <Link to={c.to} className="m2-panel m2-lift p-4 grid gap-3 group h-full">
                 <span className="flex items-end justify-between gap-3">
                   <span>
                     <span className="block font-extrabold text-lg leading-tight group-hover:underline">{c.title}</span>
@@ -272,42 +237,61 @@ export function Home() {
                   {c.items.slice(0, 3).map((p) => <ImageWithFallback key={p.id} src={p.image} alt="" loading="lazy" className="aspect-square w-full rounded-md object-cover" />)}
                 </span>
               </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Recently viewed: small, it's a reminder */}
-      {recent.length > 0 && (
-        <section className="m2-wrap">
-          <SectionHead title="Recently viewed" />
-          <div className="flex gap-3 overflow-x-auto m2-scroll">
-            {recent.map((p) => (
-              <Link key={p.id} to={productUrl(p.id)} className="w-28 shrink-0 grid gap-1 group">
+            )} />
+          </section>
+        );
+      case "recent":
+        return (
+          <section className="m2-wrap">
+            <SectionHead title={row.title} />
+            <LoopRail label="recently viewed" items={row.products} keyOf={(p) => p.id} slideClass="basis-[30%] sm:basis-1/5 lg:basis-[12.5%]" arrowStyle={arrow} render={(p) => (
+              <Link to={productUrl(p.id)} className="grid gap-1 group">
                 <ImageWithFallback src={p.image} alt="" loading="lazy" className="aspect-square w-full rounded-md object-cover" />
                 <span className="text-xs line-clamp-2 group-hover:underline">{p.name}</span>
                 <span className="m2-price text-sm">{naira(p.price)}</span>
               </Link>
-            ))}
-          </div>
-        </section>
-      )}
+            )} />
+          </section>
+        );
+      case "shopAll":
+        return (
+          <section className="m2-wrap">
+            <Link to={SHOP_ALL} className="m2-panel m2-lift p-5 flex items-center gap-4 group">
+              <span className="flex -space-x-3 shrink-0">{row.images.slice(0, 3).map((img, i) => <ImageWithFallback key={i} src={img} alt="" className="h-12 w-12 rounded-full object-cover" style={{ border: "2px solid var(--m-surface)" }} />)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-extrabold text-lg group-hover:underline">Shop all</span>
+                <span className="block text-sm m2-ink2">{plural(row.count, "product")} from our store and every shop</span>
+              </span>
+              <ArrowRight className="h-5 w-5 shrink-0" style={{ color: "var(--m-accent)" }} aria-hidden />
+            </Link>
+          </section>
+        );
+      case "promises":
+        return (
+          <section className="m2-wrap">
+            <ul className="grid sm:grid-cols-3 gap-3">
+              {[
+                ["One cart, one checkout", "Fill one cart from our store and any other shop and pay once. Each shop's part is tracked as its own order."],
+                ["Ratings you can check", "Product and seller scores come from buyers' reviews."],
+                ["Help when you need it", "Chat with us any time, and with a shop before you buy from it."],
+              ].map(([t, d]) => (
+                <li key={t} className="flex gap-3 p-4 rounded-lg" style={{ background: "var(--m-sunk)" }}>
+                  <BadgeCheck className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "var(--m-accent)" }} aria-hidden />
+                  <span><span className="block font-bold text-sm">{t}</span><span className="block text-sm m2-ink2">{d}</span></span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      case "testimonials":
+        return <Testimonials />;
+    }
+  };
 
-      {/* Why buy here, said once and plainly */}
-      <section className="m2-wrap">
-        <ul className="grid sm:grid-cols-3 gap-3">
-          {[
-            ["One cart, one checkout", "Fill one cart from our store and any other shop and pay once. Each shop's part is tracked as its own order."],
-            ["Ratings you can check", "Product and seller scores come from buyers' reviews."],
-            ["Help when you need it", "Chat with us any time, and with a shop before you buy from it."],
-          ].map(([t, d]) => (
-            <li key={t} className="flex gap-3 p-4 rounded-lg" style={{ background: "var(--m-sunk)" }}>
-              <BadgeCheck className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "var(--m-accent)" }} aria-hidden />
-              <span><span className="block font-bold text-sm">{t}</span><span className="block text-sm m2-ink2">{d}</span></span>
-            </li>
-          ))}
-        </ul>
-      </section>
+  return (
+    <div className="pb-10 grid grid-cols-[minmax(0,1fr)] gap-9 sm:gap-11">
+      {error && <p className="m2-wrap pt-4" style={{ color: "var(--m-bad)" }}>We couldn't load products just now. Please refresh the page.</p>}
+      {rows.map((row) => <div key={row.id} className="min-w-0">{draw(row)}</div>)}
     </div>
   );
 }

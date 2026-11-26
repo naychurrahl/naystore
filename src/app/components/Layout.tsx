@@ -14,6 +14,30 @@ import { ThemeSwitcher } from "../themes/ThemeSwitcher";
 import { useShopMode } from "../context/ShopModeContext";
 import { MAIN_STORE_URL } from "../utils/shopHost";
 
+// The store's own categories, and Shop all (every shop's products).
+function CategoryBar() {
+  const location = useLocation();
+  const { data } = useAPI(`${API_BASE}/categories?type=product&house=1`);
+  const categories = ((data ?? []) as { name: string }[]).map((c) => c.name);
+  const chip = (to: string, label: string, bold = false) => {
+    const active = decodeURIComponent(location.pathname) === decodeURIComponent(to);
+    return (
+      <Link key={to} to={to} className={`shrink-0 px-3 py-1.5 rounded-full text-sm ${bold ? "font-semibold" : ""}`}
+        style={{
+          color: active ? 'var(--color-nav-active)' : 'var(--color-nav-text)',
+          backgroundColor: active ? 'var(--color-primary-light)' : 'transparent',
+          border: '1px solid var(--color-border)',
+        }}>{label}</Link>
+    );
+  };
+  return (
+    <div aria-label="Categories" role="navigation" className="category-scroll flex gap-2 overflow-x-auto pb-3 -mx-1 px-1">
+      {chip("/shop", "Shop all", true)}
+      {categories.map((c) => chip(`/c/${encodeURIComponent(c)}`, c))}
+    </div>
+  );
+}
+
 export function Layout() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -223,6 +247,8 @@ export function Layout() {
               </button>
             </div>
           </div>
+
+          {!shop && <CategoryBar />}
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
