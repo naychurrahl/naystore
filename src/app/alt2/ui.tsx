@@ -14,7 +14,7 @@ export { naira, saving, useCatalog, type AltProduct } from "../alt/shared";
 
 export const m2 = (path = "") => path || "/";
 export const productUrl = (id: string) => m2(`/shop/${id}`);
-export const storeUrl = (slug: string) => m2(`/sellers/${slug}`);
+export const storeUrl = (slug: string) => m2(`/${slug}`);
 export const categoryUrl = (name: string) => m2(`/c/${encodeURIComponent(name)}`);
 export const searchUrl = (q = "") => m2(`/search${q ? `?q=${encodeURIComponent(q)}` : ""}`);
 

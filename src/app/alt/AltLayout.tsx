@@ -127,7 +127,9 @@ export function AltLayout() {
                 </a>
               )}
             </div>
-            {!user && (
+            {user?.role === "merchant" ? (
+              <Link to="/merchant" className="hidden sm:inline hover:underline shrink-0">Seller dashboard</Link>
+            ) : (
               <Link to="/become-merchant" className="hidden sm:inline hover:underline shrink-0">Sell on {storeName || "the store"}</Link>
             )}
           </div>
@@ -151,7 +153,7 @@ export function AltLayout() {
                 <IconLink to="/merchant" label="Seller dashboard"><LayoutDashboard className="h-5 w-5" /></IconLink>
               )}
               {user?.role === "customer" && (
-                <IconLink to="/become-merchant" label="Sell on the store"><Store className="h-5 w-5" /></IconLink>
+                <IconLink to="/become-merchant" label={`Sell on ${storeName || "the store"}`}><Store className="h-5 w-5" /></IconLink>
               )}
               <IconLink to="/library" label="My library"><Library className="h-5 w-5" /></IconLink>
               {user ? (
@@ -209,7 +211,7 @@ export function AltLayout() {
               <button type="button" className="alt-soft hover:underline text-left text-sm" onClick={() => openLogin()}>Log in or sign up</button>
             )}
             <Link className="alt-soft hover:underline" to={user?.role === "merchant" ? "/merchant" : "/become-merchant"}>
-              Sell on {storeName || "the store"}
+              {user?.role === "merchant" ? "Seller dashboard" : `Sell on ${storeName || "the store"}`}
             </Link>
           </div>
           {(phone || whatsapp || emails.length > 0 || addresses.length > 0 || socials.length > 0) && (
@@ -229,7 +231,7 @@ export function AltLayout() {
           )}
         </div>
         <div className="alt-wrap py-4 flex flex-wrap items-center justify-between gap-3 text-xs alt-muted" style={{ borderTop: "1px solid var(--a-line)" }}>
-          <span>© {new Date().getFullYear()} {storeName}. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} {storeName}. All rights reserved. Built by <a href="https://naychurrahl.com.ng" target="_blank" rel="noopener noreferrer" className="alt-link">Naychur Rahl</a></span>
           <ThemeSwitcher />
         </div>
       </footer>

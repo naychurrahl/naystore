@@ -9,6 +9,7 @@ import { PhoneInput } from "../components/PhoneInput";
 import { commissionRateError, minCommissionNote, useMinCommission, useAbigailDelivers } from "../utils/minCommission";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
+import { storeAddress } from "../utils/shopHost";
 
 // Opening a store: a shopper's first (becoming a seller), or a seller's
 // next one (`another`, from the seller console), which has its own name,
@@ -133,7 +134,9 @@ export function BecomeMerchant({ another = false }: { another?: boolean }) {
               className="w-full px-4 py-3 rounded-lg border"
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
-            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Shown on your products and shop page.</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+              Shown on your products and shop page{storeAddress(shopName) ? <>, and your shop's address: <span className="font-medium">{storeAddress(shopName)}</span></> : "."}
+            </p>
           </div>
 
           {!another && <><div>

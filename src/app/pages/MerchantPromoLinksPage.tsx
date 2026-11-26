@@ -44,7 +44,7 @@ export function MerchantPromoLinksPage() {
       api.get(`${API_BASE}/my-products`, { headers: authHeader }).catch(() => []),
     ]).then(([shop, domains, mine]: any[]) => {
       const own = domains?.domain?.status === "active" ? `https://${domains.domain.domain}` : "";
-      setBase(own || (shop?.slug ? `${MAIN_STORE_URL}/sellers/${shop.slug}` : ""));
+      setBase(own || (shop?.slug ? `${MAIN_STORE_URL}/${shop.slug}` : ""));
       setProducts(((mine ?? []) as any[]).map((p) => ({ id: p.id, name: p.name })));
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

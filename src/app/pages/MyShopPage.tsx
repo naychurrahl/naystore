@@ -11,6 +11,7 @@ import { ImageUploadField } from "../components/ImageUploadField";
 import { api } from "../utils/api.js";
 import { API_BASE } from "../utils/apiBase.js";
 import { useAuth } from "../context/AuthContext";
+import { MAIN_STORE_URL } from "../utils/shopHost";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 import { commissionRateError, minCommissionNote, useMinCommission, useAbigailDelivers } from "../utils/minCommission";
 
@@ -353,7 +354,7 @@ export function MyShopPage() {
                 className="px-3 flex items-center text-sm shrink-0"
                 style={{ backgroundColor: 'var(--color-surface-alt)', color: 'var(--color-text-muted)' }}
               >
-                /sellers/
+                {MAIN_STORE_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")}/
               </span>
               <Input
                 value={form.slug}
@@ -462,7 +463,7 @@ export function MyShopPage() {
             <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Shop"}</Button>
             {form.slug && (
               <a
-                href={`/sellers/${form.slug}`}
+                href={`/${form.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"

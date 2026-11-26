@@ -46,7 +46,7 @@ export function Home() {
   const slides = ((slidesData ?? []) as HeroSlide[]).filter((s) => !/^\/(gallery|portfolio|blog)\b/.test(s.ctaLink ?? ""));
 
   const shopCard = (s: HomeShop, sponsored: boolean) => (
-    <Link to={`/sellers/${s.slug}`} className="rounded-xl p-4 grid gap-3 h-full" style={card}>
+    <Link to={`/${s.slug}`} className="rounded-xl p-4 grid gap-3 h-full" style={card}>
       <span className="grid grid-cols-3 gap-1">
         {s.items.slice(0, 3).map((p) => <ImageWithFallback key={p.id} src={p.image} alt="" loading="lazy" className="aspect-square w-full rounded-md object-cover" />)}
       </span>

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, type ComponentType } from "react";
-import { Navigate, useLocation } from "react-router";
+import { Navigate, useLocation, useParams } from "react-router";
 import { Layout } from "../components/Layout";
 import { Home } from "../pages/Home";
 import { SellerPage } from "../pages/SellerPage";
@@ -96,6 +96,13 @@ export function OldThemeAddress() {
   const path = pathname
     .replace(/^\/alt(_2)?(?=\/|$)/, "")
     .replace(/^\/p\//, "/shop/")
-    .replace(/^\/s\//, "/sellers/");
+    .replace(/^\/s\//, "/");
   return <Navigate to={`${path || "/"}${search}${hash}`} replace />;
+}
+
+// Stores were at /sellers/<slug> before they moved to /<slug>.
+export function OldStoreAddress() {
+  const { slug = "" } = useParams();
+  const { search, hash } = useLocation();
+  return <Navigate to={`/${encodeURIComponent(slug)}${search}${hash}`} replace />;
 }

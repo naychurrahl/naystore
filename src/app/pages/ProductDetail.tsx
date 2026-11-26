@@ -258,7 +258,7 @@ export function ProductDetail() {
 
             {product.merchantSlug && (
               <Link
-                to={`/sellers/${product.merchantSlug}`}
+                to={`/${product.merchantSlug}`}
                 className="inline-flex items-center gap-2 mb-3 transition-colors"
                 style={{ color: 'var(--color-primary)' }}
               >

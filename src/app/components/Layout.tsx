@@ -181,7 +181,8 @@ export function Layout() {
                   to="/merchant"
                   className="p-2 rounded-md transition-colors"
                   style={{ color: 'var(--color-nav-text)' }}
-                  aria-label="Merchant Dashboard"
+                  aria-label="Seller dashboard"
+                  title="Seller dashboard"
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-nav-hover)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
@@ -194,7 +195,8 @@ export function Layout() {
                   to="/become-merchant"
                   className="p-2 rounded-md transition-colors"
                   style={{ color: 'var(--color-nav-text)' }}
-                  aria-label="Become a Merchant"
+                  aria-label={`Sell on ${companyName}`}
+                  title={`Sell on ${companyName}`}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-nav-hover)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
@@ -274,7 +276,7 @@ export function Layout() {
                   style={{ color: 'var(--color-nav-text)' }}
                 >
                   <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
+                  Seller dashboard
                 </Link>
               )}
               {!shop && user?.role === "customer" && (
@@ -284,7 +286,7 @@ export function Layout() {
                   style={{ color: 'var(--color-nav-text)' }}
                 >
                   <Store className="h-4 w-4" />
-                  Become a Merchant
+                  Sell on {companyName}
                 </Link>
               )}
             </div>
@@ -378,14 +380,14 @@ export function Layout() {
                 {!shop && user?.role === "merchant" && (
                   <li>
                     <Link to="/merchant" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
-                      Merchant Dashboard
+                      Seller dashboard
                     </Link>
                   </li>
                 )}
                 {!shop && user?.role === "customer" && (
                   <li>
                     <Link to="/become-merchant" style={{ color: 'var(--color-footer-link)' }} className="hover:underline">
-                      Become a Merchant
+                      Sell on {companyName}
                     </Link>
                   </li>
                 )}
@@ -431,7 +433,7 @@ export function Layout() {
 
           <div className="mt-8 pt-8" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
             <p className="text-center text-sm">
-              © {new Date().getFullYear()} {companyName}. All rights reserved.
+              © {new Date().getFullYear()} {companyName}. All rights reserved. Built by <a href="https://naychurrahl.com.ng" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--color-footer-link)' }}>Naychur Rahl</a>
             </p>
             <div className="mt-3 text-center"><ThemeSwitcher /></div>
           </div>
