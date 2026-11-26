@@ -120,7 +120,7 @@ export function ProductCard({ product, showMerchant = true, sponsored = false }:
             <>
               <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>&middot;</span>
               <Link
-                to={`/sellers/${product.merchantSlug}`}
+                to={`/${product.merchantSlug}`}
                 className="text-xs hover:underline"
                 style={{ color: 'var(--color-primary)' }}
               >

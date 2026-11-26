@@ -157,7 +157,7 @@ export function MerchantLayout() {
 
         <div className="px-6 py-3" style={{ borderTop: '1px solid var(--color-nav-hover)' }}>
           <a
-            href={store?.slug ? `/sellers/${store.slug}` : "/shop"}
+            href={store?.slug ? `/${store.slug}` : "/shop"}
             className="inline-flex items-center gap-1 text-xs font-medium transition-colors"
             style={{ color: 'var(--color-nav-text)', opacity: 0.75 }}
           >

@@ -72,7 +72,7 @@ function DeliverTo({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function AccountMenu() {
+function AccountMenu({ storeName }: { storeName: string }) {
   const { user, logout } = useAuth();
   const { openLogin } = useAuthModal();
   const [open, setOpen] = useState(false);
@@ -101,7 +101,7 @@ function AccountMenu() {
           <Link role="menuitem" to="/library" className={item}><Library className="h-4 w-4" /> My library</Link>
           {user.role === "merchant"
             ? <Link role="menuitem" to="/merchant" className={item}><LayoutDashboard className="h-4 w-4" /> Seller dashboard</Link>
-            : <Link role="menuitem" to="/become-merchant" className={item}><Store className="h-4 w-4" /> Sell on the marketplace</Link>}
+            : <Link role="menuitem" to="/become-merchant" className={item}><Store className="h-4 w-4" /> Sell on {storeName || "the marketplace"}</Link>}
           <button role="menuitem" type="button" onClick={() => logout()} className={`${item} w-full`}><LogOut className="h-4 w-4" /> Log out</button>
           <div className="px-3 py-2 mt-1" style={{ borderTop: "1px solid var(--m-line)" }}><ThemeSwitcher /></div>
         </div>
@@ -161,7 +161,9 @@ function Drawer({ open, onClose, categories, storeName, onChat }: { open: boolea
         )}
         <p className="m2-eyebrow px-4 pt-4 pb-1" style={{ borderTop: "1px solid var(--m-line)" }}>Help</p>
         <button type="button" className={`${row} w-full`} onClick={() => { onClose(); onChat(); }}><MessageCircle className="h-4 w-4 m2-ink3" /> Chat with support</button>
-        <Link to="/become-merchant" className={row} onClick={onClose}><Store className="h-4 w-4 m2-ink3" /> Sell on {storeName || "the marketplace"}</Link>
+        {user?.role === "merchant"
+          ? <Link to="/merchant" className={row} onClick={onClose}><LayoutDashboard className="h-4 w-4 m2-ink3" /> Seller dashboard</Link>
+          : <Link to="/become-merchant" className={row} onClick={onClose}><Store className="h-4 w-4 m2-ink3" /> Sell on {storeName || "the marketplace"}</Link>}
         <div className="px-4 py-3"><ThemeSwitcher /></div>
       </nav>
     </div>
@@ -233,7 +235,9 @@ export function M2Layout() {
           <span className="hidden md:flex items-center gap-4 shrink-0">
             {whatsapp && <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">WhatsApp us</a>}
             <Link to="/orders" className="hover:underline">Track an order</Link>
-            {user?.role !== "merchant" && <Link to="/become-merchant" className="hover:underline">Sell with us</Link>}
+            {user?.role === "merchant"
+              ? <Link to="/merchant" className="hover:underline">Seller dashboard</Link>
+              : <Link to="/become-merchant" className="hover:underline">Sell on {storeName || "the marketplace"}</Link>}
           </span>
         </div>
       </div>
@@ -253,7 +257,7 @@ export function M2Layout() {
             <nav aria-label="Account" className="ml-auto flex items-center gap-0.5">
               <span className="hidden sm:inline-flex"><NotificationBell /></span>
               <Link to={m2("/wishlist")} className="m2-icon-btn hidden lg:inline-flex" aria-label={`Wishlist, ${wish.length} saved`}><span className="relative inline-flex"><Heart className="h-5 w-5" /><CountBadge n={wish.length} /></span></Link>
-              <span className="hidden lg:inline-flex"><AccountMenu /></span>
+              <span className="hidden lg:inline-flex"><AccountMenu storeName={storeName} /></span>
               <Link to={m2("/cart")} className="m2-icon-btn gap-2 text-sm font-semibold" aria-label={`Cart, ${itemCount} item${itemCount === 1 ? "" : "s"}`}>
                 <span className="relative inline-flex"><ShoppingCart className="h-5 w-5" /><CountBadge n={itemCount} /></span>
                 <span className="hidden xl:inline">Cart</span>
@@ -300,7 +304,9 @@ export function M2Layout() {
             <Link className="m2-ink2 hover:underline" to="/orders">Track an order</Link>
             <button type="button" className="m2-ink2 hover:underline text-left text-sm" onClick={openChat}>Chat with support</button>
             <Link className="m2-ink2 hover:underline" to="/library">My library</Link>
-            <Link className="m2-ink2 hover:underline" to="/become-merchant">Sell on {storeName || "the marketplace"}</Link>
+            <Link className="m2-ink2 hover:underline" to={user?.role === "merchant" ? "/merchant" : "/become-merchant"}>
+              {user?.role === "merchant" ? "Seller dashboard" : `Sell on ${storeName || "the marketplace"}`}
+            </Link>
           </div>
           {(phone || emails.length > 0 || addresses.length > 0 || socials.length > 0) && (
             <div className="grid gap-2 content-start col-span-2 lg:col-span-1">
@@ -315,7 +321,7 @@ export function M2Layout() {
           )}
         </div>
         <div className="m2-wrap py-4 flex flex-wrap items-center justify-between gap-2 text-xs m2-ink3" style={{ borderTop: "1px solid var(--m-line)" }}>
-          <span>© {new Date().getFullYear()} {storeName}. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} {storeName}. All rights reserved. Built by <a href="https://naychurrahl.com.ng" target="_blank" rel="noopener noreferrer" className="m2-link">Naychur Rahl</a></span>
           <ThemeSwitcher />
           <span className="flex gap-2">
             {["Paystack", "Naylet", "Pay on delivery"].map((p) => <span key={p} className="m2-badge m2-badge-plain">{p}</span>)}

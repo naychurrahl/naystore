@@ -37,7 +37,7 @@ import { InviteFriends } from "./pages/InviteFriends";
 import { MerchantDomainPage } from "./pages/MerchantDomainPage";
 import {
   OldThemeAddress, ThemedCart, ThemedCategories, ThemedCategory, ThemedCheckout, ThemedHome, ThemedLayout,
-  ThemedProduct, ThemedSearch, ThemedSeller, ThemedWishlist,
+  ThemedProduct, ThemedSearch, ThemedSeller, ThemedWishlist, OldStoreAddress,
 } from "./themes/themedRoutes";
 
 export const router = createBrowserRouter([
@@ -47,7 +47,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: ThemedHome },
       { path: "shop/:id", Component: ThemedProduct },
-      { path: "sellers/:slug", Component: ThemedSeller },
+      { path: "sellers/:slug", Component: OldStoreAddress },
       { path: "shop", Component: ThemedSearch },
       { path: "search", Component: ThemedSearch },
       { path: "categories", Component: ThemedCategories },
@@ -70,6 +70,9 @@ export const router = createBrowserRouter([
       { path: "tickets/:code", Component: TicketPage },
       { path: "orders/:id", Component: OrderDetail },
       { path: "become-merchant", Component: BecomeMerchant },
+      // A store's own address, abigail.ng/<slug>. The pages above win over it,
+      // and the backend keeps those words from being store addresses.
+      { path: ":slug", Component: ThemedSeller },
       { path: "*", Component: NotFound }
     ]
   },

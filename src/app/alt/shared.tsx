@@ -26,7 +26,7 @@ export function saving(p: { price: number; originalPrice?: number | null }) {
 
 export const altPath = (path = "") => path || "/";
 export const productPath = (id: string) => altPath(`/shop/${id}`);
-export const sellerPath = (slug: string) => altPath(`/sellers/${slug}`);
+export const sellerPath = (slug: string) => altPath(`/${slug}`);
 
 // The whole catalogue, fetched once per visit and shared by every themed page
 // (the API returns every visible product in one list; search runs over it).
