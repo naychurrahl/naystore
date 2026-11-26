@@ -7,9 +7,18 @@ import { Button } from "../components/ui/button";
 import { NIGERIA_STATE_LGAS, NIGERIA_STATES } from "../data/nigeriaStates";
 import { PhoneInput } from "../components/PhoneInput";
 import { commissionRateError, minCommissionNote, useMinCommission, useAbigailDelivers } from "../utils/minCommission";
+import { api } from "../utils/api.js";
+import { API_BASE } from "../utils/apiBase.js";
 
-export function BecomeMerchant() {
-  const { user, becomeMerchant } = useAuth();
+// Opening a store: a shopper's first (becoming a seller), or a seller's
+// next one (`another`, from the seller console), which has its own name,
+// products, money and terms, and asks nothing about the person again.
+export function OpenAnotherStore() {
+  return <BecomeMerchant another />;
+}
+
+export function BecomeMerchant({ another = false }: { another?: boolean }) {
+  const { user, becomeMerchant, authHeader, refreshStores, setStoreId } = useAuth();
   const { openLogin } = useAuthModal();
   const navigate = useNavigate();
   const [shopName, setShopName] = useState("");
@@ -39,7 +48,7 @@ export function BecomeMerchant() {
     return <Navigate to="/" replace />;
   }
 
-  if (user.role === "merchant") {
+  if (user.role === "merchant" && !another) {
     return <Navigate to="/merchant" replace />;
   }
 
@@ -48,7 +57,7 @@ export function BecomeMerchant() {
       setError("Enter your shop name");
       return;
     }
-    if (!legalName.trim()) {
+    if (!another && !legalName.trim()) {
       setError("Enter your legal name");
       return;
     }
@@ -74,7 +83,7 @@ export function BecomeMerchant() {
       setError("Enter your area");
       return;
     }
-    if (!phone.trim() || !phoneValid) {
+    if (!another && (!phone.trim() || !phoneValid)) {
       setError(phone.trim() ? "Check your phone number - include the country code if it isn't Nigerian" : "Add a phone number for your shop");
       return;
     }
@@ -82,7 +91,13 @@ export function BecomeMerchant() {
     setSubmitting(true);
     setError(null);
     try {
-      await becomeMerchant(commissionType, rate, fulfillmentMethod, location.trim(), state, lga, area.trim(), landmark.trim(), shopName.trim(), legalName.trim(), phone);
+      if (another) {
+        const r = await api.post(`${API_BASE}/my-stores`, { commissionType, commissionRate: rate, fulfillmentMethod, location: location.trim(), state, lga, area: area.trim(), landmark: landmark.trim(), shopName: shopName.trim() }, { headers: authHeader });
+        await refreshStores();
+        if (r.storeId) setStoreId(r.storeId);
+      } else {
+        await becomeMerchant(commissionType, rate, fulfillmentMethod, location.trim(), state, lga, area.trim(), landmark.trim(), shopName.trim(), legalName.trim(), phone);
+      }
       navigate("/merchant", { replace: true });
     } catch (err: any) {
       setError(err.message || "Could not upgrade your account");
@@ -100,10 +115,11 @@ export function BecomeMerchant() {
         >
           <Store className="h-6 w-6" style={{ color: 'var(--color-primary)' }} />
         </div>
-        <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Become a Merchant</h1>
+        <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>{another ? "Open another store" : "Become a Merchant"}</h1>
         <p className="text-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
-          List and sell your own products, right from your existing account ({user.email}). No new sign-up needed -
-          you'll keep the same login and just gain a Dashboard for managing products, orders, and payouts.
+          {another
+            ? "A store of its own: its own name, products, orders, money and team. You own it, from the same login, and switch between your stores in the seller console."
+            : `List and sell your own products, right from your existing account (${user.email}). No new sign-up needed - you'll keep the same login and just gain a Dashboard for managing products, orders, and payouts.`}
         </p>
 
         <div className="space-y-4 text-left">
@@ -120,7 +136,7 @@ export function BecomeMerchant() {
             <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Shown on your products and shop page.</p>
           </div>
 
-          <div>
+          {!another && <><div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Your legal name</label>
             <input
               type="text"
@@ -148,7 +164,7 @@ export function BecomeMerchant() {
               style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
             />
             <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>So buyers and our team can reach your shop.</p>
-          </div>
+          </div></>}
 
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-primary)' }}>Commission</label>
@@ -269,11 +285,11 @@ export function BecomeMerchant() {
         {error && <p className="text-sm mt-4" style={{ color: 'var(--color-error)' }}>{error}</p>}
 
         <Button onClick={handleUpgrade} disabled={submitting} className="w-full mt-6">
-          {submitting ? "Upgrading..." : "Become a Merchant"}
+          {submitting ? (another ? "Opening..." : "Upgrading...") : another ? "Open the store" : "Become a Merchant"}
         </Button>
 
         <p className="text-sm text-center mt-6" style={{ color: 'var(--color-text-secondary)' }}>
-          <Link to="/" style={{ color: 'var(--color-primary)' }}>Never mind, take me back</Link>
+          <Link to={another ? "/merchant" : "/"} style={{ color: 'var(--color-primary)' }}>Never mind, take me back</Link>
         </p>
       </div>
     </div>

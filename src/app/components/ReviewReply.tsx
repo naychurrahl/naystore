@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
 // Under a review: the seller's one public reply, or - for that seller - a box
 // to write it. kind: a product review, or a review of the shop.
 export function ReviewReply({ review, ownerId, kind = "product" }: { review: any; ownerId?: string | null; kind?: "product" | "seller" }) {
-  const { user, authHeader } = useAuth();
+  const { user, stores, authHeader } = useAuth();
   const [reply, setReply] = useState<string | null>(review.reply ?? null);
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
@@ -20,7 +20,8 @@ export function ReviewReply({ review, ownerId, kind = "product" }: { review: any
       </div>
     );
   }
-  if (!user || user.role !== "merchant" || !ownerId || user.id !== ownerId) return null;
+  // The store's owner and managers reply (whichever of their stores it is).
+  if (!user || !ownerId || !stores.some((s) => s.id === ownerId && s.can.includes("reviews"))) return null;
   const send = async () => {
     setBusy(true);
     try {
