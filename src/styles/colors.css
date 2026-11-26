@@ -68,3 +68,62 @@
   --color-blog-category: #3b82f6;
   --color-blog-meta: #9ca3af;
 }
+
+/* Classic in dark mode (html.dark, set by the store's colour mode). The
+   Modern and Marketplace themes have their own dark palettes. */
+html.dark:not(.alt-theme):not(.m2-theme) {
+  --color-primary: #6d9bff;
+  --color-primary-hover: #8cb0ff;
+  --color-primary-light: #1c2a4a;
+  --color-primary-ink: #0b1020;
+
+  --color-secondary: #a78bfa;
+  --color-secondary-hover: #c4b5fd;
+  --color-secondary-light: #2a2145;
+
+  --color-accent: #fbbf24;
+  --color-accent-hover: #fcd34d;
+  --color-accent-light: #3a2d12;
+
+  --color-success: #34d399;
+  --color-success-hover: #6ee7b7;
+  --color-success-light: #12332a;
+
+  --color-error: #f87171;
+  --color-error-hover: #fca5a5;
+  --color-error-light: #3a1c1b;
+
+  --color-background: #0f1218;
+  --color-surface: #141820;
+  --color-surface-alt: #1a1f29;
+  --color-border: #2b3140;
+  --color-text-primary: #eef0f4;
+  --color-text-secondary: #b4bac6;
+  --color-text-muted: #868d9b;
+
+  --color-nav-bg: #141820;
+  --color-nav-text: #eef0f4;
+  --color-nav-hover: #1f2430;
+  --color-nav-active: #6d9bff;
+
+  --color-footer-bg: #07090d;
+  --color-footer-text: #c3c8d2;
+  --color-footer-link: #8cb0ff;
+
+  --color-product-card: #171b23;
+  --color-product-badge: #f87171;
+  --color-cart-button: #34d399;
+  --color-cart-button-hover: #6ee7b7;
+
+  --color-portfolio-overlay: rgba(0, 0, 0, 0.75);
+  --color-portfolio-tag: #a78bfa;
+  --color-gallery-overlay: rgba(0, 0, 0, 0.9);
+  --color-blog-card: #171b23;
+  --color-blog-category: #8cb0ff;
+  --color-blog-meta: #868d9b;
+  color-scheme: dark;
+}
+html.dark:not(.alt-theme):not(.m2-theme) body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}

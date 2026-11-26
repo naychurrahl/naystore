@@ -15,20 +15,13 @@ import { altPath, contactsOf } from "./shared";
 import "./alt.css";
 
 // Puts this theme on <html> while it is the active one (so the login
-// modal, toasts and chat, which render outside the page, match it), and
-// follows the device's light/dark setting.
+// modal, toasts and chat, which render outside the page, match it). Light
+// or dark comes from the store's colour mode (themes/ColorMode).
 function useAltTheme() {
   useLayoutEffect(() => {
     const root = document.documentElement;
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => root.classList.toggle("dark", media.matches);
     root.classList.add("alt-theme");
-    apply();
-    media.addEventListener("change", apply);
-    return () => {
-      media.removeEventListener("change", apply);
-      root.classList.remove("alt-theme", "dark");
-    };
+    return () => root.classList.remove("alt-theme");
   }, []);
 }
 
@@ -93,6 +86,9 @@ export function AltLayout() {
   useAltTheme();
   const location = useLocation();
   const { data: settings } = useAPI(`${API_BASE}/settings`);
+  // The store's own categories; Shop all has every shop's.
+  const { data: catData } = useAPI(`${API_BASE}/categories?type=product&house=1`);
+  const categories = ((catData ?? []) as { name: string }[]).map((c) => c.name);
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
   const { openLogin } = useAuthModal();
@@ -173,6 +169,14 @@ export function AltLayout() {
           </div>
           <div className="md:hidden flex"><HeaderSearch /></div>
         </div>
+        <nav aria-label="Categories" style={{ borderTop: "1px solid var(--a-line)" }}>
+          <div className="alt-wrap flex gap-2 overflow-x-auto alt-scroll py-2">
+            <Link to="/shop" className="alt-chip font-bold">Shop all</Link>
+            {categories.map((c) => (
+              <Link key={c} to={altPath(`/c/${encodeURIComponent(c)}`)} className="alt-chip">{c}</Link>
+            ))}
+          </div>
+        </nav>
       </header>
 
       <main className="flex-1 min-w-0">
@@ -188,7 +192,7 @@ export function AltLayout() {
           </div>
           <div className="grid gap-2 content-start">
             <p className="font-bold">Shopping</p>
-            <Link className="alt-soft hover:underline" to={altPath("/search")}>All products</Link>
+            <Link className="alt-soft hover:underline" to="/shop">Shop all</Link>
             <Link className="alt-soft hover:underline" to="/orders">Track my orders</Link>
             <Link className="alt-soft hover:underline" to="/library">My library</Link>
             <Link className="alt-soft hover:underline" to={altPath("/cart")}>Cart</Link>

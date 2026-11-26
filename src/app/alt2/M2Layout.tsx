@@ -23,15 +23,8 @@ import "./alt2.css";
 function useM2Theme() {
   useLayoutEffect(() => {
     const root = document.documentElement;
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => root.classList.toggle("dark", media.matches);
     root.classList.add("m2-theme");
-    apply();
-    media.addEventListener("change", apply);
-    return () => {
-      media.removeEventListener("change", apply);
-      root.classList.remove("m2-theme", "dark");
-    };
+    return () => root.classList.remove("m2-theme");
   }, []);
 }
 
@@ -148,6 +141,7 @@ function Drawer({ open, onClose, categories, storeName, onChat }: { open: boolea
         </div>
         <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--m-line)" }}><DeliverTo /></div>
         <p className="m2-eyebrow px-4 pt-4 pb-1">Categories</p>
+        <Link to="/shop" className={row} onClick={onClose}><Store className="h-4 w-4 m2-ink3" /> Shop all</Link>
         <Link to={m2("/categories")} className={row} onClick={onClose}><LayoutGrid className="h-4 w-4 m2-ink3" /> All categories</Link>
         {categories.map((c) => <Link key={c} to={categoryUrl(c)} className={row} onClick={onClose}>{c}</Link>)}
         <p className="m2-eyebrow px-4 pt-4 pb-1" style={{ borderTop: "1px solid var(--m-line)" }}>Your account</p>
@@ -202,7 +196,7 @@ export function M2Layout() {
   useM2Theme();
   const location = useLocation();
   const { data: settings } = useAPI(`${API_BASE}/settings`);
-  const { data: catData } = useAPI(`${API_BASE}/categories?type=product`);
+  const { data: catData } = useAPI(`${API_BASE}/categories?type=product&house=1`);
   const { itemCount } = useCart();
   const wish = useWishlist();
   const { user } = useAuth();
@@ -271,7 +265,8 @@ export function M2Layout() {
         {!focused && categories.length > 0 && (
           <nav aria-label="Categories" className="hidden lg:block" style={{ borderTop: "1px solid var(--m-line)" }}>
             <div className="m2-wrap flex items-center gap-1 h-11 overflow-x-auto m2-scroll text-sm">
-              <NavLink to={m2("/categories")} className="flex items-center gap-1.5 px-3 h-8 rounded-md font-bold hover:bg-[var(--m-sunk)] shrink-0"><LayoutGrid className="h-4 w-4" /> All categories</NavLink>
+              <NavLink to="/shop" className="flex items-center gap-1.5 px-3 h-8 rounded-md font-bold hover:bg-[var(--m-sunk)] shrink-0"><Store className="h-4 w-4" /> Shop all</NavLink>
+              <NavLink to={m2("/categories")} className="flex items-center gap-1.5 px-3 h-8 rounded-md font-bold hover:bg-[var(--m-sunk)] shrink-0"><LayoutGrid className="h-4 w-4" /> Categories</NavLink>
               {categories.map((c) => (
                 <NavLink key={c} to={categoryUrl(c)}
                   className={({ isActive }) => `px-3 h-8 inline-flex items-center rounded-md shrink-0 hover:bg-[var(--m-sunk)] ${isActive ? "font-bold text-[var(--m-accent)]" : "m2-ink2 font-medium"}`}>{c}</NavLink>
@@ -294,6 +289,7 @@ export function M2Layout() {
           </div>
           <div className="grid gap-2 content-start">
             <p className="font-bold">Shop</p>
+            <Link className="m2-ink2 hover:underline" to="/shop">Shop all</Link>
             <Link className="m2-ink2 hover:underline" to={m2("/categories")}>All categories</Link>
             <Link className="m2-ink2 hover:underline" to={`${m2("/search")}?deals=1&sort=discount`}>Today's deals</Link>
             <Link className="m2-ink2 hover:underline" to={m2("/wishlist")}>Wishlist</Link>

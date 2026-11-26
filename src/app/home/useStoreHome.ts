@@ -77,6 +77,21 @@ export function sponsoredAbove<T extends { id: string }>(ranked: T[], paid: T[],
   return paid.filter((p) => !rankedIds.has(p.id)).slice(0, spots);
 }
 
+// A category page: the store's own products in it, after the shops' products
+// placed there today (sponsored). Shop all has every shop's.
+export function categoryShelf<T extends AltProduct>(products: T[], promos: HomePromotions, name: string): T[] {
+  const paid = new Set(promos.categories[name] ?? []);
+  return storeFirst(products.filter((p) => p.categories?.includes(name) && (isHouse(p) || (paid.has(p.id) && p.inStock))), promos, name);
+}
+
+// The shops whose slugs these are, in this order, with their products.
+export function shopsOf(products: AltProduct[], slugs: string[]): HomeShop[] {
+  return slugs.flatMap((slug) => {
+    const items = products.filter((p) => p.merchantSlug === slug && p.inStock);
+    return items.length ? [{ slug, name: items[0].merchantName ?? "", items }] : [];
+  });
+}
+
 export type HomeShop = { slug: string; name: string; items: AltProduct[] };
 export type HomeCategory = { name: string; count: number; image: string; sponsored: boolean };
 
@@ -108,32 +123,27 @@ export function useStoreHome() {
     const topRated = house.filter((p) => (p.reviewCount ?? 0) > 0)
       .sort((a, b) => (b.avgRating ?? 0) - (a.avgRating ?? 0) || (b.reviewCount ?? 0) - (a.reviewCount ?? 0));
 
-    // A category shows when the store or a paying shop has something in it.
-    // Its count is the whole category, which is what its link opens.
-    const counts = new Map<string, number>();
-    products.forEach((p) => p.categories?.forEach((c) => counts.set(c, (counts.get(c) ?? 0) + 1)));
+    // The store's categories: what its own products are in, each pictured by
+    // a shop's product placed there today (sponsored) or the store's own.
     const pictures = new Map<string, { image: string; sponsored: boolean }>();
     if (!shop) {
       for (const [name, ids] of Object.entries(promos.categories)) {
         const paid = live(ids)[0];
-        if (paid) pictures.set(name, { image: paid.image, sponsored: true });
+        if (paid && house.some((p) => p.categories?.includes(name))) pictures.set(name, { image: paid.image, sponsored: true });
       }
     }
-    shelf.forEach((p) => p.categories?.forEach((c) => {
+    house.forEach((p) => p.categories?.forEach((c) => {
       if (!pictures.has(c)) pictures.set(c, { image: p.image, sponsored: false });
     }));
     const byCount: HomeCategory[] = [...pictures]
-      .map(([name, pic]) => ({ name, count: counts.get(name) ?? 0, ...pic }))
+      .map(([name, pic]) => ({ name, count: categoryShelf(products, promos, name).length, ...pic }))
       .sort((a, b) => b.count - a.count);
     const firstCategories = byCount.filter((c) => c.sponsored).slice(0, spots);
     const categories = [...firstCategories, ...byCount.filter((c) => !firstCategories.includes(c))];
 
     // Only shops that paid for today. The first spots are theirs, then the
     // store's own card, then any more that paid.
-    const paidShops: HomeShop[] = shop ? [] : promos.shops.flatMap((slug) => {
-      const items = products.filter((p) => p.merchantSlug === slug);
-      return items.length ? [{ slug, name: items[0].merchantName ?? "", items }] : [];
-    });
+    const paidShops: HomeShop[] = shop ? [] : shopsOf(products, promos.shops);
     const firstShops = paidShops.slice(0, spots);
     const laterShops = paidShops.slice(spots);
 

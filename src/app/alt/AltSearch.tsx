@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import { SlidersHorizontal, X } from "lucide-react";
 import { productTypeLabel, PRODUCT_TYPE_LABELS } from "../utils/productTypes";
 import { AltProductCard } from "./AltProductCard";
 import { CardSkeleton, naira, saving, useCatalog, type AltProduct } from "./shared";
-import { sponsoredFor, storeFirst, useHomePromotions } from "../home/useStoreHome";
+import { categoryShelf, sponsoredFor, storeFirst, useHomePromotions } from "../home/useStoreHome";
 
 const PAGE = 24;
 
@@ -86,8 +86,10 @@ function sortProducts(list: AltProduct[], sort: string, terms: string[], order: 
 
 // The listing: search, filters with counts, sort, grid, "Load more". Used by
 // /alt/search over the whole catalogue and by a shop page over its products.
-export function Listing({ products, loading, title, showSeller = true }: {
+export function Listing({ products, loading, title, showSeller = true, category }: {
   products: AltProduct[]; loading: boolean; title?: string; showSeller?: boolean;
+  // A category page: what shops placed there today is labelled Sponsored.
+  category?: string;
 }) {
   const [params, setParams] = useSearchParams();
   const f = readFilters(params, !!params.get("q"));
@@ -105,8 +107,9 @@ export function Listing({ products, loading, title, showSeller = true }: {
   // first; a chosen sort stays exactly as chosen, and only says "Sponsored"
   // where being paid for moved something up. One shop's own page keeps its order.
   const promos = useHomePromotions();
-  const order = useMemo(() => new Map((showSeller ? storeFirst(products, promos, f.category) : products).map((p, i) => [p.id, i])), [products, promos, showSeller, f.category]);
-  const sponsored = useMemo(() => (showSeller && (f.sort === "featured" || f.sort === "relevance") ? sponsoredFor(promos, f.category) : new Set<string>()), [promos, showSeller, f.sort, f.category]);
+  const placed = category ?? f.category;
+  const order = useMemo(() => new Map((showSeller ? storeFirst(products, promos, placed) : products).map((p, i) => [p.id, i])), [products, promos, showSeller, placed]);
+  const sponsored = useMemo(() => (showSeller && (f.sort === "featured" || f.sort === "relevance") ? sponsoredFor(promos, placed) : new Set<string>()), [promos, showSeller, f.sort, placed]);
   const results = useMemo(
     () => sortProducts(products.filter((p) => matches(p, f, terms)), f.sort, terms, order),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -318,7 +321,23 @@ export function AltSearch() {
   return (
     <div className="alt-wrap py-5">
       {error && <p className="mb-4" style={{ color: "var(--a-bad)" }}>We couldn't load products just now. Please refresh the page.</p>}
-      <Listing products={products} loading={loading} title={q ? `Results for “${q}”` : category ?? "All products"} />
+      <Listing products={products} loading={loading}
+        title={q ? `Results for “${q}”` : category ?? (params.get("house") === "1" ? "Our store" : "Shop all")} />
+    </div>
+  );
+}
+
+// A category: the store's own products in it, after what shops placed there today.
+export function AltCategory() {
+  const { name = "" } = useParams();
+  const { products, loading, error } = useCatalog();
+  const promos = useHomePromotions();
+  const shelf = useMemo(() => categoryShelf(products, promos, name), [products, promos, name]);
+  return (
+    <div className="alt-wrap py-5 grid gap-3">
+      {error && <p style={{ color: "var(--a-bad)" }}>We couldn't load products just now. Please refresh the page.</p>}
+      <Listing products={shelf} loading={loading} title={name} category={name} />
+      <p className="text-sm alt-muted">Looking for more? <Link to={`/shop?category=${encodeURIComponent(name)}`} className="alt-link">See {name} from every shop</Link></p>
     </div>
   );
 }

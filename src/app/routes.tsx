@@ -47,6 +47,7 @@ export const router = createBrowserRouter([
       { index: true, Component: ThemedHome },
       { path: "shop/:id", Component: ThemedProduct },
       { path: "sellers/:slug", Component: ThemedSeller },
+      { path: "shop", Component: ThemedSearch },
       { path: "search", Component: ThemedSearch },
       { path: "categories", Component: ThemedCategories },
       { path: "c/:name", Component: ThemedCategory },

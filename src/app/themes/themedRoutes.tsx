@@ -1,16 +1,18 @@
 import { lazy, Suspense, useEffect, type ComponentType } from "react";
-import { Navigate, useLocation, useParams } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { Layout } from "../components/Layout";
 import { Home } from "../pages/Home";
 import { SellerPage } from "../pages/SellerPage";
 import { ProductDetail } from "../pages/ProductDetail";
 import { Cart } from "../pages/Cart";
 import { Checkout } from "../pages/Checkout";
+import { ClassicCategory, ShopAll } from "../pages/ShopAll";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { useShopMode } from "../context/ShopModeContext";
 import { rememberReferral } from "../utils/referral";
 import { useTheme, type ThemeId } from "./ThemeContext";
+import { useApplyColorMode } from "./ColorMode";
 
 // One set of addresses for every theme: each address here says which page
 // each theme shows there. Modern and Marketplace load only when they're used.
@@ -38,22 +40,19 @@ function ClassicIndex() {
 }
 
 // Addresses a theme has no page for go to its nearest equivalent.
-const ToClassicShop = () => <Navigate to="/#shop" replace />;
-const ToSearch = () => <Navigate to="/search" replace />;
-function CategoryToSearch() {
-  const { name = "" } = useParams();
-  return <Navigate to={`/search?category=${encodeURIComponent(name)}`} replace />;
-}
+const ToShopAll = () => <Navigate to="/shop" replace />;
 
 export const ThemedHome = themedPage({ classic: ClassicIndex, modern: modern("AltHome"), marketplace: marketplace("Home") });
 export const ThemedProduct = themedPage({ classic: ProductDetail, modern: modern("AltProductPage"), marketplace: marketplace("ProductPage") });
 export const ThemedSeller = themedPage({ classic: SellerPage as ComponentType, modern: modern("AltSeller"), marketplace: marketplace("StorePage") });
 export const ThemedCart = themedPage({ classic: Cart, modern: modern("AltCart"), marketplace: marketplace("CartPage") });
 export const ThemedCheckout = themedPage({ classic: Checkout, modern: Checkout, marketplace: marketplace("CheckoutPage") });
-export const ThemedSearch = themedPage({ classic: ToClassicShop, modern: modern("AltSearch"), marketplace: marketplace("SearchPage") });
-export const ThemedCategories = themedPage({ classic: ToClassicShop, modern: ToSearch, marketplace: marketplace("CategoriesPage") });
-export const ThemedCategory = themedPage({ classic: ToClassicShop, modern: CategoryToSearch, marketplace: marketplace("CategoryPage") });
-export const ThemedWishlist = themedPage({ classic: ToClassicShop, modern: ToSearch, marketplace: marketplace("WishlistPage") });
+// Shop all (/shop) and search (/search) are the same list: every product,
+// the store's own and every shop's. Category pages are the store's own.
+export const ThemedSearch = themedPage({ classic: ShopAll, modern: modern("AltSearch"), marketplace: marketplace("SearchPage") });
+export const ThemedCategories = themedPage({ classic: ToShopAll, modern: ToShopAll, marketplace: marketplace("CategoriesPage") });
+export const ThemedCategory = themedPage({ classic: ClassicCategory, modern: modern("AltCategory"), marketplace: marketplace("CategoryPage") });
+export const ThemedWishlist = themedPage({ classic: ToShopAll, modern: ToShopAll, marketplace: marketplace("WishlistPage") });
 
 const layouts: Record<ThemeId, ComponentType> = {
   classic: Layout,
@@ -82,6 +81,7 @@ function useStoreLinks() {
 export function ThemedLayout() {
   const { theme } = useTheme();
   useStoreLinks();
+  useApplyColorMode();
   const ActiveLayout = layouts[theme];
   return (
     <Suspense fallback={<div className="min-h-screen" />}>
